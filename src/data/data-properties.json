@@ -1,0 +1,53 @@
+[
+  {
+    "id":1,
+    "address": "19 rue des Quinsous",
+    "zipcode":30190,
+    "city": "La Calmette",
+    "type":"Maison",
+    "pieces":4,
+    "area":100,
+    "thumbnail": "/images/properties/thumb-01.jpg",
+    "images":[
+      {
+        "id":1,
+        "src": "./../../../assets/images/react.jpg"
+      }
+    ],
+    "created_at": "03/09/2022"
+  },
+  {
+    "id":2,
+    "address": "192 rue Paul Vaillan Couturier",
+    "zipcode":94140,
+    "city": "Alfortville",
+    "type":"Appartement",
+    "pieces":1,
+    "area":12,
+    "thumbnail": "/images/properties/thumb-02.jpg",
+    "images":[
+      {
+        "id":1,
+        "src": "./../../../assets/images/react.jpg"
+      }
+    ],
+    "created_at": "03/09/2022"
+  },
+  {
+    "id":3,
+    "address": "24 rue de l'ancienne cave",
+    "zipcode":30730,
+    "city": "Montpezat",
+    "type":"Maison",
+    "pieces":4,
+    "area":108,
+    "thumbnail": "/images/properties/thumb-03.jpg",
+    "images":[
+      {
+        "id":1,
+        "src": "./../../../assets/images/react.jpg"
+      }
+    ],
+    "created_at": "03/09/2022"
+  }
+]

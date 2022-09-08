@@ -1,0 +1,32 @@
+[
+  {
+    "id":1,
+    "civility": "MR",
+    "firstname": "Bruce",
+    "lastname": "LIOU",
+    "email": "bruceliou@free.fr",
+    "mobile": "0676090147",
+    "property_id": 1,
+    "created_at": "03/09/2022"
+  },
+  {
+    "id":2,
+    "civility": "MR",
+    "firstname": "Grégory",
+    "lastname": "LIOU",
+    "email": "g.liou@orientex.fr",
+    "mobile": "0613216262",
+    "property_id": 2,
+    "created_at": "03/09/2022"
+  },
+  {
+    "id":3,
+    "civility": "MME",
+    "firstname": "Laetitia",
+    "lastname": "DRUET",
+    "email": "laetitiadruet@hotmail.com",
+    "mobile": "0663644848",
+    "property_id": 3,
+    "created_at": "03/09/2022"
+  }
+]
