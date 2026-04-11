@@ -196,7 +196,7 @@ const Inspections = () => {
               <CCol sm={6}><div className="text-muted small">Locataire</div><div className="fw-semibold">{viewing.Tenant ? `${viewing.Tenant.civility || ''} ${viewing.Tenant.firstname} ${viewing.Tenant.lastname}` : '-'}</div></CCol>
               <CCol sm={3}><div className="text-muted small">Date</div><div className="fw-semibold">{DateUtils.formatShort(viewing.date)}</div></CCol>
               <CCol sm={3}><div className="text-muted small">Statut</div><CBadge color={statusColor[viewing.status]}>{statusLabel[viewing.status]}</CBadge></CCol>
-            {viewing.general_notes && <CCol sm={12}><div className="text-muted small">Observations générales</div><div>{viewing.general_notes}</div></CCol>}
+            <CCol sm={12}><div className="text-muted small">Observations générales</div><div>{viewing.general_notes || <span className="text-muted fst-italic">Aucune observation</span>}</div></CCol>
             </CRow>
             {viewing._rooms && viewing._rooms.length > 0 && (
               <>
