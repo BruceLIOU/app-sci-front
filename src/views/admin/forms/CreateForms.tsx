@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import PropertyDataService from '../../../services/property.service'
 import TenantDataService from '../../../services/tenant.service'
-import { CFormInput, CForm, CCol, CButton, CFormSelect, CFormLabel, CSpinner, CFormCheck, CFormTextarea, CInputGroup, CInputGroupText } from '@coreui/react'
+import { CFormInput, CForm, CCol, CButton, CFormSelect, CFormLabel, CFormCheck, CFormTextarea, CInputGroup, CInputGroupText } from '@coreui/react'
+import AddressAutocomplete from '../../../components/AddressAutocomplete'
 
 const ROOM_TYPES = ['Chambre', 'Salon', 'Séjour', 'Salle de bain', "Salle d'eau", 'WC / Toilettes', 'Cuisine', 'Cuisine ouverte', 'Bureau', 'Dressing', 'Buanderie', 'Garage', 'Cave', 'Grenier', 'Terrasse', 'Balcon', 'Véranda', "Entrée / Hall", 'Autre']
 const FEATURE_LIST = ['Domotique', 'Ballon eau chaude thermodynamique', 'Chauffe-eau solaire', 'Pompe à chaleur', 'Climatisation', 'Cheminée / Poêle', 'Panneau solaire photovoltaïque', 'Double vitrage', 'Triple vitrage', 'Parquet', 'Cuisine équipée', 'Fibre optique', 'Alarme', 'Interphone / Digicode', 'Ascenseur', 'Parking', 'Box / Garage', 'Cave', 'Jardin', 'Piscine']
@@ -15,7 +16,6 @@ interface CreateFormsProps {
 const CreateForms = ({ setModalVisible, entities }: CreateFormsProps) => {
   const [validated, setValidated] = useState(false)
   const [properties, setProperties] = useState<any[]>([])
-  const [geocoding, setGeocoding] = useState(false)
 
   // État pour la branche properties
   const [thumbnail, setThumbnail] = useState<File | null>(null)
@@ -25,8 +25,6 @@ const CreateForms = ({ setModalVisible, entities }: CreateFormsProps) => {
   const [rooms, setRooms] = useState<{ type: string; count: number }[]>([])
   const [features, setFeatures] = useState<string[]>([])
   const [newRoomType, setNewRoomType] = useState(ROOM_TYPES[0])
-
-  const geocodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [inputValue, setInputValue] = useState<any>(
     entities === 'tenants'
@@ -39,36 +37,6 @@ const CreateForms = ({ setModalVisible, entities }: CreateFormsProps) => {
       PropertyDataService.getAll().then((res) => setProperties(res.data)).catch((err) => console.log(err.message))
     }
   }, [entities])
-
-  // Géocodage auto (Nominatim) sur changement adresse/cp/ville
-  useEffect(() => {
-    if (entities !== 'properties') return
-    if (!inputValue.address && !inputValue.city) return
-
-    if (geocodeTimer.current) clearTimeout(geocodeTimer.current)
-    geocodeTimer.current = setTimeout(async () => {
-      const query = [inputValue.address, inputValue.zipcode, inputValue.city].filter(Boolean).join(' ')
-      if (query.trim().length < 5) return
-      setGeocoding(true)
-      try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`,
-          { headers: { 'Accept-Language': 'fr' } },
-        )
-        const results = await res.json()
-        if (results.length > 0) {
-          setInputValue((prev: any) => ({
-            ...prev,
-            latitude: results[0].lat,
-            longitude: results[0].lon,
-          }))
-        }
-      } catch {}
-      setGeocoding(false)
-    }, 900)
-
-    return () => { if (geocodeTimer.current) clearTimeout(geocodeTimer.current) }
-  }, [inputValue.address, inputValue.zipcode, inputValue.city])
 
   const handleChangeInput = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setInputValue({ ...inputValue, [e.target.name]: e.target.value })
@@ -139,8 +107,16 @@ const CreateForms = ({ setModalVisible, entities }: CreateFormsProps) => {
 
   return (
     <CForm className="row g-3 needs-validation" noValidate validated={validated} onSubmit={handleSubmit}>
-      {/* Adresse */}
-      <CCol md={6}><CFormInput type="text" name="address" label="Adresse" placeholder="Adresse" value={inputValue.address} required onChange={handleChangeInput} /></CCol>
+      {/* Adresse avec auto-complétion */}
+      <CCol md={12}>
+        <AddressAutocomplete
+          label="Adresse"
+          required
+          value={inputValue.address}
+          onChange={(val) => setInputValue((prev: any) => ({ ...prev, address: val }))}
+          onSelect={(data) => setInputValue((prev: any) => ({ ...prev, ...data }))}
+        />
+      </CCol>
       <CCol md={6}><CFormInput type="number" name="zipcode" label="Code postal" placeholder="Code postal" value={inputValue.zipcode} required onChange={handleChangeInput} /></CCol>
       <CCol md={6}><CFormInput type="text" name="city" label="Ville" placeholder="Ville" value={inputValue.city} required onChange={handleChangeInput} /></CCol>
       <CCol md={6}>
@@ -153,13 +129,13 @@ const CreateForms = ({ setModalVisible, entities }: CreateFormsProps) => {
       <CCol md={6}><CFormInput type="number" name="pieces" label="Pièces" placeholder="Pièces" value={inputValue.pieces} required onChange={handleChangeInput} /></CCol>
       <CCol md={6}><CFormInput type="number" name="area" label="Superficie (m²)" placeholder="Superficie" value={inputValue.area} required onChange={handleChangeInput} /></CCol>
 
-      {/* Coordonnées GPS (auto-remplies, overridables) */}
+      {/* Coordonnées GPS (auto-remplies via auto-complétion) */}
       <CCol md={6}>
-        <CFormLabel>Latitude {geocoding && <CSpinner size="sm" className="ms-1" />}</CFormLabel>
+        <CFormLabel>Latitude</CFormLabel>
         <CFormInput type="text" name="latitude" placeholder="Auto-détectée" value={inputValue.latitude} onChange={handleChangeInput} />
       </CCol>
       <CCol md={6}>
-        <CFormLabel>Longitude {geocoding && <CSpinner size="sm" className="ms-1" />}</CFormLabel>
+        <CFormLabel>Longitude</CFormLabel>
         <CFormInput type="text" name="longitude" placeholder="Auto-détectée" value={inputValue.longitude} onChange={handleChangeInput} />
       </CCol>
 

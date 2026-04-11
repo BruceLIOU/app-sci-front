@@ -86,9 +86,14 @@ const PropertyMap: React.FC<PropertyMapProps> = ({ properties, onMarkerClick }) 
             <br />
             {property.pieces} pièces · {property.area} m²
             <br />
-            <small className="text-primary" style={{ cursor: 'pointer' }}>
-              Voir le détail →
-            </small>
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${property.address}, ${property.city}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontSize: '0.8rem' }}
+            >
+              Itinéraire →
+            </a>
           </Popup>
         </Marker>
       ))}

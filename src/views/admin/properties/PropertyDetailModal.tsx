@@ -62,7 +62,7 @@ const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
           {/* Colonne gauche : galerie + mini-carte */}
           <CCol md={7}>
             {images.length > 0 ? (
-              <CCarousel controls indicators transition="crossfade" className="mb-3 rounded overflow-hidden">
+              <CCarousel controls indicators transition="crossfade" interval={false} className="mb-3 rounded overflow-hidden">
                 {images.map((src, i) => (
                   <CCarouselItem key={i}>
                     <img
