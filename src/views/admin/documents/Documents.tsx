@@ -213,17 +213,19 @@ const Documents = () => {
                       <CTableDataCell className="text-muted small">
                         {doc.createdAt ? new Date(doc.createdAt).toLocaleDateString('fr-FR') : '—'}
                       </CTableDataCell>
-                      <CTableDataCell className="text-end">
-                        <CButton
-                          color="light" size="sm" className="me-1"
-                          href={DocumentDataService.downloadUrl(doc.id)} target="_blank" rel="noreferrer"
-                          title="Télécharger / Ouvrir"
-                        >
-                          <CIcon icon={cilCloudDownload} />
-                        </CButton>
-                        <CButton color="light" size="sm" onClick={() => { setToDelete(doc); setDeleteModal(true) }}>
-                          <CIcon icon={cilTrash} />
-                        </CButton>
+                      <CTableDataCell>
+                        <div className="d-flex gap-1 justify-content-end flex-nowrap">
+                          <CButton
+                            color="light" size="sm"
+                            href={DocumentDataService.downloadUrl(doc.id)} target="_blank" rel="noreferrer"
+                            title="Télécharger / Ouvrir"
+                          >
+                            <CIcon icon={cilCloudDownload} />
+                          </CButton>
+                          <CButton color="light" size="sm" onClick={() => { setToDelete(doc); setDeleteModal(true) }}>
+                            <CIcon icon={cilTrash} />
+                          </CButton>
+                        </div>
                       </CTableDataCell>
                     </CTableRow>
                   )
