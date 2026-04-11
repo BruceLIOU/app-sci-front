@@ -3,6 +3,7 @@ import LeaseDataService from '../../../services/lease.service'
 import TenantDataService from '../../../services/tenant.service'
 import PropertyDataService from '../../../services/property.service'
 import DocumentsSection from '../../../components/DocumentsSection'
+import ViewControlBar from '../../../components/ViewControlBar'
 import {
   CCard, CCardBody, CCardHeader, CCol, CRow, CTable, CTableBody, CTableDataCell,
   CTableHead, CTableHeaderCell, CTableRow, CBadge, CButton, CModal, CModalHeader,
@@ -28,6 +29,8 @@ const Leases = () => {
   const [properties, setProperties] = useState<any[]>([])
   const [modalVisible, setModalVisible] = useState(false)
   const [viewModal, setViewModal] = useState(false)
+  const [filterStatus, setFilterStatus] = useState('')
+  const [filterLeaseType, setFilterLeaseType] = useState('')
   const [deleteModal, setDeleteModal] = useState(false)
   const [editing, setEditing] = useState<any>(null)
   const [viewing, setViewing] = useState<any>(null)
@@ -70,6 +73,14 @@ const Leases = () => {
   const totalActive = leases.filter((l) => l.status === 'active').length
   const totalRent = leases.filter((l) => l.status === 'active').reduce((s, l) => s + parseFloat(l.rent_amount || 0) + parseFloat(l.charges_amount || 0), 0)
 
+  const hasFilter = filterStatus !== '' || filterLeaseType !== ''
+  const filteredLeases = leases.filter((l) => {
+    if (filterStatus && l.status !== filterStatus) return false
+    if (filterLeaseType && l.type !== filterLeaseType) return false
+    return true
+  })
+  const resetFilters = () => { setFilterStatus(''); setFilterLeaseType('') }
+
   return (
     <>
       <CRow className="mb-4">
@@ -84,6 +95,30 @@ const Leases = () => {
           <CButton color="primary" size="sm" onClick={openCreate}><CIcon icon={cilPlus} className="me-1" />Nouveau bail</CButton>
         </CCardHeader>
         <CCardBody>
+          <ViewControlBar
+            filters={[
+              {
+                value: filterStatus,
+                onChange: setFilterStatus,
+                options: Object.entries(statusLabel).map(([v, l]) => ({ value: v, label: l })),
+                placeholder: 'Tous les statuts',
+                width: 160,
+              },
+              {
+                value: filterLeaseType,
+                onChange: setFilterLeaseType,
+                options: Object.entries(typeLabel).map(([v, l]) => ({ value: v, label: l })),
+                placeholder: 'Tous les types',
+                width: 160,
+              },
+            ]}
+            hasActiveFilter={hasFilter}
+            onResetFilters={resetFilters}
+            totalCount={leases.length}
+            filteredCount={filteredLeases.length}
+            itemLabel="bail"
+            itemLabelPlural="baux"
+          />
           <CTable align="middle" hover responsive bordered>
             <CTableHead color="light">
               <CTableRow>
@@ -99,9 +134,9 @@ const Leases = () => {
               </CTableRow>
             </CTableHead>
             <CTableBody>
-              {leases.length === 0 ? (
+              {filteredLeases.length === 0 ? (
                 <CTableRow><CTableDataCell colSpan={9} className="text-center text-muted">Aucun bail enregistré</CTableDataCell></CTableRow>
-              ) : leases.map((l) => (
+              ) : filteredLeases.map((l) => (
                 <CTableRow key={l.id}>
                   <CTableDataCell>{l.Property ? `${l.Property.type} - ${l.Property.city}` : '-'}</CTableDataCell>
                   <CTableDataCell>{l.Tenant ? `${l.Tenant.civility || ''} ${l.Tenant.lastname}` : '-'}</CTableDataCell>

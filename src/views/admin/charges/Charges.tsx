@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import ChargeDataService from '../../../services/charge.service'
 import PropertyDataService from '../../../services/property.service'
+import ViewControlBar from '../../../components/ViewControlBar'
 import {
   CCard, CCardBody, CCardHeader, CCol, CRow, CTable, CTableBody, CTableDataCell,
   CTableHead, CTableHeaderCell, CTableRow, CBadge, CButton, CModal, CModalHeader,
@@ -24,6 +25,7 @@ const Charges = () => {
   const [toDelete, setToDelete] = useState<any>(null)
   const [form, setForm] = useState(emptyForm)
   const [filterType, setFilterType] = useState('')
+  const [filterFrequency, setFilterFrequency] = useState('')
 
   const fetchAll = () => ChargeDataService.getAll().then((r) => setCharges(r.data)).catch(console.error)
 
@@ -51,7 +53,12 @@ const Charges = () => {
 
   const handleDelete = async () => { await ChargeDataService.delete(toDelete.id); setDeleteModal(false); fetchAll() }
 
-  const filtered = filterType ? charges.filter((c) => c.type === filterType) : charges
+  const hasFilter = filterType !== '' || filterFrequency !== ''
+  const filtered = charges.filter((c) => {
+    if (filterType && c.type !== filterType) return false
+    if (filterFrequency && c.frequency !== filterFrequency) return false
+    return true
+  })
   const total = filtered.reduce((s, c) => s + parseFloat(c.amount || 0), 0)
   const totalAnnual = charges.reduce((s, c) => {
     const a = parseFloat(c.amount || 0)
@@ -74,17 +81,34 @@ const Charges = () => {
       </CRow>
 
       <CCard>
-        <CCardHeader className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <CCardHeader className="d-flex justify-content-between align-items-center">
           <strong>Charges &amp; dépenses</strong>
-          <div className="d-flex gap-2">
-            <CFormSelect size="sm" value={filterType} onChange={(e) => setFilterType(e.target.value)} style={{ width: 180 }}>
-              <option value="">Tous les types</option>
-              {Object.entries(typeLabel).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-            </CFormSelect>
-            <CButton color="primary" size="sm" onClick={openCreate}><CIcon icon={cilPlus} className="me-1" />Ajouter</CButton>
-          </div>
+          <CButton color="primary" size="sm" onClick={openCreate}><CIcon icon={cilPlus} className="me-1" />Ajouter</CButton>
         </CCardHeader>
         <CCardBody>
+          <ViewControlBar
+            filters={[
+              {
+                value: filterType,
+                onChange: setFilterType,
+                options: Object.entries(typeLabel).map(([v, l]) => ({ value: v, label: l })),
+                placeholder: 'Tous les types',
+                width: 180,
+              },
+              {
+                value: filterFrequency,
+                onChange: setFilterFrequency,
+                options: Object.entries(freqLabel).map(([v, l]) => ({ value: v, label: l })),
+                placeholder: 'Toutes les fréquences',
+                width: 180,
+              },
+            ]}
+            hasActiveFilter={hasFilter}
+            onResetFilters={() => { setFilterType(''); setFilterFrequency('') }}
+            totalCount={charges.length}
+            filteredCount={filtered.length}
+            itemLabel="charge"
+          />
           <CTable align="middle" hover responsive bordered>
             <CTableHead color="light">
               <CTableRow>

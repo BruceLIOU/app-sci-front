@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import PaymentDataService from '../../../services/payment.service'
 import TenantDataService from '../../../services/tenant.service'
 import PropertyDataService from '../../../services/property.service'
+import ViewControlBar from '../../../components/ViewControlBar'
 import {
   CCard, CCardBody, CCardHeader, CCol, CRow, CTable, CTableBody, CTableDataCell,
   CTableHead, CTableHeaderCell, CTableRow, CBadge, CButton, CModal, CModalHeader,
@@ -24,6 +25,7 @@ const Payments = () => {
   const [formData, setFormData] = useState(emptyForm)
   const [deleteModal, setDeleteModal] = useState(false)
   const [toDelete, setToDelete] = useState<any>(null)
+  const [filterStatus, setFilterStatus] = useState('')
 
   const fetchPayments = async () => {
     try { const res = await PaymentDataService.getAll(); setPayments(res.data) }
@@ -64,6 +66,8 @@ const Payments = () => {
   const totalPaid = payments.filter((p) => p.status === 'paid').reduce((sum, p) => sum + parseFloat(p.amount || 0), 0)
   const totalPending = payments.filter((p) => p.status !== 'paid').reduce((sum, p) => sum + parseFloat(p.amount || 0), 0)
 
+  const filteredPayments = filterStatus ? payments.filter((p) => p.status === filterStatus) : payments
+
   return (
     <>
       <CRow className="mb-4">
@@ -78,6 +82,22 @@ const Payments = () => {
           <CButton color="primary" size="sm" onClick={handleOpenCreate}><CIcon icon={cilPlus} className="me-1" />Ajouter</CButton>
         </CCardHeader>
         <CCardBody>
+          <ViewControlBar
+            filters={[
+              {
+                value: filterStatus,
+                onChange: setFilterStatus,
+                options: Object.entries(statusLabel).map(([v, l]) => ({ value: v, label: l })),
+                placeholder: 'Tous les statuts',
+                width: 160,
+              },
+            ]}
+            hasActiveFilter={filterStatus !== ''}
+            onResetFilters={() => setFilterStatus('')}
+            totalCount={payments.length}
+            filteredCount={filteredPayments.length}
+            itemLabel="paiement"
+          />
           <CTable align="middle" hover responsive bordered>
             <CTableHead color="light">
               <CTableRow>
@@ -88,9 +108,9 @@ const Payments = () => {
               </CTableRow>
             </CTableHead>
             <CTableBody>
-              {payments.length === 0 ? (
+              {filteredPayments.length === 0 ? (
                 <CTableRow><CTableDataCell colSpan={7} className="text-center text-muted">Aucun paiement enregistré</CTableDataCell></CTableRow>
-              ) : payments.map((payment) => (
+              ) : filteredPayments.map((payment) => (
                 <CTableRow key={payment.id}>
                   <CTableDataCell>{payment.month || '-'}</CTableDataCell>
                   <CTableDataCell>{payment.Tenant ? `${payment.Tenant.civility || ''} ${payment.Tenant.firstname} ${payment.Tenant.lastname}` : '-'}</CTableDataCell>

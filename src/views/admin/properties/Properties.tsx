@@ -3,29 +3,16 @@ import PropertyDataService from '../../../services/property.service'
 import Modal from '../modals/Modals'
 import PropertyMap from './PropertyMap'
 import PropertyDetailModal from './PropertyDetailModal'
+import ViewControlBar from '../../../components/ViewControlBar'
+import type { ViewMode } from '../../../components/ViewControlBar'
 import {
   CRow, CCol, CCard, CCardBody, CCardTitle, CCardText, CCardFooter,
   CContainer, CButton, CTooltip, CCardImage, CButtonGroup,
-  CFormSelect, CBadge,
+  CBadge,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilPlus, cilPen, cilTrash, cilViewModule, cilList, cilViewColumn, cilFilterX } from '@coreui/icons'
+import { cilPlus, cilPen, cilTrash } from '@coreui/icons'
 import { DateUtils } from 'src/utils/date'
-
-type ViewMode = 'vignette' | 'list' | 'grid'
-
-const GridColIcon = ({ cols }: { cols: number }) => {
-  const gap = 2
-  const total = 28
-  const colW = (total - gap * (cols - 1)) / cols
-  return (
-    <svg width={total} height={18} viewBox={`0 0 ${total} 18`} fill="currentColor">
-      {Array.from({ length: cols }).map((_, i) => (
-        <rect key={i} x={i * (colW + gap)} y={0} width={colW} height={18} rx={2} />
-      ))}
-    </svg>
-  )
-}
 
 // Ratio hauteur/largeur de l'image selon le nombre de colonnes de la grille
 const gridImgRatio: Record<number, string> = {
@@ -116,96 +103,41 @@ const Properties = () => {
         </div>
 
         {/* Barre de contrôle : vue + filtres */}
-        <div className="d-flex align-items-center flex-wrap gap-2 py-3 border-top border-bottom mb-4">
-          {/* Sélecteur de mode d'affichage */}
-          <CButtonGroup>
-            <CTooltip content="Vignettes">
-              <CButton
-                color={viewMode === 'vignette' ? 'primary' : 'light'}
-                onClick={() => setViewMode('vignette')}
-              >
-                <CIcon icon={cilViewModule} />
-              </CButton>
-            </CTooltip>
-            <CTooltip content="Liste">
-              <CButton
-                color={viewMode === 'list' ? 'primary' : 'light'}
-                onClick={() => setViewMode('list')}
-              >
-                <CIcon icon={cilList} />
-              </CButton>
-            </CTooltip>
-            <CTooltip content="Grille personnalisée">
-              <CButton
-                color={viewMode === 'grid' ? 'primary' : 'light'}
-                onClick={() => setViewMode('grid')}
-              >
-                <CIcon icon={cilViewColumn} />
-              </CButton>
-            </CTooltip>
-          </CButtonGroup>
-
-          {viewMode === 'grid' && (
-            <CButtonGroup>
-              {[1, 2, 3, 4].map((n) => (
-                <CTooltip key={n} content={`${n} colonne${n > 1 ? 's' : ''}`}>
-                  <CButton
-                    color={gridCols === n ? 'primary' : 'light'}
-                    size="sm"
-                    onClick={() => setGridCols(n)}
-                  >
-                    <GridColIcon cols={n} />
-                  </CButton>
-                </CTooltip>
-              ))}
-            </CButtonGroup>
-          )}
-
-          <div className="vr mx-1" />
-
-          {/* Filtres */}
-          <CFormSelect
-            size="sm"
-            style={{ width: 160 }}
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-          >
-            <option value="">Tous les types</option>
-            {typeOptions.map((t) => <option key={t} value={t}>{t}</option>)}
-          </CFormSelect>
-
-          <CFormSelect
-            size="sm"
-            style={{ width: 160 }}
-            value={filterCity}
-            onChange={(e) => setFilterCity(e.target.value)}
-          >
-            <option value="">Toutes les villes</option>
-            {cityOptions.map((c) => <option key={c} value={c}>{c}</option>)}
-          </CFormSelect>
-
-          <CFormSelect
-            size="sm"
-            style={{ width: 140 }}
-            value={filterPieces}
-            onChange={(e) => setFilterPieces(e.target.value)}
-          >
-            <option value="">Nb de pièces</option>
-            {piecesOptions.map((p) => <option key={p} value={p}>{p} pièce{p > 1 ? 's' : ''}</option>)}
-          </CFormSelect>
-
-          {hasFilter && (
-            <CTooltip content="Réinitialiser les filtres">
-              <CButton color="light" size="sm" onClick={resetFilters}>
-                <CIcon icon={cilFilterX} className="me-1" />
-                <CBadge color="danger" shape="rounded-pill">{filteredData.length}/{data.length}</CBadge>
-              </CButton>
-            </CTooltip>
-          )}
-          {!hasFilter && (
-            <small className="text-medium-emphasis ms-1">{data.length} bien{data.length > 1 ? 's' : ''}</small>
-          )}
-        </div>
+        <ViewControlBar
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          supportedModes={['vignette', 'list', 'grid']}
+          gridCols={gridCols}
+          onGridColsChange={setGridCols}
+          filters={[
+            {
+              value: filterType,
+              onChange: setFilterType,
+              options: typeOptions.map((t) => ({ value: t, label: t })),
+              placeholder: 'Tous les types',
+              width: 160,
+            },
+            {
+              value: filterCity,
+              onChange: setFilterCity,
+              options: cityOptions.map((c) => ({ value: c, label: c })),
+              placeholder: 'Toutes les villes',
+              width: 160,
+            },
+            {
+              value: filterPieces,
+              onChange: setFilterPieces,
+              options: piecesOptions.map((p) => ({ value: String(p), label: `${p} pièce${p > 1 ? 's' : ''}` })),
+              placeholder: 'Nb de pièces',
+              width: 140,
+            },
+          ]}
+          hasActiveFilter={hasFilter}
+          onResetFilters={resetFilters}
+          totalCount={data.length}
+          filteredCount={filteredData.length}
+          itemLabel="bien"
+        />
       </CContainer>
 
       <CContainer fluid>
