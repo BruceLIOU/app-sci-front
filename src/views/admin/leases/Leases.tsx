@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import LeaseDataService from '../../../services/lease.service'
 import TenantDataService from '../../../services/tenant.service'
 import PropertyDataService from '../../../services/property.service'
+import DocumentsSection from '../../../components/DocumentsSection'
 import {
   CCard, CCardBody, CCardHeader, CCol, CRow, CTable, CTableBody, CTableDataCell,
   CTableHead, CTableHeaderCell, CTableRow, CBadge, CButton, CModal, CModalHeader,
@@ -167,6 +168,9 @@ const Leases = () => {
               ))}
               {viewing.notes && <CCol sm={12}><div className="text-muted small">Notes</div><div>{viewing.notes}</div></CCol>}
             </CRow>
+            <hr />
+            <strong className="d-block mb-2">Documents</strong>
+            <DocumentsSection entityType="lease" entityId={viewing.id} />
             <hr />
             <div className="d-flex justify-content-end"><CButton color="primary" onClick={() => setViewModal(false)}>Fermer</CButton></div>
           </CModalBody>

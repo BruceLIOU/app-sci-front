@@ -1,4 +1,8 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
+import DocumentsSection from '../../../components/DocumentsSection'
+import PropertyLeaseModal from '../../../components/PropertyLeaseModal'
+import LeaseDataService from '../../../services/lease.service'
+import TenantDataService from '../../../services/tenant.service'
 import {
   CModal,
   CModalHeader,
@@ -16,9 +20,10 @@ import {
   CTab,
   CTabContent,
   CTabPanel,
+  CSpinner,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilPen, cilTrash } from '@coreui/icons'
+import { cilPen, cilTrash, cilPlus } from '@coreui/icons'
 import { MapContainer, TileLayer, Marker } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -37,6 +42,30 @@ const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const [leases, setLeases] = useState<any[]>([])
+  const [leasesLoading, setLeasesLoading] = useState(false)
+  const [tenants, setTenants] = useState<any[]>([])
+  const [leaseModalVisible, setLeaseModalVisible] = useState(false)
+  const [editingLease, setEditingLease] = useState<any>(null)
+
+  const fetchLeases = () => {
+    if (!property?.id) return
+    setLeasesLoading(true)
+    LeaseDataService.getAll()
+      .then((r) => setLeases(r.data.filter((l: any) => l.property_id === property.id || l.Property?.id === property.id)))
+      .catch(console.error)
+      .finally(() => setLeasesLoading(false))
+  }
+
+  useEffect(() => {
+    if (!visible) return
+    fetchLeases()
+    TenantDataService.getAll().then((r) => setTenants(r.data)).catch(console.error)
+  }, [visible, property?.id])
+
+  const statusLabel: Record<string, string> = { active: 'Actif', expired: 'Expiré', terminated: 'Résilié' }
+  const statusColor: Record<string, string> = { active: 'success', expired: 'warning', terminated: 'danger' }
+  const typeLabel: Record<string, string> = { nu: 'Location nue', meublé: 'Meublé', commercial: 'Commercial' }
   if (!property) return null
 
   const images: string[] = (() => {
@@ -56,6 +85,7 @@ const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
     !isNaN(Number(property.longitude))
 
   return (
+    <>
     <CModal size="xl" alignment="center" visible={visible} onClose={onClose}>
       <CModalHeader>
         <CModalTitle>
@@ -109,8 +139,10 @@ const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
               <CTabList variant="tabs" className="mb-3">
                 <CTab itemKey="detail">Détail</CTab>
                 <CTab itemKey="tenants">Locataires</CTab>
+                <CTab itemKey="bail">Bail</CTab>
                 <CTab itemKey="features">Caractéristiques</CTab>
                 <CTab itemKey="comments">Commentaires</CTab>
+                <CTab itemKey="documents">Documents</CTab>
               </CTabList>
               <CTabContent>
                 {/* Onglet Détail */}
@@ -198,6 +230,52 @@ const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                   })()}
                 </CTabPanel>
 
+                {/* Onglet Bail */}
+                <CTabPanel itemKey="bail">
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <span className="fw-semibold text-medium-emphasis small">
+                      {leases.length} bail{leases.length > 1 ? 'x' : ''} associé{leases.length > 1 ? 's' : ''}
+                    </span>
+                    <CButton
+                      color="primary"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => { setEditingLease(null); setLeaseModalVisible(true) }}
+                    >
+                      <CIcon icon={cilPlus} className="me-1" />Nouveau bail
+                    </CButton>
+                  </div>
+                  {leasesLoading ? (
+                    <div className="text-center py-3"><CSpinner size="sm" /></div>
+                  ) : leases.length === 0 ? (
+                    <p className="text-medium-emphasis fst-italic small">Aucun bail enregistré pour ce bien.</p>
+                  ) : (
+                    <ul className="list-group list-group-flush">
+                      {leases.map((l: any) => (
+                        <li key={l.id} className="list-group-item px-0 py-2">
+                          <div className="d-flex justify-content-between align-items-start">
+                            <div>
+                              <CBadge color={statusColor[l.status]} className="me-2">{statusLabel[l.status]}</CBadge>
+                              <span className="small fw-semibold">{l.Tenant ? `${l.Tenant.civility ?? ''} ${l.Tenant.firstname} ${l.Tenant.lastname}` : 'Sans locataire'}</span>
+                            </div>
+                            <CButton
+                              color="light"
+                              size="sm"
+                              onClick={() => { setEditingLease(l); setLeaseModalVisible(true) }}
+                            >
+                              <CIcon icon={cilPen} />
+                            </CButton>
+                          </div>
+                          <div className="text-muted small mt-1">
+                            {l.start_date} → {l.end_date || 'En cours'} &nbsp;·&nbsp;
+                            {(parseFloat(l.rent_amount || 0) + parseFloat(l.charges_amount || 0)).toFixed(2)} € CC
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </CTabPanel>
+
                 {/* Onglet Caractéristiques */}
                 <CTabPanel itemKey="features">
                   {property.features ? (() => {
@@ -227,6 +305,11 @@ const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                     <p className="text-medium-emphasis fst-italic">Aucun commentaire renseigné.</p>
                   )}
                 </CTabPanel>
+
+                {/* Onglet Documents */}
+                <CTabPanel itemKey="documents">
+                  <DocumentsSection entityType="property" entityId={property.id} />
+                </CTabPanel>
               </CTabContent>
             </CTabs>
           </CCol>
@@ -246,6 +329,18 @@ const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
         </CButton>
       </CModalFooter>
     </CModal>
+
+    {leaseModalVisible && (
+      <PropertyLeaseModal
+        visible={leaseModalVisible}
+        property={property}
+        lease={editingLease}
+        tenants={tenants}
+        onClose={() => setLeaseModalVisible(false)}
+        onSaved={() => { fetchLeases(); setLeaseModalVisible(false) }}
+      />
+    )}
+    </>
   )
 }
 

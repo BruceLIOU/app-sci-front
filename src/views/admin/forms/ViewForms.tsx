@@ -1,5 +1,6 @@
 import React from 'react'
 import { CRow, CFormLabel, CCol, CFormInput, CContainer, CButton, CBadge } from '@coreui/react'
+import DocumentsSection from '../../../components/DocumentsSection'
 
 interface ViewFormsProps {
   entities: string
@@ -56,6 +57,9 @@ const ViewForms = ({ entities, data, setModalVisible }: ViewFormsProps) => {
                   <CCol sm={9}><p className="form-control-plaintext" style={{ whiteSpace: 'pre-wrap' }}>{item.comments}</p></CCol>
                 </CRow>
               )}
+              <hr />
+              <strong className="d-block mb-2">Documents</strong>
+              <DocumentsSection entityType="tenant" entityId={item.id} />
             </>
           ) : (
             <>
