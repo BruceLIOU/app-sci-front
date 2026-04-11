@@ -34,9 +34,14 @@ const EditForms = ({ setModalVisible, data, entities }: EditFormsProps) => {
   })
   const [newRoomType, setNewRoomType] = useState(ROOM_TYPES[0])
 
+  // État pour la branche tenants
+  const [avatar, setAvatar] = useState<File | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(data[0]?.avatar || null)
+  const [removeAvatar, setRemoveAvatar] = useState(false)
+
   const [inputValue, setInputValue] = useState<any>(
     isTenant
-      ? { civility: data[0]?.civility || 'MR', firstname: data[0]?.firstname || '', lastname: data[0]?.lastname || '', email: data[0]?.email || '', mobile: data[0]?.mobile || '', property_id: data[0]?.property_id || '' }
+      ? { civility: data[0]?.civility || 'MR', firstname: data[0]?.firstname || '', lastname: data[0]?.lastname || '', email: data[0]?.email || '', mobile: data[0]?.mobile || '', property_id: data[0]?.property_id || '', comments: data[0]?.comments || '', previous_address: data[0]?.previous_address || '', previous_zipcode: data[0]?.previous_zipcode || '', previous_city: data[0]?.previous_city || '' }
       : { address: data[0]?.address || '', zipcode: data[0]?.zipcode || '', city: data[0]?.city || '', type: data[0]?.type || '', pieces: data[0]?.pieces || '', area: data[0]?.area || '', latitude: data[0]?.latitude || '', longitude: data[0]?.longitude || '', comments: data[0]?.comments || '' },
   )
 
@@ -77,6 +82,10 @@ const EditForms = ({ setModalVisible, data, entities }: EditFormsProps) => {
       formData.append('rooms', JSON.stringify(rooms))
       formData.append('features', JSON.stringify(features))
     }
+    if (isTenant) {
+      if (avatar) formData.append('avatar', avatar)
+      else if (removeAvatar) formData.append('removeAvatar', 'true')
+    }
     try {
       if (isTenant) await TenantDataService.update(data[0].id, formData)
       else await PropertyDataService.update(data[0].id, formData)
@@ -87,6 +96,20 @@ const EditForms = ({ setModalVisible, data, entities }: EditFormsProps) => {
   if (isTenant) {
     return (
       <CForm className="row g-3 needs-validation" noValidate validated={validated} onSubmit={handleSubmit}>
+        {/* Avatar */}
+        <CCol md={12}>
+          <CFormLabel>Photo du locataire</CFormLabel>
+          {avatarPreview && !removeAvatar ? (
+            <div className="d-flex align-items-center gap-3 mb-2">
+              <img src={avatarPreview} alt="Avatar" className="rounded-circle" style={{ width: 72, height: 72, objectFit: 'cover' }} />
+              <CButton color="danger" size="sm" variant="outline" onClick={() => { setRemoveAvatar(true); setAvatarPreview(null); setAvatar(null) }}>Supprimer la photo</CButton>
+            </div>
+          ) : null}
+          <CFormInput type="file" accept="image/*" onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (file) { setAvatar(file); setAvatarPreview(URL.createObjectURL(file)); setRemoveAvatar(false) }
+          }} />
+        </CCol>
         <CCol md={6}>
           <CFormSelect label="Civilité" name="civility" value={inputValue.civility} onChange={handleChangeInput}>
             <option value="MR">M.</option>
@@ -102,6 +125,22 @@ const EditForms = ({ setModalVisible, data, entities }: EditFormsProps) => {
             <option value="">-- Aucun bien --</option>
             {properties.map((p) => <option key={p.id} value={p.id}>{`${p.type} - ${p.address}, ${p.city}`}</option>)}
           </CFormSelect>
+        </CCol>
+        {/* Ancienne adresse */}
+        <CCol md={12}>
+          <AddressAutocomplete
+            label="Ancienne adresse"
+            value={inputValue.previous_address}
+            onChange={(val) => setInputValue((prev: any) => ({ ...prev, previous_address: val }))}
+            onSelect={(d) => setInputValue((prev: any) => ({ ...prev, previous_address: d.address, previous_zipcode: d.zipcode, previous_city: d.city }))}
+          />
+        </CCol>
+        <CCol md={6}><CFormInput type="text" name="previous_zipcode" label="CP ancienne adresse" placeholder="Code postal" value={inputValue.previous_zipcode} onChange={handleChangeInput} /></CCol>
+        <CCol md={6}><CFormInput type="text" name="previous_city" label="Ville ancienne adresse" placeholder="Ville" value={inputValue.previous_city} onChange={handleChangeInput} /></CCol>
+        {/* Commentaires */}
+        <CCol md={12}>
+          <CFormLabel>Commentaires</CFormLabel>
+          <CFormTextarea name="comments" rows={3} placeholder="Notes, observations..." value={inputValue.comments} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInputValue((prev: any) => ({ ...prev, comments: e.target.value }))} />
         </CCol>
         <hr />
         <CCol md={12} className="d-flex gap-2 justify-content-end">

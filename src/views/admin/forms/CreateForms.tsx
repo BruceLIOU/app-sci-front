@@ -26,9 +26,13 @@ const CreateForms = ({ setModalVisible, entities }: CreateFormsProps) => {
   const [features, setFeatures] = useState<string[]>([])
   const [newRoomType, setNewRoomType] = useState(ROOM_TYPES[0])
 
+  // État pour la branche tenants
+  const [avatar, setAvatar] = useState<File | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+
   const [inputValue, setInputValue] = useState<any>(
     entities === 'tenants'
-      ? { civility: 'MR', firstname: '', lastname: '', email: '', mobile: '', property_id: '' }
+      ? { civility: 'MR', firstname: '', lastname: '', email: '', mobile: '', property_id: '', comments: '', previous_address: '', previous_zipcode: '', previous_city: '' }
       : { address: '', zipcode: '', city: '', type: '', pieces: '', area: '', latitude: '', longitude: '', comments: '' },
   )
 
@@ -70,6 +74,9 @@ const CreateForms = ({ setModalVisible, entities }: CreateFormsProps) => {
       if (rooms.length) formData.append('rooms', JSON.stringify(rooms))
       if (features.length) formData.append('features', JSON.stringify(features))
     }
+    if (entities === 'tenants' && avatar) {
+      formData.append('avatar', avatar)
+    }
     try {
       if (entities === 'tenants') TenantDataService.create(formData)
       else PropertyDataService.create(formData)
@@ -80,6 +87,20 @@ const CreateForms = ({ setModalVisible, entities }: CreateFormsProps) => {
   if (entities === 'tenants') {
     return (
       <CForm className="row g-3 needs-validation" noValidate validated={validated} onSubmit={handleSubmit}>
+        {/* Avatar */}
+        <CCol md={12}>
+          <CFormLabel>Photo du locataire</CFormLabel>
+          <CFormInput type="file" accept="image/*" onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (file) { setAvatar(file); setAvatarPreview(URL.createObjectURL(file)) }
+          }} />
+          {avatarPreview && (
+            <div className="mt-2 d-flex align-items-center gap-2">
+              <img src={avatarPreview} alt="Aperçu" className="rounded-circle" style={{ width: 72, height: 72, objectFit: 'cover' }} />
+              <CButton color="danger" size="sm" variant="outline" onClick={() => { setAvatar(null); setAvatarPreview(null) }}>Supprimer</CButton>
+            </div>
+          )}
+        </CCol>
         <CCol md={6}>
           <CFormSelect label="Civilité" name="civility" value={inputValue.civility} onChange={handleChangeInput}>
             <option value="MR">M.</option>
@@ -95,6 +116,22 @@ const CreateForms = ({ setModalVisible, entities }: CreateFormsProps) => {
             <option value="">-- Aucun bien --</option>
             {properties.map((p) => <option key={p.id} value={p.id}>{`${p.type} - ${p.address}, ${p.city}`}</option>)}
           </CFormSelect>
+        </CCol>
+        {/* Ancienne adresse */}
+        <CCol md={12}>
+          <AddressAutocomplete
+            label="Ancienne adresse"
+            value={inputValue.previous_address}
+            onChange={(val) => setInputValue((prev: any) => ({ ...prev, previous_address: val }))}
+            onSelect={(d) => setInputValue((prev: any) => ({ ...prev, previous_address: d.address, previous_zipcode: d.zipcode, previous_city: d.city }))}
+          />
+        </CCol>
+        <CCol md={6}><CFormInput type="text" name="previous_zipcode" label="CP ancienne adresse" placeholder="Code postal" value={inputValue.previous_zipcode} onChange={handleChangeInput} /></CCol>
+        <CCol md={6}><CFormInput type="text" name="previous_city" label="Ville ancienne adresse" placeholder="Ville" value={inputValue.previous_city} onChange={handleChangeInput} /></CCol>
+        {/* Commentaires */}
+        <CCol md={12}>
+          <CFormLabel>Commentaires</CFormLabel>
+          <CFormTextarea name="comments" rows={3} placeholder="Notes, observations..." value={inputValue.comments} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInputValue((prev: any) => ({ ...prev, comments: e.target.value }))} />
         </CCol>
         <hr />
         <CCol md={12} className="d-flex gap-2 justify-content-end">

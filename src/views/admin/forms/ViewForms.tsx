@@ -16,17 +16,46 @@ const ViewForms = ({ entities, data, setModalVisible }: ViewFormsProps) => {
         <CContainer key={item.id}>
           {isTenant ? (
             <>
-              <CRow className="mb-3"><CFormLabel className="col-sm-2 col-form-label">Civilité</CFormLabel><CCol sm={10}><CFormInput type="text" defaultValue={item.civility} readOnly plainText /></CCol></CRow>
-              <CRow className="mb-3"><CFormLabel className="col-sm-2 col-form-label">Prénom</CFormLabel><CCol sm={10}><CFormInput type="text" defaultValue={item.firstname} readOnly plainText /></CCol></CRow>
-              <CRow className="mb-3"><CFormLabel className="col-sm-2 col-form-label">Nom</CFormLabel><CCol sm={10}><CFormInput type="text" defaultValue={item.lastname} readOnly plainText /></CCol></CRow>
-              <CRow className="mb-3"><CFormLabel className="col-sm-2 col-form-label">Email</CFormLabel><CCol sm={10}><CFormInput type="text" defaultValue={item.email} readOnly plainText /></CCol></CRow>
-              <CRow className="mb-3"><CFormLabel className="col-sm-2 col-form-label">Téléphone</CFormLabel><CCol sm={10}><CFormInput type="text" defaultValue={item.mobile} readOnly plainText /></CCol></CRow>
+              {item.avatar && (
+                <div className="text-center mb-3">
+                  <img src={item.avatar} alt="Avatar" className="rounded-circle" style={{ width: 96, height: 96, objectFit: 'cover' }} />
+                </div>
+              )}
+              <CRow className="mb-3"><CFormLabel className="col-sm-3 col-form-label">Civilité</CFormLabel><CCol sm={9}><CFormInput type="text" defaultValue={item.civility} readOnly plainText /></CCol></CRow>
+              <CRow className="mb-3"><CFormLabel className="col-sm-3 col-form-label">Prénom</CFormLabel><CCol sm={9}><CFormInput type="text" defaultValue={item.firstname} readOnly plainText /></CCol></CRow>
+              <CRow className="mb-3"><CFormLabel className="col-sm-3 col-form-label">Nom</CFormLabel><CCol sm={9}><CFormInput type="text" defaultValue={item.lastname} readOnly plainText /></CCol></CRow>
               <CRow className="mb-3">
-                <CFormLabel className="col-sm-2 col-form-label">Bien loué</CFormLabel>
-                <CCol sm={10}>
+                <CFormLabel className="col-sm-3 col-form-label">Email</CFormLabel>
+                <CCol sm={9} className="d-flex align-items-center">
+                  {item.email ? <a href={`mailto:${item.email}`} className="form-control-plaintext text-decoration-none">{item.email}</a> : <span className="form-control-plaintext text-muted">—</span>}
+                </CCol>
+              </CRow>
+              <CRow className="mb-3">
+                <CFormLabel className="col-sm-3 col-form-label">Téléphone</CFormLabel>
+                <CCol sm={9} className="d-flex align-items-center">
+                  {item.mobile ? <a href={`tel:${item.mobile}`} className="form-control-plaintext text-decoration-none">{item.mobile}</a> : <span className="form-control-plaintext text-muted">—</span>}
+                </CCol>
+              </CRow>
+              <CRow className="mb-3">
+                <CFormLabel className="col-sm-3 col-form-label">Bien loué</CFormLabel>
+                <CCol sm={9}>
                   <CFormInput type="text" defaultValue={item.Property ? `${item.Property.type} de ${item.Property.area} m² à ${item.Property.city}` : 'Aucun bien associé'} readOnly plainText />
                 </CCol>
               </CRow>
+              {(item.previous_address || item.previous_city) && (
+                <CRow className="mb-3">
+                  <CFormLabel className="col-sm-3 col-form-label">Anc. adresse</CFormLabel>
+                  <CCol sm={9}>
+                    <CFormInput type="text" defaultValue={[item.previous_address, item.previous_zipcode, item.previous_city].filter(Boolean).join(', ')} readOnly plainText />
+                  </CCol>
+                </CRow>
+              )}
+              {item.comments && (
+                <CRow className="mb-3">
+                  <CFormLabel className="col-sm-3 col-form-label">Commentaires</CFormLabel>
+                  <CCol sm={9}><p className="form-control-plaintext" style={{ whiteSpace: 'pre-wrap' }}>{item.comments}</p></CCol>
+                </CRow>
+              )}
             </>
           ) : (
             <>

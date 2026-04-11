@@ -43,15 +43,19 @@ const Tenants = () => {
           {data.map((item) => (
             <CCol xs key={item.id}>
               <CCard>
-                <div className="d-flex justify-content-end p-1">
-                  <CIcon size={'3xl'} icon={item.civility === 'MR' ? cilUser : cilUserFemale} />
+                <div className="d-flex justify-content-center pt-3">
+                  {item.avatar ? (
+                    <img src={item.avatar} alt="Avatar" className="rounded-circle" style={{ width: 72, height: 72, objectFit: 'cover' }} />
+                  ) : (
+                    <CIcon size={'3xl'} icon={item.civility === 'MR' ? cilUser : cilUserFemale} />
+                  )}
                 </div>
                 <CCardBody>
-                  <CCardTitle>{`${item.civility || ''} ${item.firstname} ${item.lastname}`}</CCardTitle>
+                  <CCardTitle className="text-center">{`${item.civility || ''} ${item.firstname} ${item.lastname}`}</CCardTitle>
                   <CCardText>
                     {item.Property ? `Locataire de : ${item.Property.type} à ${item.Property.city}` : 'Aucun bien associé'}<br />
-                    Email : {item.email}<br />
-                    Téléphone : {item.mobile}
+                    {item.email && <><a href={`mailto:${item.email}`} className="text-decoration-none">{item.email}</a><br /></>}
+                    {item.mobile && <a href={`tel:${item.mobile}`} className="text-decoration-none">{item.mobile}</a>}
                   </CCardText>
                   <div className="d-grid gap-2 d-md-flex justify-content-md-end">
                     <CTooltip content="Voir"><CButton color="light" onClick={() => handleViewTenant(item.id)}><CIcon icon={cilContact} /></CButton></CTooltip>
