@@ -82,8 +82,17 @@ const Inspections = () => {
     const fd = new FormData()
     Object.entries(form).forEach(([k, v]) => fd.append(k, v))
     try {
-      if (editing) await InspectionDataService.update(editing.id, fd)
-      else await InspectionDataService.create(fd)
+      if (editing) {
+        await InspectionDataService.update(editing.id, fd)
+      } else {
+        const created = await InspectionDataService.create(fd)
+        const newId = created.data.id
+        try {
+          const pdfRes = await PdfDataService.generateEtatDesLieux(newId)
+          const doc = pdfRes.data.document
+          setInspectionDocs((prev) => ({ ...prev, [newId]: doc }))
+        } catch (pdfErr) { console.error('Génération PDF échouée :', pdfErr) }
+      }
       setModalVisible(false); fetchAll()
     } catch (err) { console.error(err) }
   }
