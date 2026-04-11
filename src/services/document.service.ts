@@ -11,6 +11,10 @@ class DocumentDataService {
   get(id: number) { return http.get(`/documents/${id}`) }
   create(data: FormData) { return http.post('/documents', data) }
   delete(id: number) { return http.delete(`/documents/${id}`) }
+  downloadUrl(id: number): string {
+    const base = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+    return `${base}/api/documents/${id}/download`
+  }
 }
 
 export default new DocumentDataService()

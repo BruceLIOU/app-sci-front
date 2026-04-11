@@ -10,6 +10,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilPlus, cilPen, cilTrash, cilViewModule, cilList, cilViewColumn, cilFilterX } from '@coreui/icons'
+import { DateUtils } from 'src/utils/date'
 
 type ViewMode = 'vignette' | 'list' | 'grid'
 
@@ -267,7 +268,7 @@ const Properties = () => {
                     </div>
                   </CCardBody>
                   <CCardFooter>
-                    <small className="text-medium-emphasis">{item.createdAt}</small>
+                    <small className="text-medium-emphasis">{DateUtils.formatWithTime(item.createdAt)}</small>
                   </CCardFooter>
                 </CCard>
               </CCol>
@@ -308,7 +309,7 @@ const Properties = () => {
                     <strong className="me-2" style={{ minWidth: 180 }}>{item.type} – {item.city}</strong>
                     <span className="text-medium-emphasis">{item.pieces} pièce{item.pieces > 1 ? 's' : ''}</span>
                     <span className="text-medium-emphasis">{item.area} m²</span>
-                    <small className="text-medium-emphasis ms-auto">{item.createdAt}</small>
+                    <small className="text-medium-emphasis ms-auto">{DateUtils.formatWithTime(item.createdAt)}</small>
                   </CCardBody>
                   <div className="d-flex gap-2 me-3" style={{ flexShrink: 0 }}>
                     <CTooltip content="Modifier">
@@ -395,7 +396,7 @@ const Properties = () => {
                     </div>
                   </CCardBody>
                   <CCardFooter>
-                    <small className="text-medium-emphasis">{item.createdAt}</small>
+                    <small className="text-medium-emphasis">{DateUtils.formatWithTime(item.createdAt)}</small>
                   </CCardFooter>
                 </CCard>
               </CCol>

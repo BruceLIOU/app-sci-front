@@ -282,13 +282,13 @@ const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                     let features: any[] = []
                     try { features = JSON.parse(property.features) } catch { features = [property.features] }
                     return features.length > 0 ? (
-                      <ul className="list-group list-group-flush">
+                      <div className="d-flex flex-wrap gap-2">
                         {features.map((f: any, i: number) => (
-                          <li key={i} className="list-group-item px-0">
-                            <span className="me-2">•</span>{typeof f === 'object' ? JSON.stringify(f) : String(f)}
-                          </li>
+                          <span key={i} className="border rounded px-2 py-1 small">
+                            {typeof f === 'object' ? JSON.stringify(f) : String(f)}
+                          </span>
                         ))}
-                      </ul>
+                      </div>
                     ) : (
                       <p className="text-medium-emphasis fst-italic">Aucune caractéristique renseignée.</p>
                     )

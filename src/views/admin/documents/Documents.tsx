@@ -216,7 +216,7 @@ const Documents = () => {
                       <CTableDataCell className="text-end">
                         <CButton
                           color="light" size="sm" className="me-1"
-                          href={doc.file_url} target="_blank" rel="noreferrer"
+                          href={DocumentDataService.downloadUrl(doc.id)} target="_blank" rel="noreferrer"
                           title="Télécharger / Ouvrir"
                         >
                           <CIcon icon={cilCloudDownload} />

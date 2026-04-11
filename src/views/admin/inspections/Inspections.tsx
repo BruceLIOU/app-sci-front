@@ -4,13 +4,17 @@ import TenantDataService from '../../../services/tenant.service'
 import PropertyDataService from '../../../services/property.service'
 import LeaseDataService from '../../../services/lease.service'
 import DocumentsSection from '../../../components/DocumentsSection'
+import PdfDataService from '../../../services/pdf.service'
+import DocumentDataService from '../../../services/document.service'
 import {
   CCard, CCardBody, CCardHeader, CCol, CRow, CTable, CTableBody, CTableDataCell,
   CTableHead, CTableHeaderCell, CTableRow, CBadge, CButton, CModal, CModalHeader,
   CModalTitle, CModalBody, CForm, CFormInput, CFormSelect, CFormTextarea, CTooltip,
+  CSpinner, CAlert,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilPlus, cilPen, cilTrash, cilInfo, cilMinus } from '@coreui/icons'
+import { cilPlus, cilPen, cilTrash, cilInfo, cilMinus, cilDescription, cilExternalLink } from '@coreui/icons'
+import { DateUtils } from 'src/utils/date'
 
 const typeLabel: Record<string, string> = { entree: 'Entrée', sortie: 'Sortie' }
 const typeColor: Record<string, string> = { entree: 'success', sortie: 'danger' }
@@ -27,6 +31,8 @@ const Inspections = () => {
   const [leases, setLeases] = useState<any[]>([])
   const [modalVisible, setModalVisible] = useState(false)
   const [viewModal, setViewModal] = useState(false)
+  const [pdfGenerating, setPdfGenerating] = useState(false)
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [deleteModal, setDeleteModal] = useState(false)
   const [editing, setEditing] = useState<any>(null)
   const [viewing, setViewing] = useState<any>(null)
@@ -75,7 +81,7 @@ const Inspections = () => {
   const openView = (i: any) => {
     const copy = { ...i }
     try { copy._rooms = i.rooms ? JSON.parse(i.rooms) : [] } catch { copy._rooms = [] }
-    setViewing(copy); setViewModal(true)
+    setViewing(copy); setViewModal(true); setPdfUrl(null)
   }
 
   return (
@@ -112,7 +118,7 @@ const Inspections = () => {
                     <CTableDataCell><CBadge color={typeColor[i.type]}>{typeLabel[i.type]}</CBadge></CTableDataCell>
                     <CTableDataCell>{i.Property ? `${i.Property.type} - ${i.Property.city}` : '-'}</CTableDataCell>
                     <CTableDataCell>{i.Tenant ? `${i.Tenant.civility || ''} ${i.Tenant.lastname}` : '-'}</CTableDataCell>
-                    <CTableDataCell>{i.date}</CTableDataCell>
+                    <CTableDataCell>{DateUtils.formatShort(i.date)}</CTableDataCell>
                     <CTableDataCell>{roomCount} pièce{roomCount > 1 ? 's' : ''}</CTableDataCell>
                     <CTableDataCell><CBadge color={statusColor[i.status]}>{statusLabel[i.status]}</CBadge></CTableDataCell>
                     <CTableDataCell className="text-end">
@@ -135,7 +141,7 @@ const Inspections = () => {
             <CCol md={6}><CFormSelect label="Bien" name="property_id" value={form.property_id} onChange={handleChange} required><option value="">-- Sélectionner --</option>{properties.map((p) => <option key={p.id} value={p.id}>{`${p.type} - ${p.address}, ${p.city}`}</option>)}</CFormSelect></CCol>
             <CCol md={6}><CFormSelect label="Locataire" name="tenant_id" value={form.tenant_id} onChange={handleChange}><option value="">-- Sélectionner --</option>{tenants.map((t) => <option key={t.id} value={t.id}>{`${t.civility || ''} ${t.firstname} ${t.lastname}`}</option>)}</CFormSelect></CCol>
             <CCol md={4}><CFormSelect label="Type" name="type" value={form.type} onChange={handleChange}><option value="entree">État d'entrée</option><option value="sortie">État de sortie</option></CFormSelect></CCol>
-            <CCol md={4}><CFormInput type="date" name="date" label="Date" value={form.date} onChange={handleChange} required /></CCol>
+            <CCol md={4}><CFormInput type="date" name="date" label="Date" value={DateUtils.formatShort(form.date)} onChange={handleChange} required /></CCol>
             <CCol md={4}><CFormSelect label="Statut" name="status" value={form.status} onChange={handleChange}><option value="pending">En attente</option><option value="completed">Complété</option></CFormSelect></CCol>
             <CCol md={12}><CFormTextarea label="Observations générales" name="general_notes" rows={2} value={form.general_notes} onChange={handleChange} /></CCol>
             <CCol md={12}>
@@ -163,7 +169,7 @@ const Inspections = () => {
       </CModal>
 
       {viewing && (
-        <CModal size="lg" alignment="center" visible={viewModal} onClose={() => setViewModal(false)}>
+        <CModal size="lg" alignment="center" visible={viewModal} onClose={() => { setViewModal(false); setPdfUrl(null) }}>
           <CModalHeader>
             <CModalTitle>
               <CBadge color={typeColor[viewing.type]} className="me-2">{typeLabel[viewing.type]}</CBadge>
@@ -173,7 +179,7 @@ const Inspections = () => {
           <CModalBody>
             <CRow className="g-3 mb-3">
               <CCol sm={6}><div className="text-muted small">Locataire</div><div className="fw-semibold">{viewing.Tenant ? `${viewing.Tenant.civility || ''} ${viewing.Tenant.firstname} ${viewing.Tenant.lastname}` : '-'}</div></CCol>
-              <CCol sm={3}><div className="text-muted small">Date</div><div className="fw-semibold">{viewing.date}</div></CCol>
+              <CCol sm={3}><div className="text-muted small">Date</div><div className="fw-semibold">{DateUtils.formatShort(viewing.date)}</div></CCol>
               <CCol sm={3}><div className="text-muted small">Statut</div><CBadge color={statusColor[viewing.status]}>{statusLabel[viewing.status]}</CBadge></CCol>
             {viewing.general_notes && <CCol sm={12}><div className="text-muted small">Observations générales</div><div>{viewing.general_notes}</div></CCol>}
             </CRow>
@@ -198,7 +204,27 @@ const Inspections = () => {
             <strong className="d-block mb-2">Documents</strong>
             <DocumentsSection entityType="inspection" entityId={viewing.id} />
             <hr />
-            <div className="d-flex justify-content-end"><CButton color="primary" onClick={() => setViewModal(false)}>Fermer</CButton></div>
+            {pdfUrl && (
+              <CAlert color="success" className="d-flex align-items-center gap-2 mb-3">
+                <CIcon icon={cilDescription} className="me-1" />
+                PDF généré —{' '}
+                <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="alert-link d-flex align-items-center gap-1">
+                  Ouvrir <CIcon icon={cilExternalLink} size="sm" />
+                </a>
+              </CAlert>
+            )}
+            <div className="d-flex justify-content-end gap-2">
+              <CButton color="info" variant="outline" disabled={pdfGenerating} onClick={async () => {
+                setPdfGenerating(true)
+                try { const r = await PdfDataService.generateEtatDesLieux(viewing.id); setPdfUrl(DocumentDataService.downloadUrl(r.data.document.id)) }
+                catch (e: any) { console.error(e) }
+                finally { setPdfGenerating(false) }
+              }}>
+                {pdfGenerating ? <CSpinner size="sm" className="me-1" /> : <CIcon icon={cilDescription} className="me-1" />}
+                Générer PDF
+              </CButton>
+              <CButton color="primary" onClick={() => setViewModal(false)}>Fermer</CButton>
+            </div>
           </CModalBody>
         </CModal>
       )}

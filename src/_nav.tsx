@@ -12,6 +12,7 @@ import {
   cilTask,
   cilPeople,
   cilBuilding,
+  cilSettings,
 } from '@coreui/icons'
 import { CNavItem, CNavTitle } from '@coreui/react'
 import { ComponentType } from 'react'
@@ -108,6 +109,16 @@ const _nav: NavItem[] = [
     name: 'Documents',
     to: '/admin/documents',
     icon: <CIcon icon={cilFolder} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavTitle,
+    name: 'Application',
+  },
+  {
+    component: CNavItem,
+    name: 'Paramètres',
+    to: '/admin/settings',
+    icon: <CIcon icon={cilSettings} customClassName="nav-icon" />,
   },
 ]
 

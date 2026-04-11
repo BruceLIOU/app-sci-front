@@ -12,6 +12,7 @@ const Comptability = React.lazy(() => import('./views/admin/comptability/Comptab
 const Associates = React.lazy(() => import('./views/admin/associates/Associates'))
 const Declarations = React.lazy(() => import('./views/admin/declarations/Declarations'))
 const Documents = React.lazy(() => import('./views/admin/documents/Documents'))
+const Settings = React.lazy(() => import('./views/admin/settings/Settings'))
 
 interface Route {
   path: string
@@ -35,6 +36,7 @@ const routes: Route[] = [
   { path: '/admin/associates', name: 'Associés', element: Associates },
   { path: '/admin/declarations', name: 'Déclaration 2072', element: Declarations },
   { path: '/admin/documents', name: 'Documents', element: Documents },
+  { path: '/admin/settings', name: 'Paramètres', element: Settings },
 ]
 
 export default routes

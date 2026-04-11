@@ -7,6 +7,7 @@ import {
   CRow, CCol, CCard, CCardBody, CCardTitle, CCardText, CCardFooter,
   CButton, CTooltip, CContainer,
 } from '@coreui/react'
+import { DateUtils } from 'src/utils/date'
 
 const Tenants = () => {
   const [data, setData] = useState<any[]>([])
@@ -63,7 +64,7 @@ const Tenants = () => {
                     <CTooltip content="Supprimer"><CButton color="light" onClick={() => handleDeleteTenant(item.id)}><CIcon icon={cilTrash} /></CButton></CTooltip>
                   </div>
                 </CCardBody>
-                <CCardFooter><small className="text-medium-emphasis">{item.createdAt}</small></CCardFooter>
+                <CCardFooter><small className="text-medium-emphasis">{DateUtils.formatWithTime(item.createdAt)}</small></CCardFooter>
               </CCard>
             </CCol>
           ))}

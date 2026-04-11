@@ -200,7 +200,7 @@ const DocumentsSection: React.FC<DocumentsSectionProps> = ({ entityType, entityI
                   </div>
                 </div>
                 <a
-                  href={doc.file_url}
+                  href={DocumentDataService.downloadUrl(doc.id)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-light btn-sm"

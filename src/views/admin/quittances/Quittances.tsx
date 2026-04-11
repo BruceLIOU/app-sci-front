@@ -3,13 +3,15 @@ import QuittanceDataService from '../../../services/quittance.service'
 import TenantDataService from '../../../services/tenant.service'
 import PropertyDataService from '../../../services/property.service'
 import LeaseDataService from '../../../services/lease.service'
+import PdfDataService from '../../../services/pdf.service'
+import DocumentDataService from '../../../services/document.service'
 import {
   CCard, CCardBody, CCardHeader, CCol, CRow, CTable, CTableBody, CTableDataCell,
   CTableHead, CTableHeaderCell, CTableRow, CButton, CModal, CModalHeader,
-  CModalTitle, CModalBody, CForm, CFormInput, CFormSelect, CTooltip,
+  CModalTitle, CModalBody, CForm, CFormInput, CFormSelect, CTooltip, CSpinner, CAlert,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilPlus, cilPen, cilTrash, cilPrint } from '@coreui/icons'
+import { cilPlus, cilPen, cilTrash, cilDescription, cilExternalLink, cilCloudDownload } from '@coreui/icons'
 
 const Quittances = () => {
   const [quittances, setQuittances] = useState<any[]>([])
@@ -23,14 +25,27 @@ const Quittances = () => {
   const [printing, setPrinting] = useState<any>(null)
   const [toDelete, setToDelete] = useState<any>(null)
   const printRef = useRef<HTMLDivElement>(null)
+  const [pdfGenerating, setPdfGenerating] = useState(false)
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+  const [quittanceDocs, setQuittanceDocs] = useState<Record<number, any>>({})
 
   const emptyForm = { tenant_id: '', property_id: '', lease_id: '', payment_id: '', period: '', rent_amount: '', charges_amount: '0', total_amount: '', issue_date: new Date().toISOString().split('T')[0] }
   const [form, setForm] = useState(emptyForm)
+
+  const fetchDocs = () =>
+    DocumentDataService.getAll({ entity_type: 'quittance' })
+      .then((r) => {
+        const map: Record<number, any> = {}
+        r.data.forEach((d: any) => { map[d.entity_id] = d })
+        setQuittanceDocs(map)
+      })
+      .catch(console.error)
 
   const fetchAll = () => QuittanceDataService.getAll().then((r) => setQuittances(r.data)).catch(console.error)
 
   useEffect(() => {
     fetchAll()
+    fetchDocs()
     TenantDataService.getAll().then((r) => setTenants(r.data))
     PropertyDataService.getAll().then((r) => setProperties(r.data))
     LeaseDataService.getAll().then((r) => setLeases(r.data))
@@ -70,14 +85,20 @@ const Quittances = () => {
 
   const handleDelete = async () => { await QuittanceDataService.delete(toDelete.id); setDeleteModal(false); fetchAll() }
 
-  const handlePrint = () => {
-    if (!printRef.current) return
-    const content = printRef.current.innerHTML
-    const win = window.open('', '_blank')
-    if (!win) return
-    win.document.write(`<html><head><title>Quittance ${printing?.number}</title><style>body{font-family:Arial,sans-serif;margin:40px;color:#333}.header{text-align:center;margin-bottom:30px}.section{margin:20px 0;padding:15px;border:1px solid #ddd;border-radius:4px}.row{display:flex;justify-content:space-between;margin:5px 0}.total{font-size:18px;text-align:center;padding:15px;background:#f5f5f5}.signature{margin-top:40px;display:flex;justify-content:space-between}.signature-box{width:45%;border-top:1px solid #333;padding-top:5px;text-align:center;color:#666;font-size:12px}</style></head><body>${content}</body></html>`)
-    win.document.close(); win.focus()
-    setTimeout(() => { win.print(); win.close() }, 500)
+  const handleGeneratePdf = async () => {
+    if (!printing?.id) return
+    setPdfGenerating(true)
+    setPdfUrl(null)
+    try {
+      const res = await PdfDataService.generateQuittance(printing.id)
+      const doc = res.data.document
+      setPdfUrl(DocumentDataService.downloadUrl(doc.id))
+      setQuittanceDocs((prev) => ({ ...prev, [printing.id]: doc }))
+    } catch (e: any) {
+      console.error(e)
+    } finally {
+      setPdfGenerating(false)
+    }
   }
 
   return (
@@ -118,7 +139,17 @@ const Quittances = () => {
                   <CTableDataCell><strong>{parseFloat(q.total_amount || 0).toFixed(2)} €</strong></CTableDataCell>
                   <CTableDataCell>{q.issue_date}</CTableDataCell>
                   <CTableDataCell className="text-end">
-                    <CTooltip content="Imprimer"><CButton color="light" size="sm" className="me-1" onClick={() => { setPrinting(q); setPrintModal(true) }}><CIcon icon={cilPrint} /></CButton></CTooltip>
+                    {quittanceDocs[q.id] ? (
+                      <CTooltip content="Télécharger PDF">
+                        <a href={DocumentDataService.downloadUrl(quittanceDocs[q.id].id)} target="_blank" rel="noopener noreferrer">
+                          <CButton color="light" size="sm" className="me-1">
+                            <CIcon icon={cilCloudDownload} />
+                          </CButton>
+                        </a>
+                      </CTooltip>
+                    ) : (
+                      <CTooltip content="Générer PDF"><CButton color="light" size="sm" className="me-1" onClick={() => { setPrinting(q); setPrintModal(true); setPdfUrl(null) }}><CIcon icon={cilDescription} /></CButton></CTooltip>
+                    )}
                     <CTooltip content="Modifier"><CButton color="light" size="sm" className="me-1" onClick={() => openEdit(q)}><CIcon icon={cilPen} /></CButton></CTooltip>
                     <CTooltip content="Supprimer"><CButton color="light" size="sm" onClick={() => { setToDelete(q); setDeleteModal(true) }}><CIcon icon={cilTrash} /></CButton></CTooltip>
                   </CTableDataCell>
@@ -151,9 +182,18 @@ const Quittances = () => {
       </CModal>
 
       {printing && (
-        <CModal size="lg" alignment="center" visible={printModal} onClose={() => setPrintModal(false)}>
+        <CModal size="lg" alignment="center" visible={printModal} onClose={() => { setPrintModal(false); setPdfUrl(null) }}>
           <CModalHeader><CModalTitle>Quittance {printing.number}</CModalTitle></CModalHeader>
           <CModalBody>
+            {pdfUrl && (
+              <CAlert color="success" className="d-flex align-items-center gap-2 mb-3">
+                <CIcon icon={cilDescription} className="me-1" />
+                PDF généré —{' '}
+                <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="alert-link d-flex align-items-center gap-1">
+                  Ouvrir <CIcon icon={cilExternalLink} size="sm" />
+                </a>
+              </CAlert>
+            )}
             <div ref={printRef}>
               <div className="header"><h1>Quittance de loyer</h1><h2>N° {printing.number} — {printing.period}</h2></div>
               <div className="section"><h3>Bailleur (SCI)</h3><div className="row"><span className="label">Société</span><span className="value">SCI</span></div></div>
@@ -185,8 +225,11 @@ const Quittances = () => {
             </div>
             <hr />
             <div className="d-flex gap-2 justify-content-end">
-              <CButton color="secondary" onClick={() => setPrintModal(false)}>Fermer</CButton>
-              <CButton color="primary" onClick={handlePrint}><CIcon icon={cilPrint} className="me-1" />Imprimer / PDF</CButton>
+              <CButton color="secondary" onClick={() => { setPrintModal(false); setPdfUrl(null) }}>Fermer</CButton>
+              <CButton color="primary" onClick={handleGeneratePdf} disabled={pdfGenerating}>
+                {pdfGenerating ? <CSpinner size="sm" className="me-1" /> : <CIcon icon={cilDescription} className="me-1" />}
+                Générer PDF
+              </CButton>
             </div>
           </CModalBody>
         </CModal>

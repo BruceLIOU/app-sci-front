@@ -10,6 +10,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilPlus, cilPen, cilTrash, cilInfo } from '@coreui/icons'
+import { DateUtils } from 'src/utils/date'
 
 const statusLabel: Record<string, string> = { active: 'Actif', expired: 'Expiré', terminated: 'Résilié' }
 const statusColor: Record<string, string> = { active: 'success', expired: 'warning', terminated: 'danger' }
@@ -107,8 +108,8 @@ const Leases = () => {
                   <CTableDataCell>{typeLabel[l.type] || l.type}</CTableDataCell>
                   <CTableDataCell>{(parseFloat(l.rent_amount || 0) + parseFloat(l.charges_amount || 0)).toFixed(2)} €</CTableDataCell>
                   <CTableDataCell>{parseFloat(l.deposit_amount || 0).toFixed(2)} €</CTableDataCell>
-                  <CTableDataCell>{l.start_date || '-'}</CTableDataCell>
-                  <CTableDataCell>{l.end_date || 'En cours'}</CTableDataCell>
+                  <CTableDataCell>{DateUtils.formatShort(l.start_date) || '-'}</CTableDataCell>
+                  <CTableDataCell>{DateUtils.formatShort(l.end_date) || 'En cours'}</CTableDataCell>
                   <CTableDataCell><CBadge color={statusColor[l.status]}>{statusLabel[l.status]}</CBadge></CTableDataCell>
                   <CTableDataCell className="text-end">
                     <CTooltip content="Détails"><CButton color="light" size="sm" className="me-1" onClick={() => { setViewing(l); setViewModal(true) }}><CIcon icon={cilInfo} /></CButton></CTooltip>
@@ -132,8 +133,8 @@ const Leases = () => {
             <CCol md={4}><CFormInput type="number" name="rent_amount" label="Loyer hors charges (€)" value={form.rent_amount} onChange={handleChange} required /></CCol>
             <CCol md={4}><CFormInput type="number" name="charges_amount" label="Charges (€)" value={form.charges_amount} onChange={handleChange} /></CCol>
             <CCol md={4}><CFormInput type="number" name="deposit_amount" label="Dépôt de garantie (€)" value={form.deposit_amount} onChange={handleChange} /></CCol>
-            <CCol md={4}><CFormInput type="date" name="start_date" label="Date de début" value={form.start_date} onChange={handleChange} required /></CCol>
-            <CCol md={4}><CFormInput type="date" name="end_date" label="Date de fin (optionnel)" value={form.end_date} onChange={handleChange} /></CCol>
+            <CCol md={4}><CFormInput type="date" name="start_date" label="Date de début" value={DateUtils.formatShort(form.start_date)} onChange={handleChange} required /></CCol>
+            <CCol md={4}><CFormInput type="date" name="end_date" label="Date de fin (optionnel)" value={DateUtils.formatShort(form.end_date)} onChange={handleChange} /></CCol>
             <CCol md={4}><CFormInput type="number" name="notice_period" label="Préavis (mois)" value={form.notice_period} onChange={handleChange} /></CCol>
             <CCol md={4}><CFormSelect label="Statut" name="status" value={form.status} onChange={handleChange}><option value="active">Actif</option><option value="expired">Expiré</option><option value="terminated">Résilié</option></CFormSelect></CCol>
             <CCol md={12}><CFormTextarea label="Notes" name="notes" rows={3} value={form.notes} onChange={handleChange} /></CCol>
@@ -160,8 +161,8 @@ const Leases = () => {
                 ['Charges', `${parseFloat(viewing.charges_amount || 0).toFixed(2)} €`],
                 ['Loyer CC', `${(parseFloat(viewing.rent_amount || 0) + parseFloat(viewing.charges_amount || 0)).toFixed(2)} €`],
                 ['Dépôt de garantie', `${parseFloat(viewing.deposit_amount || 0).toFixed(2)} €`],
-                ['Date de début', viewing.start_date || '-'],
-                ['Date de fin', viewing.end_date || 'En cours'],
+                ['Date de début', DateUtils.formatShort(viewing.start_date) || '-'],
+                ['Date de fin', DateUtils.formatShort(viewing.end_date) || 'En cours'],
                 ['Préavis', `${viewing.notice_period} mois`],
               ] as [string, string][]).map(([label, value]) => (
                 <CCol key={label} sm={6}><div className="text-muted small">{label}</div><div className="fw-semibold">{value}</div></CCol>

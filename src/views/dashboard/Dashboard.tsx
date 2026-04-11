@@ -11,6 +11,7 @@ import PropertyDataService from '../../services/property.service'
 import TenantDataService from '../../services/tenant.service'
 import LeaseDataService from '../../services/lease.service'
 import PaymentDataService from '../../services/payment.service'
+import { DateUtils } from 'src/utils/date'
 
 const statusLabel: Record<string, string> = { paid: 'Payé', pending: 'En attente', late: 'En retard' }
 const statusColor: Record<string, string> = { paid: 'success', pending: 'warning', late: 'danger' }
@@ -233,7 +234,7 @@ const Dashboard = () => {
                       <CTableDataCell>{l.Property ? `${l.Property.type} - ${l.Property.city}` : '-'}</CTableDataCell>
                       <CTableDataCell>{l.Tenant ? `${l.Tenant.civility || ''} ${l.Tenant.lastname}` : '-'}</CTableDataCell>
                       <CTableDataCell>{(parseFloat(l.rent_amount || 0) + parseFloat(l.charges_amount || 0)).toFixed(2)} €</CTableDataCell>
-                      <CTableDataCell>{l.start_date || '-'}</CTableDataCell>
+                      <CTableDataCell>{DateUtils.formatShort(l.start_date) || '-'}</CTableDataCell>
                     </CTableRow>
                   ))}
                 </CTableBody>
