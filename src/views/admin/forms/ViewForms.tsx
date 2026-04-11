@@ -1,5 +1,5 @@
 import React from 'react'
-import { CRow, CFormLabel, CCol, CFormInput, CContainer, CButton } from '@coreui/react'
+import { CRow, CFormLabel, CCol, CFormInput, CContainer, CButton, CBadge } from '@coreui/react'
 
 interface ViewFormsProps {
   entities: string
@@ -36,6 +36,40 @@ const ViewForms = ({ entities, data, setModalVisible }: ViewFormsProps) => {
               <CRow className="mb-3"><CFormLabel className="col-sm-2 col-form-label">Type</CFormLabel><CCol sm={10}><CFormInput type="text" defaultValue={item.type} readOnly plainText /></CCol></CRow>
               <CRow className="mb-3"><CFormLabel className="col-sm-2 col-form-label">Pièces</CFormLabel><CCol sm={10}><CFormInput type="text" defaultValue={item.pieces} readOnly plainText /></CCol></CRow>
               <CRow className="mb-3"><CFormLabel className="col-sm-2 col-form-label">Superficie</CFormLabel><CCol sm={10}><CFormInput type="text" defaultValue={`${item.area} m²`} readOnly plainText /></CCol></CRow>
+              {(() => {
+                const rooms: { type: string; count: number }[] = (() => { try { return JSON.parse(item.rooms || '[]') } catch { return [] } })()
+                const features: string[] = (() => { try { return JSON.parse(item.features || '[]') } catch { return [] } })()
+                return (
+                  <>
+                    {rooms.length > 0 && (
+                      <CRow className="mb-3">
+                        <CFormLabel className="col-sm-2 col-form-label">Détail pièces</CFormLabel>
+                        <CCol sm={10} className="d-flex flex-wrap gap-2 align-self-center">
+                          {rooms.map((r, i) => (
+                            <CBadge key={i} color="info" className="fs-6 fw-normal">{r.count > 1 ? `${r.count}× ` : ''}{r.type}</CBadge>
+                          ))}
+                        </CCol>
+                      </CRow>
+                    )}
+                    {features.length > 0 && (
+                      <CRow className="mb-3">
+                        <CFormLabel className="col-sm-2 col-form-label">Caractéristiques</CFormLabel>
+                        <CCol sm={10} className="d-flex flex-wrap gap-2 align-self-center">
+                          {features.map((f, i) => (
+                            <CBadge key={i} color="success" className="fs-6 fw-normal">{f}</CBadge>
+                          ))}
+                        </CCol>
+                      </CRow>
+                    )}
+                    {item.comments && (
+                      <CRow className="mb-3">
+                        <CFormLabel className="col-sm-2 col-form-label">Commentaires</CFormLabel>
+                        <CCol sm={10}><p className="form-control-plaintext">{item.comments}</p></CCol>
+                      </CRow>
+                    )}
+                  </>
+                )
+              })()}
             </>
           )}
           <hr />
