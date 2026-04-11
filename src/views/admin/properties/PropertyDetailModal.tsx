@@ -65,7 +65,7 @@ const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
       <CModalBody>
         <CRow>
           {/* Colonne gauche : galerie + mini-carte */}
-          <CCol md={7}>
+          <CCol md={5}>
             {images.length > 0 ? (
               <CCarousel controls indicators transition="crossfade" interval={false} className="mb-3 rounded overflow-hidden">
                 {images.map((src, i) => (
@@ -104,10 +104,11 @@ const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
           </CCol>
 
           {/* Colonne droite : onglets */}
-          <CCol md={5}>
+          <CCol md={7}>
             <CTabs defaultActiveItemKey="detail">
               <CTabList variant="tabs" className="mb-3">
                 <CTab itemKey="detail">Détail</CTab>
+                <CTab itemKey="tenants">Locataires</CTab>
                 <CTab itemKey="features">Caractéristiques</CTab>
                 <CTab itemKey="comments">Commentaires</CTab>
               </CTabList>
@@ -161,16 +162,39 @@ const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                     return rooms.length > 0 ? (
                       <div>
                         <strong className="d-block mb-2">Détail des pièces</strong>
-                        <ul className="list-unstyled mb-0">
+                        <div className="d-flex flex-wrap gap-2">
                           {rooms.map((r: any, i: number) => (
-                            <li key={i} className="mb-1">
-                              <CBadge color="secondary" className="me-1">{r.count ?? 1}</CBadge>
+                            <span key={i} className="d-inline-flex align-items-center gap-1 border rounded px-2 py-1 small">
+                              <CBadge color="secondary">{r.count ?? 1}</CBadge>
                               {typeof r === 'object' ? `${r.type ?? ''}${r.area ? ` – ${r.area} m²` : ''}` : String(r)}
-                            </li>
+                            </span>
                           ))}
-                        </ul>
+                        </div>
                       </div>
                     ) : null
+                  })()}
+                </CTabPanel>
+
+                {/* Onglet Locataires */}
+                <CTabPanel itemKey="tenants">
+                  {(() => {
+                    const tenants: any[] = Array.isArray(property.Tenants) ? property.Tenants : []
+                    if (tenants.length === 0) {
+                      return <p className="text-medium-emphasis fst-italic">Aucun locataire associé à ce bien.</p>
+                    }
+                    return (
+                      <ul className="list-group list-group-flush">
+                        {tenants.map((t: any) => (
+                          <li key={t.id} className="list-group-item px-0">
+                            <div className="fw-semibold">
+                              {t.civility ? `${t.civility} ` : ''}{t.firstname} {t.lastname}
+                            </div>
+                            {t.email && <div className="text-medium-emphasis small">{t.email}</div>}
+                            {t.mobile && <div className="text-medium-emphasis small">{t.mobile}</div>}
+                          </li>
+                        ))}
+                      </ul>
+                    )
                   })()}
                 </CTabPanel>
 

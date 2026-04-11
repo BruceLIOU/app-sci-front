@@ -63,8 +63,13 @@ const Properties = () => {
 
   const resetFilters = () => { setFilterType(''); setFilterCity(''); setFilterPieces('') }
 
-  const handleViewProperty = (id: number) => {
-    setSelectedProperty(data.find((p) => p.id === id) ?? null)
+  const handleViewProperty = async (id: number) => {
+    try {
+      const response = await PropertyDataService.get(id)
+      setSelectedProperty(response.data)
+    } catch {
+      setSelectedProperty(data.find((p) => p.id === id) ?? null)
+    }
     setDetailVisible(true)
   }
   const handleEditProperty = (id: number) => { setPropertyId(id); setModalType('edit'); setModalVisible(true) }
@@ -213,24 +218,29 @@ const Properties = () => {
                   style={{ cursor: 'pointer' }}
                   onClick={() => handleViewProperty(item.id)}
                 >
-                  {item.thumbnail ? (
-                    <CCardImage
-                      orientation="top"
-                      src={item.thumbnail}
-                      style={{ aspectRatio: '16/9', objectFit: 'cover', width: '100%' }}
-                    />
-                  ) : (
-                    <div
-                      className="d-flex align-items-center justify-content-center bg-light border-bottom"
-                      style={{
-                        aspectRatio: '16/9',
-                        borderTopLeftRadius: 'var(--cui-card-inner-border-radius)',
-                        borderTopRightRadius: 'var(--cui-card-inner-border-radius)',
-                      }}
-                    >
-                      <span className="text-medium-emphasis small">Aucune photo</span>
-                    </div>
-                  )}
+                  <div style={{ position: 'relative' }}>
+                    {item.thumbnail ? (
+                      <CCardImage
+                        orientation="top"
+                        src={item.thumbnail}
+                        style={{ aspectRatio: '16/9', objectFit: 'cover', width: '100%' }}
+                      />
+                    ) : (
+                      <div
+                        className="d-flex align-items-center justify-content-center bg-light border-bottom"
+                        style={{
+                          aspectRatio: '16/9',
+                          borderTopLeftRadius: 'var(--cui-card-inner-border-radius)',
+                          borderTopRightRadius: 'var(--cui-card-inner-border-radius)',
+                        }}
+                      >
+                        <span className="text-medium-emphasis small">Aucune photo</span>
+                      </div>
+                    )}
+                    {item.Tenants?.length > 0 && (
+                      <CBadge color="success" style={{ position: 'absolute', top: 8, left: 8, fontSize: '0.75rem' }}>Loué</CBadge>
+                    )}
+                  </div>
                   <CCardBody>
                     <CCardTitle>{item.type + ' – ' + item.city}</CCardTitle>
                     <CCardText>
@@ -275,20 +285,25 @@ const Properties = () => {
                 onClick={() => handleViewProperty(item.id)}
               >
                 <div className="d-flex align-items-center">
-                  {item.thumbnail ? (
-                    <img
-                      src={item.thumbnail}
-                      alt={item.type}
-                      style={{ width: 100, height: 70, objectFit: 'cover', flexShrink: 0, borderRadius: 'var(--cui-card-inner-border-radius) 0 0 var(--cui-card-inner-border-radius)' }}
-                    />
-                  ) : (
-                    <div
-                      className="d-flex align-items-center justify-content-center bg-light"
-                      style={{ width: 100, height: 70, flexShrink: 0, borderRadius: 'var(--cui-card-inner-border-radius) 0 0 var(--cui-card-inner-border-radius)' }}
-                    >
-                      <span className="text-medium-emphasis" style={{ fontSize: 10 }}>Aucune photo</span>
-                    </div>
-                  )}
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
+                    {item.thumbnail ? (
+                      <img
+                        src={item.thumbnail}
+                        alt={item.type}
+                        style={{ width: 100, height: 70, objectFit: 'cover', display: 'block', borderRadius: 'var(--cui-card-inner-border-radius) 0 0 var(--cui-card-inner-border-radius)' }}
+                      />
+                    ) : (
+                      <div
+                        className="d-flex align-items-center justify-content-center bg-light"
+                        style={{ width: 100, height: 70, borderRadius: 'var(--cui-card-inner-border-radius) 0 0 var(--cui-card-inner-border-radius)' }}
+                      >
+                        <span className="text-medium-emphasis" style={{ fontSize: 10 }}>Aucune photo</span>
+                      </div>
+                    )}
+                    {item.Tenants?.length > 0 && (
+                      <CBadge color="success" style={{ position: 'absolute', top: 4, left: 4, fontSize: '0.65rem' }}>Loué</CBadge>
+                    )}
+                  </div>
                   <CCardBody className="d-flex align-items-center flex-grow-1 py-2 gap-4">
                     <strong className="me-2" style={{ minWidth: 180 }}>{item.type} – {item.city}</strong>
                     <span className="text-medium-emphasis">{item.pieces} pièce{item.pieces > 1 ? 's' : ''}</span>
@@ -331,24 +346,29 @@ const Properties = () => {
                   style={{ cursor: 'pointer' }}
                   onClick={() => handleViewProperty(item.id)}
                 >
-                  {item.thumbnail ? (
-                    <CCardImage
-                      orientation="top"
-                      src={item.thumbnail}
-                      style={{ aspectRatio: gridImgRatio[gridCols], objectFit: 'cover', width: '100%' }}
-                    />
-                  ) : (
-                    <div
-                      className="d-flex align-items-center justify-content-center bg-light border-bottom"
-                      style={{
-                        aspectRatio: gridImgRatio[gridCols],
-                        borderTopLeftRadius: 'var(--cui-card-inner-border-radius)',
-                        borderTopRightRadius: 'var(--cui-card-inner-border-radius)',
-                      }}
-                    >
-                      <span className="text-medium-emphasis small">Aucune photo</span>
-                    </div>
-                  )}
+                  <div style={{ position: 'relative' }}>
+                    {item.thumbnail ? (
+                      <CCardImage
+                        orientation="top"
+                        src={item.thumbnail}
+                        style={{ aspectRatio: gridImgRatio[gridCols], objectFit: 'cover', width: '100%' }}
+                      />
+                    ) : (
+                      <div
+                        className="d-flex align-items-center justify-content-center bg-light border-bottom"
+                        style={{
+                          aspectRatio: gridImgRatio[gridCols],
+                          borderTopLeftRadius: 'var(--cui-card-inner-border-radius)',
+                          borderTopRightRadius: 'var(--cui-card-inner-border-radius)',
+                        }}
+                      >
+                        <span className="text-medium-emphasis small">Aucune photo</span>
+                      </div>
+                    )}
+                    {item.Tenants?.length > 0 && (
+                      <CBadge color="success" style={{ position: 'absolute', top: 8, left: 8, fontSize: '0.75rem' }}>Loué</CBadge>
+                    )}
+                  </div>
                   <CCardBody>
                     <CCardTitle>{item.type + ' – ' + item.city}</CCardTitle>
                     <CCardText>
