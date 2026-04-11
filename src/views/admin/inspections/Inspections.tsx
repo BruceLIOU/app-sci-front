@@ -97,7 +97,7 @@ const Inspections = () => {
     } catch (err) { console.error(err) }
   }
 
-  const handleDelete = async () => { await InspectionDataService.delete(toDelete.id); setDeleteModal(false); fetchAll() }
+  const handleDelete = async () => { await InspectionDataService.delete(toDelete.id); setDeleteModal(false); fetchAll(); fetchDocs() }
 
   const openView = (i: any) => {
     const copy = { ...i }
