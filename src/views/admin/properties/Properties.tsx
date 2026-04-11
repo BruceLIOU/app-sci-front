@@ -218,7 +218,7 @@ const Properties = () => {
                   style={{ cursor: 'pointer' }}
                   onClick={() => handleViewProperty(item.id)}
                 >
-                  <div style={{ position: 'relative' }}>
+                  <div style={{ position: 'relative', overflow: 'hidden', borderTopLeftRadius: 'var(--cui-card-inner-border-radius)', borderTopRightRadius: 'var(--cui-card-inner-border-radius)' }}>
                     {item.thumbnail ? (
                       <CCardImage
                         orientation="top"
@@ -238,7 +238,7 @@ const Properties = () => {
                       </div>
                     )}
                     {item.Tenants?.length > 0 && (
-                      <CBadge color="success" style={{ position: 'absolute', top: 8, left: 8, fontSize: '0.75rem' }}>Loué</CBadge>
+                      <div style={{ position: 'absolute', top: 16, left: -26, width: 100, transform: 'rotate(-45deg)', backgroundColor: '#2eb85c', color: 'white', textAlign: 'center', fontSize: '0.7rem', fontWeight: 600, padding: '4px 0', zIndex: 1 }}>Loué</div>
                     )}
                   </div>
                   <CCardBody>
@@ -285,7 +285,7 @@ const Properties = () => {
                 onClick={() => handleViewProperty(item.id)}
               >
                 <div className="d-flex align-items-center">
-                  <div style={{ position: 'relative', flexShrink: 0 }}>
+                  <div style={{ position: 'relative', flexShrink: 0, overflow: 'hidden', borderTopLeftRadius: 'var(--cui-card-inner-border-radius)', borderBottomLeftRadius: 'var(--cui-card-inner-border-radius)' }}>
                     {item.thumbnail ? (
                       <img
                         src={item.thumbnail}
@@ -301,7 +301,7 @@ const Properties = () => {
                       </div>
                     )}
                     {item.Tenants?.length > 0 && (
-                      <CBadge color="success" style={{ position: 'absolute', top: 4, left: 4, fontSize: '0.65rem' }}>Loué</CBadge>
+                      <div style={{ position: 'absolute', top: 12, left: -20, width: 80, transform: 'rotate(-45deg)', backgroundColor: '#2eb85c', color: 'white', textAlign: 'center', fontSize: '0.6rem', fontWeight: 600, padding: '3px 0', zIndex: 1 }}>Loué</div>
                     )}
                   </div>
                   <CCardBody className="d-flex align-items-center flex-grow-1 py-2 gap-4">
@@ -346,7 +346,7 @@ const Properties = () => {
                   style={{ cursor: 'pointer' }}
                   onClick={() => handleViewProperty(item.id)}
                 >
-                  <div style={{ position: 'relative' }}>
+                  <div style={{ position: 'relative', overflow: 'hidden', borderTopLeftRadius: 'var(--cui-card-inner-border-radius)', borderTopRightRadius: 'var(--cui-card-inner-border-radius)' }}>
                     {item.thumbnail ? (
                       <CCardImage
                         orientation="top"
@@ -366,7 +366,7 @@ const Properties = () => {
                       </div>
                     )}
                     {item.Tenants?.length > 0 && (
-                      <CBadge color="success" style={{ position: 'absolute', top: 8, left: 8, fontSize: '0.75rem' }}>Loué</CBadge>
+                      <div style={{ position: 'absolute', top: 16, left: -26, width: 100, transform: 'rotate(-45deg)', backgroundColor: '#2eb85c', color: 'white', textAlign: 'center', fontSize: '0.7rem', fontWeight: 600, padding: '4px 0', zIndex: 1 }}>Loué</div>
                     )}
                   </div>
                   <CCardBody>
