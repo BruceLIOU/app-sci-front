@@ -11,6 +11,11 @@ import {
   CBadge,
   CCarousel,
   CCarouselItem,
+  CTabs,
+  CTabList,
+  CTab,
+  CTabContent,
+  CTabPanel,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilPen, cilTrash } from '@coreui/icons'
@@ -98,49 +103,108 @@ const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
             )}
           </CCol>
 
-          {/* Colonne droite : informations */}
+          {/* Colonne droite : onglets */}
           <CCol md={5}>
-            <h5 className="mb-3">Informations</h5>
-            <table className="table table-sm table-bordered">
-              <tbody>
-                <tr>
-                  <th className="text-nowrap">Adresse</th>
-                  <td>{property.address}</td>
-                </tr>
-                <tr>
-                  <th>Code postal</th>
-                  <td>{property.zipcode}</td>
-                </tr>
-                <tr>
-                  <th>Ville</th>
-                  <td>{property.city}</td>
-                </tr>
-                <tr>
-                  <th>Type</th>
-                  <td>
-                    <CBadge color="info">{property.type}</CBadge>
-                  </td>
-                </tr>
-                <tr>
-                  <th>Pièces</th>
-                  <td>{property.pieces}</td>
-                </tr>
-                <tr>
-                  <th>Superficie</th>
-                  <td>{property.area} m²</td>
-                </tr>
-                {hasCoords && (
-                  <tr>
-                    <th>Coordonnées</th>
-                    <td>
-                      <small className="text-medium-emphasis">
-                        {Number(property.latitude).toFixed(5)}, {Number(property.longitude).toFixed(5)}
-                      </small>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+            <CTabs defaultActiveItemKey="detail">
+              <CTabList variant="tabs" className="mb-3">
+                <CTab itemKey="detail">Détail</CTab>
+                <CTab itemKey="features">Caractéristiques</CTab>
+                <CTab itemKey="comments">Commentaires</CTab>
+              </CTabList>
+              <CTabContent>
+                {/* Onglet Détail */}
+                <CTabPanel itemKey="detail">
+                  <table className="table table-sm table-bordered">
+                    <tbody>
+                      <tr>
+                        <th className="text-nowrap">Adresse</th>
+                        <td>{property.address}</td>
+                      </tr>
+                      <tr>
+                        <th>Code postal</th>
+                        <td>{property.zipcode}</td>
+                      </tr>
+                      <tr>
+                        <th>Ville</th>
+                        <td>{property.city}</td>
+                      </tr>
+                      <tr>
+                        <th>Type</th>
+                        <td>
+                          <CBadge color="info">{property.type}</CBadge>
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>Pièces</th>
+                        <td>{property.pieces}</td>
+                      </tr>
+                      <tr>
+                        <th>Superficie</th>
+                        <td>{property.area} m²</td>
+                      </tr>
+                      {hasCoords && (
+                        <tr>
+                          <th>Coordonnées</th>
+                          <td>
+                            <small className="text-medium-emphasis">
+                              {Number(property.latitude).toFixed(5)}, {Number(property.longitude).toFixed(5)}
+                            </small>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                  {/* Pièces détaillées (rooms) */}
+                  {property.rooms && (() => {
+                    let rooms: any[] = []
+                    try { rooms = JSON.parse(property.rooms) } catch { rooms = [] }
+                    return rooms.length > 0 ? (
+                      <div>
+                        <strong className="d-block mb-2">Détail des pièces</strong>
+                        <ul className="list-unstyled mb-0">
+                          {rooms.map((r: any, i: number) => (
+                            <li key={i} className="mb-1">
+                              <CBadge color="secondary" className="me-1">{r.count ?? 1}</CBadge>
+                              {typeof r === 'object' ? `${r.type ?? ''}${r.area ? ` – ${r.area} m²` : ''}` : String(r)}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null
+                  })()}
+                </CTabPanel>
+
+                {/* Onglet Caractéristiques */}
+                <CTabPanel itemKey="features">
+                  {property.features ? (() => {
+                    let features: any[] = []
+                    try { features = JSON.parse(property.features) } catch { features = [property.features] }
+                    return features.length > 0 ? (
+                      <ul className="list-group list-group-flush">
+                        {features.map((f: any, i: number) => (
+                          <li key={i} className="list-group-item px-0">
+                            <span className="me-2">•</span>{typeof f === 'object' ? JSON.stringify(f) : String(f)}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-medium-emphasis fst-italic">Aucune caractéristique renseignée.</p>
+                    )
+                  })() : (
+                    <p className="text-medium-emphasis fst-italic">Aucune caractéristique renseignée.</p>
+                  )}
+                </CTabPanel>
+
+                {/* Onglet Commentaires */}
+                <CTabPanel itemKey="comments">
+                  {property.comments ? (
+                    <p style={{ whiteSpace: 'pre-wrap' }}>{property.comments}</p>
+                  ) : (
+                    <p className="text-medium-emphasis fst-italic">Aucun commentaire renseigné.</p>
+                  )}
+                </CTabPanel>
+              </CTabContent>
+            </CTabs>
           </CCol>
         </CRow>
       </CModalBody>
