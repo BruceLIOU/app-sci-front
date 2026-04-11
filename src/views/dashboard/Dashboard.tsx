@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   CCard, CCardBody, CCardHeader, CCol, CRow, CTable, CTableBody,
   CTableDataCell, CTableHead, CTableHeaderCell, CTableRow, CBadge, CSpinner,
@@ -20,6 +21,7 @@ const Dashboard = () => {
   const [leases, setLeases] = useState<any[]>([])
   const [payments, setPayments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
 
   useEffect(() => {
     Promise.all([
@@ -65,7 +67,7 @@ const Dashboard = () => {
       {/* Cartes statistiques */}
       <CRow className="mb-4">
         <CCol sm={6} lg={3}>
-          <CCard className="text-white bg-primary mb-3">
+          <CCard className="text-white bg-primary mb-3" style={{ cursor: 'pointer' }} onClick={() => navigate('/admin/properties')}>
             <CCardBody className="d-flex justify-content-between align-items-center">
               <div>
                 <div className="fs-2 fw-bold">{properties.length}</div>
@@ -76,7 +78,7 @@ const Dashboard = () => {
           </CCard>
         </CCol>
         <CCol sm={6} lg={3}>
-          <CCard className="text-white bg-info mb-3">
+          <CCard className="text-white bg-info mb-3" style={{ cursor: 'pointer' }} onClick={() => navigate('/admin/tenants')}>
             <CCardBody className="d-flex justify-content-between align-items-center">
               <div>
                 <div className="fs-2 fw-bold">{tenants.length}</div>
@@ -87,7 +89,7 @@ const Dashboard = () => {
           </CCard>
         </CCol>
         <CCol sm={6} lg={3}>
-          <CCard className="text-white bg-success mb-3">
+          <CCard className="text-white bg-success mb-3" style={{ cursor: 'pointer' }} onClick={() => navigate('/admin/leases')}>
             <CCardBody className="d-flex justify-content-between align-items-center">
               <div>
                 <div className="fs-2 fw-bold">{activeLeases.length}</div>
@@ -98,7 +100,7 @@ const Dashboard = () => {
           </CCard>
         </CCol>
         <CCol sm={6} lg={3}>
-          <CCard className="text-white bg-warning mb-3">
+          <CCard className="text-white bg-warning mb-3" style={{ cursor: 'pointer' }} onClick={() => navigate('/admin/payments')}>
             <CCardBody className="d-flex justify-content-between align-items-center">
               <div>
                 <div className="fs-2 fw-bold">{monthlyRevenue.toFixed(0)} €</div>
@@ -175,7 +177,7 @@ const Dashboard = () => {
         {/* Paiements non réglés */}
         <CCol md={6}>
           <CCard className="mb-4">
-            <CCardHeader className="d-flex justify-content-between">
+            <CCardHeader className="d-flex justify-content-between" style={{ cursor: 'pointer' }} onClick={() => navigate('/admin/payments')}>
               <strong>Paiements en attente / retard</strong>
               <CBadge color="danger">{pendingPayments.length}</CBadge>
             </CCardHeader>
@@ -209,7 +211,7 @@ const Dashboard = () => {
         {/* Liste des baux actifs */}
         <CCol md={6}>
           <CCard className="mb-4">
-            <CCardHeader className="d-flex justify-content-between">
+            <CCardHeader className="d-flex justify-content-between" style={{ cursor: 'pointer' }} onClick={() => navigate('/admin/leases')}>
               <strong>Baux actifs</strong>
               <CBadge color="success">{activeLeases.length}</CBadge>
             </CCardHeader>
