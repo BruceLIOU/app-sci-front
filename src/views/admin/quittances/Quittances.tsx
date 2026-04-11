@@ -5,32 +5,49 @@ import PropertyDataService from '../../../services/property.service'
 import LeaseDataService from '../../../services/lease.service'
 import PdfDataService from '../../../services/pdf.service'
 import DocumentDataService from '../../../services/document.service'
+import ActionButtons from '../../../components/ActionButtons'
+import CrudModal from '../../../components/CrudModal'
+import DeleteModal from '../../../components/DeleteModal'
+import EntityTableCard from '../../../components/EntityTableCard'
+import StatCard from '../../../components/StatCard'
+import TableEmptyRow from '../../../components/TableEmptyRow'
+import useEntityCrud from '../../../hooks/useEntityCrud'
 import {
-  CCard, CCardBody, CCardHeader, CCol, CRow, CTable, CTableBody, CTableDataCell,
+  CCol, CRow, CTable, CTableBody, CTableDataCell,
   CTableHead, CTableHeaderCell, CTableRow, CButton, CModal, CModalHeader,
-  CModalTitle, CModalBody, CForm, CFormInput, CFormSelect, CTooltip, CSpinner, CAlert,
+  CModalTitle, CModalBody, CFormInput, CFormSelect, CTooltip, CSpinner, CAlert,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilPlus, cilPen, cilTrash, cilDescription, cilExternalLink, cilCloudDownload } from '@coreui/icons'
+import { cilDescription, cilExternalLink, cilCloudDownload } from '@coreui/icons'
 
 const Quittances = () => {
-  const [quittances, setQuittances] = useState<any[]>([])
   const [tenants, setTenants] = useState<any[]>([])
   const [properties, setProperties] = useState<any[]>([])
   const [leases, setLeases] = useState<any[]>([])
-  const [modalVisible, setModalVisible] = useState(false)
   const [printModal, setPrintModal] = useState(false)
-  const [deleteModal, setDeleteModal] = useState(false)
-  const [editing, setEditing] = useState<any>(null)
   const [printing, setPrinting] = useState<any>(null)
-  const [toDelete, setToDelete] = useState<any>(null)
   const printRef = useRef<HTMLDivElement>(null)
   const [pdfGenerating, setPdfGenerating] = useState(false)
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [quittanceDocs, setQuittanceDocs] = useState<Record<number, any>>({})
 
   const emptyForm = { tenant_id: '', property_id: '', lease_id: '', payment_id: '', period: '', rent_amount: '', charges_amount: '0', total_amount: '', issue_date: new Date().toISOString().split('T')[0] }
-  const [form, setForm] = useState(emptyForm)
+
+  const {
+    items: quittances,
+    modalVisible, setModalVisible,
+    deleteModal, setDeleteModal,
+    editing, toDelete, form, setForm,
+    handleChange, openCreate, openEdit, openDelete,
+    handleDelete, fetchAll,
+  } = useEntityCrud({
+    service: QuittanceDataService,
+    emptyForm,
+    toForm: (q) => ({ tenant_id: q.tenant_id || '', property_id: q.property_id || '', lease_id: q.lease_id || '', payment_id: q.payment_id || '', period: q.period || '', rent_amount: q.rent_amount || '', charges_amount: q.charges_amount || '0', total_amount: q.total_amount || '', issue_date: q.issue_date || '' }),
+  })
+
+  const rent = parseFloat(form.rent_amount || '0')
+  const charges = parseFloat(form.charges_amount || '0')
 
   const fetchDocs = () =>
     DocumentDataService.getAll({ entity_type: 'quittance' })
@@ -41,27 +58,14 @@ const Quittances = () => {
       })
       .catch(console.error)
 
-  const fetchAll = () => QuittanceDataService.getAll().then((r) => setQuittances(r.data)).catch(console.error)
-
   useEffect(() => {
-    fetchAll()
     fetchDocs()
     TenantDataService.getAll().then((r) => setTenants(r.data))
     PropertyDataService.getAll().then((r) => setProperties(r.data))
     LeaseDataService.getAll().then((r) => setLeases(r.data))
   }, [])
 
-  const rent = parseFloat(form.rent_amount || '0')
-  const charges = parseFloat(form.charges_amount || '0')
-
-  const openCreate = () => { setEditing(null); setForm(emptyForm); setModalVisible(true) }
-  const openEdit = (q: any) => {
-    setEditing(q)
-    setForm({ tenant_id: q.tenant_id || '', property_id: q.property_id || '', lease_id: q.lease_id || '', payment_id: q.payment_id || '', period: q.period || '', rent_amount: q.rent_amount || '', charges_amount: q.charges_amount || '0', total_amount: q.total_amount || '', issue_date: q.issue_date || '' })
-    setModalVisible(true)
-  }
-
-  const handleChange = (e: React.ChangeEvent<any>) => {
+  const handleQuittanceChange = (e: React.ChangeEvent<any>) => {
     const updated = { ...form, [e.target.name]: e.target.value }
     if (e.target.name === 'rent_amount' || e.target.name === 'charges_amount') {
       const r = parseFloat(e.target.name === 'rent_amount' ? e.target.value : form.rent_amount) || 0
@@ -73,9 +77,9 @@ const Quittances = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const fd = new FormData()
     const total = (parseFloat(form.rent_amount || '0') + parseFloat(form.charges_amount || '0')).toFixed(2)
-    Object.entries({ ...form, total_amount: total }).forEach(([k, v]) => fd.append(k, v))
+    const fd = new FormData()
+    Object.entries({ ...form, total_amount: total }).forEach(([k, v]) => fd.append(k, v as string))
     try {
       if (editing) await QuittanceDataService.update(editing.id, fd)
       else await QuittanceDataService.create(fd)
@@ -83,103 +87,92 @@ const Quittances = () => {
     } catch (err) { console.error(err) }
   }
 
-  const handleDelete = async () => { await QuittanceDataService.delete(toDelete.id); setDeleteModal(false); fetchAll() }
-
   const handleGeneratePdf = async () => {
     if (!printing?.id) return
-    setPdfGenerating(true)
-    setPdfUrl(null)
+    setPdfGenerating(true); setPdfUrl(null)
     try {
       const res = await PdfDataService.generateQuittance(printing.id)
       const doc = res.data.document
       setPdfUrl(DocumentDataService.downloadUrl(doc.id))
       setQuittanceDocs((prev) => ({ ...prev, [printing.id]: doc }))
-    } catch (e: any) {
-      console.error(e)
-    } finally {
-      setPdfGenerating(false)
-    }
+    } catch (e) { console.error(e) }
+    finally { setPdfGenerating(false) }
   }
 
   return (
     <>
       <CRow className="mb-4">
-        <CCol sm={4}><CCard className="text-white bg-primary mb-3"><CCardBody><div className="fs-4 fw-semibold">{quittances.length}</div><div>Quittances émises</div></CCardBody></CCard></CCol>
-        <CCol sm={4}><CCard className="text-white bg-success mb-3"><CCardBody><div className="fs-4 fw-semibold">{quittances.reduce((s, q) => s + parseFloat(q.total_amount || 0), 0).toFixed(2)} €</div><div>Montant total</div></CCardBody></CCard></CCol>
-        <CCol sm={4}><CCard className="text-white bg-info mb-3"><CCardBody><div className="fs-4 fw-semibold">{new Set(quittances.map((q) => q.tenant_id)).size}</div><div>Locataires concernés</div></CCardBody></CCard></CCol>
+        <StatCard value={quittances.length} label="Quittances émises" color="primary" />
+        <StatCard value={`${quittances.reduce((s, q) => s + parseFloat(q.total_amount || 0), 0).toFixed(2)} €`} label="Montant total" color="success" />
+        <StatCard value={new Set(quittances.map((q) => q.tenant_id)).size} label="Locataires concernés" color="info" />
       </CRow>
 
-      <CCard>
-        <CCardHeader className="d-flex justify-content-between align-items-center">
-          <strong>Quittances de loyer</strong>
-          <CButton color="primary" size="sm" onClick={openCreate}><CIcon icon={cilPlus} className="me-1" />Nouvelle quittance</CButton>
-        </CCardHeader>
-        <CCardBody>
-          <CTable align="middle" hover responsive bordered>
-            <CTableHead color="light">
-              <CTableRow>
-                <CTableHeaderCell>N°</CTableHeaderCell><CTableHeaderCell>Période</CTableHeaderCell>
-                <CTableHeaderCell>Locataire</CTableHeaderCell><CTableHeaderCell>Bien</CTableHeaderCell>
-                <CTableHeaderCell>Loyer HC</CTableHeaderCell><CTableHeaderCell>Charges</CTableHeaderCell>
-                <CTableHeaderCell>Total</CTableHeaderCell><CTableHeaderCell>Date émission</CTableHeaderCell>
-                <CTableHeaderCell className="text-end">Actions</CTableHeaderCell>
-              </CTableRow>
-            </CTableHead>
-            <CTableBody>
-              {quittances.length === 0 ? (
-                <CTableRow><CTableDataCell colSpan={9} className="text-center text-muted">Aucune quittance émise</CTableDataCell></CTableRow>
-              ) : quittances.map((q) => (
-                <CTableRow key={q.id}>
-                  <CTableDataCell><strong>{q.number}</strong></CTableDataCell>
-                  <CTableDataCell>{q.period}</CTableDataCell>
-                  <CTableDataCell>{q.Tenant ? `${q.Tenant.civility || ''} ${q.Tenant.lastname}` : '-'}</CTableDataCell>
-                  <CTableDataCell>{q.Property ? `${q.Property.type} - ${q.Property.city}` : '-'}</CTableDataCell>
-                  <CTableDataCell>{parseFloat(q.rent_amount || 0).toFixed(2)} €</CTableDataCell>
-                  <CTableDataCell>{parseFloat(q.charges_amount || 0).toFixed(2)} €</CTableDataCell>
-                  <CTableDataCell><strong>{parseFloat(q.total_amount || 0).toFixed(2)} €</strong></CTableDataCell>
-                  <CTableDataCell>{q.issue_date}</CTableDataCell>
-                  <CTableDataCell className="text-end">
+      <EntityTableCard title="Quittances de loyer" addLabel="Nouvelle quittance" onAdd={openCreate}>
+        <CTable align="middle" hover responsive bordered>
+          <CTableHead color="light">
+            <CTableRow>
+              <CTableHeaderCell>N°</CTableHeaderCell><CTableHeaderCell>Période</CTableHeaderCell>
+              <CTableHeaderCell>Locataire</CTableHeaderCell><CTableHeaderCell>Bien</CTableHeaderCell>
+              <CTableHeaderCell>Loyer HC</CTableHeaderCell><CTableHeaderCell>Charges</CTableHeaderCell>
+              <CTableHeaderCell>Total</CTableHeaderCell><CTableHeaderCell>Date émission</CTableHeaderCell>
+              <CTableHeaderCell className="text-end">Actions</CTableHeaderCell>
+            </CTableRow>
+          </CTableHead>
+          <CTableBody>
+            {quittances.length === 0 ? (
+              <TableEmptyRow colSpan={9} message="Aucune quittance émise" />
+            ) : quittances.map((q) => (
+              <CTableRow key={q.id}>
+                <CTableDataCell><strong>{q.number}</strong></CTableDataCell>
+                <CTableDataCell>{q.period}</CTableDataCell>
+                <CTableDataCell>{q.Tenant ? `${q.Tenant.civility || ''} ${q.Tenant.lastname}` : '-'}</CTableDataCell>
+                <CTableDataCell>{q.Property ? `${q.Property.type} - ${q.Property.city}` : '-'}</CTableDataCell>
+                <CTableDataCell>{parseFloat(q.rent_amount || 0).toFixed(2)} €</CTableDataCell>
+                <CTableDataCell>{parseFloat(q.charges_amount || 0).toFixed(2)} €</CTableDataCell>
+                <CTableDataCell><strong>{parseFloat(q.total_amount || 0).toFixed(2)} €</strong></CTableDataCell>
+                <CTableDataCell>{q.issue_date}</CTableDataCell>
+                <CTableDataCell className="text-end">
+                  <ActionButtons onEdit={() => openEdit(q)} onDelete={() => openDelete(q)}>
                     {quittanceDocs[q.id] ? (
                       <CTooltip content="Télécharger PDF">
                         <a href={DocumentDataService.downloadUrl(quittanceDocs[q.id].id)} target="_blank" rel="noopener noreferrer">
-                          <CButton color="light" size="sm" className="me-1">
-                            <CIcon icon={cilCloudDownload} />
-                          </CButton>
+                          <CButton color="light" size="sm" className="me-1"><CIcon icon={cilCloudDownload} /></CButton>
                         </a>
                       </CTooltip>
                     ) : (
-                      <CTooltip content="Générer PDF"><CButton color="light" size="sm" className="me-1" onClick={() => { setPrinting(q); setPrintModal(true); setPdfUrl(null) }}><CIcon icon={cilDescription} /></CButton></CTooltip>
+                      <CTooltip content="Générer PDF">
+                        <CButton color="light" size="sm" className="me-1" onClick={() => { setPrinting(q); setPrintModal(true); setPdfUrl(null) }}>
+                          <CIcon icon={cilDescription} />
+                        </CButton>
+                      </CTooltip>
                     )}
-                    <CTooltip content="Modifier"><CButton color="light" size="sm" className="me-1" onClick={() => openEdit(q)}><CIcon icon={cilPen} /></CButton></CTooltip>
-                    <CTooltip content="Supprimer"><CButton color="light" size="sm" onClick={() => { setToDelete(q); setDeleteModal(true) }}><CIcon icon={cilTrash} /></CButton></CTooltip>
-                  </CTableDataCell>
-                </CTableRow>
-              ))}
-            </CTableBody>
-          </CTable>
-        </CCardBody>
-      </CCard>
+                  </ActionButtons>
+                </CTableDataCell>
+              </CTableRow>
+            ))}
+          </CTableBody>
+        </CTable>
+      </EntityTableCard>
 
-      <CModal size="xl" alignment="center" visible={modalVisible} onClose={() => setModalVisible(false)}>
-        <CModalHeader><CModalTitle>{editing ? 'Modifier la quittance' : 'Nouvelle quittance'}</CModalTitle></CModalHeader>
-        <CModalBody>
-          <CForm className="row g-3" onSubmit={handleSubmit}>
-            <CCol md={6}><CFormSelect label="Locataire" name="tenant_id" value={form.tenant_id} onChange={handleChange}><option value="">-- Sélectionner --</option>{tenants.map((t) => <option key={t.id} value={t.id}>{`${t.civility || ''} ${t.firstname} ${t.lastname}`}</option>)}</CFormSelect></CCol>
-            <CCol md={6}><CFormSelect label="Bien" name="property_id" value={form.property_id} onChange={handleChange}><option value="">-- Sélectionner --</option>{properties.map((p) => <option key={p.id} value={p.id}>{`${p.type} - ${p.address}, ${p.city}`}</option>)}</CFormSelect></CCol>
-            <CCol md={6}><CFormSelect label="Bail associé (optionnel)" name="lease_id" value={form.lease_id} onChange={handleChange}><option value="">-- Aucun --</option>{leases.map((l) => <option key={l.id} value={l.id}>{`Bail ${l.Property?.city || ''} — ${l.start_date}`}</option>)}</CFormSelect></CCol>
-            <CCol md={6}><CFormInput type="text" name="period" label="Période (ex: Janvier 2024)" value={form.period} onChange={handleChange} required /></CCol>
-            <CCol md={4}><CFormInput type="number" name="rent_amount" label="Loyer hors charges (€)" value={form.rent_amount} onChange={handleChange} required /></CCol>
-            <CCol md={4}><CFormInput type="number" name="charges_amount" label="Charges (€)" value={form.charges_amount} onChange={handleChange} /></CCol>
-            <CCol md={4}><CFormInput type="number" name="total_amount" label="Total (€)" value={(rent + charges).toFixed(2)} readOnly /></CCol>
-            <CCol md={6}><CFormInput type="date" name="issue_date" label="Date d'émission" value={form.issue_date} onChange={handleChange} required /></CCol>
-            <hr />
-            <CCol md={12} className="d-flex gap-2 justify-content-end">
-              <CButton color="secondary" onClick={() => setModalVisible(false)}>Annuler</CButton>
-              <CButton color="primary" type="submit">{editing ? 'Modifier' : 'Créer'}</CButton>
-            </CCol>
-          </CForm>
-        </CModalBody>
-      </CModal>
+      <CrudModal
+        visible={modalVisible}
+        editing={editing}
+        addTitle="Nouvelle quittance"
+        editTitle="Modifier la quittance"
+        size="xl"
+        onClose={() => setModalVisible(false)}
+        onSubmit={handleSubmit}
+        submitLabel={editing ? 'Modifier' : 'Créer'}
+      >
+        <CCol md={6}><CFormSelect label="Locataire" name="tenant_id" value={form.tenant_id} onChange={handleQuittanceChange}><option value="">-- Sélectionner --</option>{tenants.map((t) => <option key={t.id} value={t.id}>{`${t.civility || ''} ${t.firstname} ${t.lastname}`}</option>)}</CFormSelect></CCol>
+        <CCol md={6}><CFormSelect label="Bien" name="property_id" value={form.property_id} onChange={handleQuittanceChange}><option value="">-- Sélectionner --</option>{properties.map((p) => <option key={p.id} value={p.id}>{`${p.type} - ${p.address}, ${p.city}`}</option>)}</CFormSelect></CCol>
+        <CCol md={6}><CFormSelect label="Bail associé (optionnel)" name="lease_id" value={form.lease_id} onChange={handleQuittanceChange}><option value="">-- Aucun --</option>{leases.map((l) => <option key={l.id} value={l.id}>{`Bail ${l.Property?.city || ''} — ${l.start_date}`}</option>)}</CFormSelect></CCol>
+        <CCol md={6}><CFormInput type="text" name="period" label="Période (ex: Janvier 2024)" value={form.period} onChange={handleQuittanceChange} required /></CCol>
+        <CCol md={4}><CFormInput type="number" name="rent_amount" label="Loyer hors charges (€)" value={form.rent_amount} onChange={handleQuittanceChange} required /></CCol>
+        <CCol md={4}><CFormInput type="number" name="charges_amount" label="Charges (€)" value={form.charges_amount} onChange={handleQuittanceChange} /></CCol>
+        <CCol md={4}><CFormInput type="number" name="total_amount" label="Total (€)" value={(rent + charges).toFixed(2)} readOnly /></CCol>
+        <CCol md={6}><CFormInput type="date" name="issue_date" label="Date d'émission" value={form.issue_date} onChange={handleQuittanceChange} required /></CCol>
+      </CrudModal>
 
       {printing && (
         <CModal size="lg" alignment="center" visible={printModal} onClose={() => { setPrintModal(false); setPdfUrl(null) }}>
@@ -235,16 +228,12 @@ const Quittances = () => {
         </CModal>
       )}
 
-      <CModal alignment="center" visible={deleteModal} onClose={() => setDeleteModal(false)}>
-        <CModalHeader><CModalTitle>Suppression</CModalTitle></CModalHeader>
-        <CModalBody>
-          <p>Supprimer la quittance <strong>{toDelete?.number}</strong> ?</p>
-          <div className="d-flex gap-2 justify-content-end">
-            <CButton color="secondary" onClick={() => setDeleteModal(false)}>Annuler</CButton>
-            <CButton color="danger" onClick={handleDelete}>Supprimer</CButton>
-          </div>
-        </CModalBody>
-      </CModal>
+      <DeleteModal
+        visible={deleteModal}
+        itemLabel={toDelete ? `la quittance ${toDelete.number || ''}` : undefined}
+        onClose={() => setDeleteModal(false)}
+        onConfirm={handleDelete}
+      />
     </>
   )
 }

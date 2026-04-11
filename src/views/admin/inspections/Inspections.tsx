@@ -6,14 +6,21 @@ import LeaseDataService from '../../../services/lease.service'
 import DocumentsSection from '../../../components/DocumentsSection'
 import PdfDataService from '../../../services/pdf.service'
 import DocumentDataService from '../../../services/document.service'
+import ActionButtons from '../../../components/ActionButtons'
+import CrudModal from '../../../components/CrudModal'
+import DeleteModal from '../../../components/DeleteModal'
+import EntityTableCard from '../../../components/EntityTableCard'
+import StatCard from '../../../components/StatCard'
+import TableEmptyRow from '../../../components/TableEmptyRow'
+import useEntityCrud from '../../../hooks/useEntityCrud'
 import {
-  CCard, CCardBody, CCardHeader, CCol, CRow, CTable, CTableBody, CTableDataCell,
+  CCol, CRow, CTable, CTableBody, CTableDataCell,
   CTableHead, CTableHeaderCell, CTableRow, CBadge, CButton, CModal, CModalHeader,
-  CModalTitle, CModalBody, CForm, CFormInput, CFormSelect, CFormTextarea, CTooltip,
+  CModalTitle, CModalBody, CFormInput, CFormSelect, CFormTextarea, CTooltip,
   CSpinner, CAlert,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilPlus, cilPen, cilTrash, cilInfo, cilDescription, cilExternalLink, cilCloudDownload } from '@coreui/icons'
+import { cilInfo, cilDescription, cilExternalLink, cilCloudDownload } from '@coreui/icons'
 import { DateUtils } from 'src/utils/date'
 
 const typeLabel: Record<string, string> = { entree: 'Entrée', sortie: 'Sortie' }
@@ -23,20 +30,27 @@ const statusColor: Record<string, string> = { pending: 'warning', completed: 'su
 const emptyForm = { property_id: '', tenant_id: '', lease_id: '', type: 'entree', date: new Date().toISOString().split('T')[0], status: 'pending', general_notes: '' }
 
 const Inspections = () => {
-  const [inspections, setInspections] = useState<any[]>([])
   const [tenants, setTenants] = useState<any[]>([])
   const [properties, setProperties] = useState<any[]>([])
   const [leases, setLeases] = useState<any[]>([])
-  const [modalVisible, setModalVisible] = useState(false)
   const [viewModal, setViewModal] = useState(false)
   const [pdfGenerating, setPdfGenerating] = useState(false)
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
-  const [deleteModal, setDeleteModal] = useState(false)
-  const [editing, setEditing] = useState<any>(null)
   const [viewing, setViewing] = useState<any>(null)
-  const [toDelete, setToDelete] = useState<any>(null)
-  const [form, setForm] = useState(emptyForm)
   const [inspectionDocs, setInspectionDocs] = useState<Record<number, any>>({})
+
+  const {
+    items: inspections,
+    modalVisible, setModalVisible,
+    deleteModal, setDeleteModal,
+    editing, toDelete, form, setForm,
+    handleChange, openCreate, openEdit, openDelete,
+    handleDelete: baseHandleDelete, fetchAll,
+  } = useEntityCrud({
+    service: InspectionDataService,
+    emptyForm,
+    toForm: (i) => ({ property_id: i.property_id || '', tenant_id: i.tenant_id || '', lease_id: i.lease_id || '', type: i.type, date: i.date, status: i.status, general_notes: i.general_notes || '' }),
+  })
 
   const fetchDocs = () =>
     DocumentDataService.getAll({ entity_type: 'inspection' })
@@ -47,26 +61,13 @@ const Inspections = () => {
       })
       .catch(console.error)
 
-  const fetchAll = () => InspectionDataService.getAll().then((r) => setInspections(r.data)).catch(console.error)
-
   useEffect(() => {
-    fetchAll()
     fetchDocs()
     TenantDataService.getAll().then((r) => setTenants(r.data))
     PropertyDataService.getAll().then((r) => setProperties(r.data))
     LeaseDataService.getAll().then((r) => setLeases(r.data))
   }, [])
 
-  const openCreate = () => { setEditing(null); setForm(emptyForm); setModalVisible(true) }
-  const openEdit = (i: any) => {
-    setEditing(i)
-    setForm({ property_id: i.property_id || '', tenant_id: i.tenant_id || '', lease_id: i.lease_id || '', type: i.type, date: i.date, status: i.status, general_notes: i.general_notes || '' })
-    setModalVisible(true)
-  }
-
-  const handleChange = (e: React.ChangeEvent<any>) => setForm({ ...form, [e.target.name]: e.target.value })
-
-  // Auto-remplit le locataire depuis le bail actif lié au bien
   const handlePropertyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const pid = e.target.value
     let tenantId = ''
@@ -97,7 +98,7 @@ const Inspections = () => {
     } catch (err) { console.error(err) }
   }
 
-  const handleDelete = async () => { await InspectionDataService.delete(toDelete.id); setDeleteModal(false); fetchAll(); fetchDocs() }
+  const handleDelete = async () => { await baseHandleDelete(); fetchDocs() }
 
   const openView = (i: any) => {
     const copy = { ...i }
@@ -109,41 +110,37 @@ const Inspections = () => {
   return (
     <>
       <CRow className="mb-4">
-        <CCol sm={4}><CCard className="text-white bg-success mb-3"><CCardBody><div className="fs-4 fw-semibold">{inspections.filter((i) => i.type === 'entree').length}</div><div>États d&apos;entrée</div></CCardBody></CCard></CCol>
-        <CCol sm={4}><CCard className="text-white bg-danger mb-3"><CCardBody><div className="fs-4 fw-semibold">{inspections.filter((i) => i.type === 'sortie').length}</div><div>États de sortie</div></CCardBody></CCard></CCol>
-        <CCol sm={4}><CCard className="text-white bg-warning mb-3"><CCardBody><div className="fs-4 fw-semibold">{inspections.filter((i) => i.status === 'pending').length}</div><div>En attente</div></CCardBody></CCard></CCol>
+        <StatCard value={inspections.filter((i) => i.type === 'entree').length} label="États d'entrée" color="success" />
+        <StatCard value={inspections.filter((i) => i.type === 'sortie').length} label="États de sortie" color="danger" />
+        <StatCard value={inspections.filter((i) => i.status === 'pending').length} label="En attente" color="warning" />
       </CRow>
 
-      <CCard>
-        <CCardHeader className="d-flex justify-content-between align-items-center">
-          <strong>États des lieux</strong>
-          <CButton color="primary" size="sm" onClick={openCreate}><CIcon icon={cilPlus} className="me-1" />Nouveau</CButton>
-        </CCardHeader>
-        <CCardBody>
-          <CTable align="middle" hover responsive bordered>
-            <CTableHead color="light">
-              <CTableRow>
-                <CTableHeaderCell>Type</CTableHeaderCell><CTableHeaderCell>Bien</CTableHeaderCell>
-                <CTableHeaderCell>Locataire</CTableHeaderCell><CTableHeaderCell>Date</CTableHeaderCell>
-                <CTableHeaderCell>Pièces vérifiées</CTableHeaderCell><CTableHeaderCell>Statut</CTableHeaderCell>
-                <CTableHeaderCell className="text-end">Actions</CTableHeaderCell>
-              </CTableRow>
-            </CTableHead>
-            <CTableBody>
-              {inspections.length === 0 ? (
-                <CTableRow><CTableDataCell colSpan={7} className="text-center text-muted">Aucun état des lieux</CTableDataCell></CTableRow>
-              ) : inspections.map((i) => {
-                let roomCount = 0
-                try { roomCount = i.rooms ? JSON.parse(i.rooms).length : 0 } catch { roomCount = 0 }
-                return (
-                  <CTableRow key={i.id}>
-                    <CTableDataCell><CBadge color={typeColor[i.type]}>{typeLabel[i.type]}</CBadge></CTableDataCell>
-                    <CTableDataCell>{i.Property ? `${i.Property.type} - ${i.Property.city}` : '-'}</CTableDataCell>
-                    <CTableDataCell>{i.Tenant ? `${i.Tenant.civility || ''} ${i.Tenant.lastname}` : '-'}</CTableDataCell>
-                    <CTableDataCell>{DateUtils.formatShort(i.date)}</CTableDataCell>
-                    <CTableDataCell>{roomCount} pièce{roomCount > 1 ? 's' : ''}</CTableDataCell>
-                    <CTableDataCell><CBadge color={statusColor[i.status]}>{statusLabel[i.status]}</CBadge></CTableDataCell>
-                    <CTableDataCell className="text-end">
+      <EntityTableCard title="États des lieux" addLabel="Nouveau" onAdd={openCreate}>
+        <CTable align="middle" hover responsive bordered>
+          <CTableHead color="light">
+            <CTableRow>
+              <CTableHeaderCell>Type</CTableHeaderCell><CTableHeaderCell>Bien</CTableHeaderCell>
+              <CTableHeaderCell>Locataire</CTableHeaderCell><CTableHeaderCell>Date</CTableHeaderCell>
+              <CTableHeaderCell>Pièces vérifiées</CTableHeaderCell><CTableHeaderCell>Statut</CTableHeaderCell>
+              <CTableHeaderCell className="text-end">Actions</CTableHeaderCell>
+            </CTableRow>
+          </CTableHead>
+          <CTableBody>
+            {inspections.length === 0 ? (
+              <TableEmptyRow colSpan={7} message="Aucun état des lieux" />
+            ) : inspections.map((i) => {
+              let roomCount = 0
+              try { roomCount = i.rooms ? JSON.parse(i.rooms).length : 0 } catch { roomCount = 0 }
+              return (
+                <CTableRow key={i.id}>
+                  <CTableDataCell><CBadge color={typeColor[i.type]}>{typeLabel[i.type]}</CBadge></CTableDataCell>
+                  <CTableDataCell>{i.Property ? `${i.Property.type} - ${i.Property.city}` : '-'}</CTableDataCell>
+                  <CTableDataCell>{i.Tenant ? `${i.Tenant.civility || ''} ${i.Tenant.lastname}` : '-'}</CTableDataCell>
+                  <CTableDataCell>{DateUtils.formatShort(i.date)}</CTableDataCell>
+                  <CTableDataCell>{roomCount} pièce{roomCount > 1 ? 's' : ''}</CTableDataCell>
+                  <CTableDataCell><CBadge color={statusColor[i.status]}>{statusLabel[i.status]}</CBadge></CTableDataCell>
+                  <CTableDataCell className="text-end">
+                    <ActionButtons onEdit={() => openEdit(i)} onDelete={() => openDelete(i)}>
                       {inspectionDocs[i.id] ? (
                         <CTooltip content="Télécharger PDF">
                           <a href={DocumentDataService.downloadUrl(inspectionDocs[i.id].id)} target="_blank" rel="noopener noreferrer">
@@ -151,37 +148,36 @@ const Inspections = () => {
                           </a>
                         </CTooltip>
                       ) : (
-                        <CTooltip content="Voir détails"><CButton color="light" size="sm" className="me-1" onClick={() => openView(i)}><CIcon icon={cilInfo} /></CButton></CTooltip>
+                        <CTooltip content="Voir détails">
+                          <CButton color="light" size="sm" className="me-1" onClick={() => openView(i)}><CIcon icon={cilInfo} /></CButton>
+                        </CTooltip>
                       )}
-                      <CTooltip content="Modifier"><CButton color="light" size="sm" className="me-1" onClick={() => openEdit(i)}><CIcon icon={cilPen} /></CButton></CTooltip>
-                      <CTooltip content="Supprimer"><CButton color="light" size="sm" onClick={() => { setToDelete(i); setDeleteModal(true) }}><CIcon icon={cilTrash} /></CButton></CTooltip>
-                    </CTableDataCell>
-                  </CTableRow>
-                )
-              })}
-            </CTableBody>
-          </CTable>
-        </CCardBody>
-      </CCard>
+                    </ActionButtons>
+                  </CTableDataCell>
+                </CTableRow>
+              )
+            })}
+          </CTableBody>
+        </CTable>
+      </EntityTableCard>
 
-      <CModal size="xl" alignment="center" visible={modalVisible} onClose={() => setModalVisible(false)}>
-        <CModalHeader><CModalTitle>{editing ? "Modifier l'état des lieux" : 'Nouvel état des lieux'}</CModalTitle></CModalHeader>
-        <CModalBody>
-          <CForm className="row g-3" onSubmit={handleSubmit}>
-            <CCol md={6}><CFormSelect label="Bien" name="property_id" value={form.property_id} onChange={handlePropertyChange} required><option value="">-- Sélectionner --</option>{properties.map((p) => <option key={p.id} value={p.id}>{`${p.type} - ${p.address}, ${p.city}`}</option>)}</CFormSelect></CCol>
-            <CCol md={6}><CFormSelect label="Locataire" name="tenant_id" value={form.tenant_id} onChange={handleChange}><option value="">-- Sélectionner --</option>{tenants.map((t) => <option key={t.id} value={t.id}>{`${t.civility || ''} ${t.firstname} ${t.lastname}`}</option>)}</CFormSelect></CCol>
-            <CCol md={4}><CFormSelect label="Type" name="type" value={form.type} onChange={handleChange}><option value="entree">État d'entrée</option><option value="sortie">État de sortie</option></CFormSelect></CCol>
-            <CCol md={4}><CFormInput type="date" name="date" label="Date" value={form.date} onChange={handleChange} required /></CCol>
-            <CCol md={4}><CFormSelect label="Statut" name="status" value={form.status} onChange={handleChange}><option value="pending">En attente</option><option value="completed">Complété</option></CFormSelect></CCol>
-            <CCol md={12}><CFormTextarea label="Observations générales" name="general_notes" rows={2} value={form.general_notes} onChange={handleChange} /></CCol>
-            <hr />
-            <CCol md={12} className="d-flex gap-2 justify-content-end">
-              <CButton color="secondary" onClick={() => setModalVisible(false)}>Annuler</CButton>
-              <CButton color="primary" type="submit">{editing ? 'Modifier' : 'Créer'}</CButton>
-            </CCol>
-          </CForm>
-        </CModalBody>
-      </CModal>
+      <CrudModal
+        visible={modalVisible}
+        editing={editing}
+        addTitle="Nouvel état des lieux"
+        editTitle="Modifier l'état des lieux"
+        size="xl"
+        onClose={() => setModalVisible(false)}
+        onSubmit={handleSubmit}
+        submitLabel={editing ? 'Modifier' : 'Créer'}
+      >
+        <CCol md={6}><CFormSelect label="Bien" name="property_id" value={form.property_id} onChange={handlePropertyChange} required><option value="">-- Sélectionner --</option>{properties.map((p) => <option key={p.id} value={p.id}>{`${p.type} - ${p.address}, ${p.city}`}</option>)}</CFormSelect></CCol>
+        <CCol md={6}><CFormSelect label="Locataire" name="tenant_id" value={form.tenant_id} onChange={handleChange}><option value="">-- Sélectionner --</option>{tenants.map((t) => <option key={t.id} value={t.id}>{`${t.civility || ''} ${t.firstname} ${t.lastname}`}</option>)}</CFormSelect></CCol>
+        <CCol md={4}><CFormSelect label="Type" name="type" value={form.type} onChange={handleChange}><option value="entree">État d'entrée</option><option value="sortie">État de sortie</option></CFormSelect></CCol>
+        <CCol md={4}><CFormInput type="date" name="date" label="Date" value={form.date} onChange={handleChange} required /></CCol>
+        <CCol md={4}><CFormSelect label="Statut" name="status" value={form.status} onChange={handleChange}><option value="pending">En attente</option><option value="completed">Complété</option></CFormSelect></CCol>
+        <CCol md={12}><CFormTextarea label="Observations générales" name="general_notes" rows={2} value={form.general_notes} onChange={handleChange} /></CCol>
+      </CrudModal>
 
       {viewing && (
         <CModal size="lg" alignment="center" visible={viewModal} onClose={() => { setViewModal(false); setPdfUrl(null) }}>
@@ -196,7 +192,7 @@ const Inspections = () => {
               <CCol sm={6}><div className="text-muted small">Locataire</div><div className="fw-semibold">{viewing.Tenant ? `${viewing.Tenant.civility || ''} ${viewing.Tenant.firstname} ${viewing.Tenant.lastname}` : '-'}</div></CCol>
               <CCol sm={3}><div className="text-muted small">Date</div><div className="fw-semibold">{DateUtils.formatShort(viewing.date)}</div></CCol>
               <CCol sm={3}><div className="text-muted small">Statut</div><CBadge color={statusColor[viewing.status]}>{statusLabel[viewing.status]}</CBadge></CCol>
-            <CCol sm={12}><div className="text-muted small">Observations générales</div><div>{viewing.general_notes || <span className="text-muted fst-italic">Aucune observation</span>}</div></CCol>
+              <CCol sm={12}><div className="text-muted small">Observations générales</div><div>{viewing.general_notes || <span className="text-muted fst-italic">Aucune observation</span>}</div></CCol>
             </CRow>
             {viewing._rooms && viewing._rooms.length > 0 && (
               <>
@@ -204,8 +200,8 @@ const Inspections = () => {
                 <CTable bordered small className="mt-2">
                   <CTableHead color="light"><CTableRow><CTableHeaderCell>Pièce</CTableHeaderCell><CTableHeaderCell>État</CTableHeaderCell><CTableHeaderCell>Observations</CTableHeaderCell></CTableRow></CTableHead>
                   <CTableBody>
-                    {viewing._rooms.map((r: any, i: number) => (
-                      <CTableRow key={i}>
+                    {viewing._rooms.map((r: any, idx: number) => (
+                      <CTableRow key={idx}>
                         <CTableDataCell>{r.name}</CTableDataCell>
                         <CTableDataCell><CBadge color={r.condition === 'Très bon état' || r.condition === 'Bon état' ? 'success' : r.condition === 'État moyen' ? 'warning' : 'danger'}>{r.condition}</CBadge></CTableDataCell>
                         <CTableDataCell>{r.notes || '-'}</CTableDataCell>
@@ -231,8 +227,12 @@ const Inspections = () => {
             <div className="d-flex justify-content-end gap-2">
               <CButton color="info" variant="outline" disabled={pdfGenerating} onClick={async () => {
                 setPdfGenerating(true)
-                try { const r = await PdfDataService.generateEtatDesLieux(viewing.id); const doc = r.data.document; setPdfUrl(DocumentDataService.downloadUrl(doc.id)); setInspectionDocs((prev) => ({ ...prev, [viewing.id]: doc })) }
-                catch (e: any) { console.error(e) }
+                try {
+                  const r = await PdfDataService.generateEtatDesLieux(viewing.id)
+                  const doc = r.data.document
+                  setPdfUrl(DocumentDataService.downloadUrl(doc.id))
+                  setInspectionDocs((prev) => ({ ...prev, [viewing.id]: doc }))
+                } catch (e) { console.error(e) }
                 finally { setPdfGenerating(false) }
               }}>
                 {pdfGenerating ? <CSpinner size="sm" className="me-1" /> : <CIcon icon={cilDescription} className="me-1" />}
@@ -244,16 +244,12 @@ const Inspections = () => {
         </CModal>
       )}
 
-      <CModal alignment="center" visible={deleteModal} onClose={() => setDeleteModal(false)}>
-        <CModalHeader><CModalTitle>Suppression</CModalTitle></CModalHeader>
-        <CModalBody>
-          <p>Supprimer cet état des lieux du <strong>{toDelete?.date}</strong> ?</p>
-          <div className="d-flex gap-2 justify-content-end">
-            <CButton color="secondary" onClick={() => setDeleteModal(false)}>Annuler</CButton>
-            <CButton color="danger" onClick={handleDelete}>Supprimer</CButton>
-          </div>
-        </CModalBody>
-      </CModal>
+      <DeleteModal
+        visible={deleteModal}
+        itemLabel={toDelete ? `l'état des lieux du ${toDelete.date}` : undefined}
+        onClose={() => setDeleteModal(false)}
+        onConfirm={handleDelete}
+      />
     </>
   )
 }
