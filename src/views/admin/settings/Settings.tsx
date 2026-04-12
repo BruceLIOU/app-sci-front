@@ -13,6 +13,11 @@ import {
   CAlert,
   CSpinner,
   CBadge,
+  CNav,
+  CNavItem,
+  CNavLink,
+  CTabContent,
+  CTabPane,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilCheckCircle, cilXCircle } from '@coreui/icons'
@@ -51,6 +56,7 @@ const Settings: React.FC = () => {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [googleCalendarsError, setGoogleCalendarsError] = useState(false)
   const [googleAlert, setGoogleAlert] = useState<{ type: 'success' | 'danger' | 'info'; message: string } | null>(null)
+  const [activeTab, setActiveTab] = useState<'sci' | 'google'>('sci')
 
   const fetchGoogleCalendars = async () => {
     setGoogleCalendarsError(false)
@@ -202,12 +208,37 @@ const Settings: React.FC = () => {
       <CCol xs={12} lg={10} xl={8}>
         <CCard className="mb-4">
           <CCardHeader>
-            <strong>Paramètres de la SCI</strong>
-            <small className="ms-2 text-muted">
-              Ces informations apparaissent sur les documents générés (bail, quittances, attestations…)
-            </small>
+            <strong>Paramètres</strong>
           </CCardHeader>
-          <CCardBody>
+          <CCardBody className="p-0">
+            <CNav variant="tabs" className="px-3 pt-3">
+              <CNavItem>
+                <CNavLink
+                  active={activeTab === 'sci'}
+                  onClick={() => setActiveTab('sci')}
+                  style={{ cursor: 'pointer' }}
+                >
+                  SCI
+                </CNavLink>
+              </CNavItem>
+              <CNavItem>
+                <CNavLink
+                  active={activeTab === 'google'}
+                  onClick={() => setActiveTab('google')}
+                  style={{ cursor: 'pointer' }}
+                >
+                  Google Calendar
+                  {googleConnected ? (
+                    <CBadge color="success" className="ms-2">Connecté</CBadge>
+                  ) : (
+                    <CBadge color="secondary" className="ms-2">Non connecté</CBadge>
+                  )}
+                </CNavLink>
+              </CNavItem>
+            </CNav>
+
+            <CTabContent className="p-3">
+              <CTabPane visible={activeTab === 'sci'}>
             {saved && (
               <CAlert color="success" dismissible onClose={() => setSaved(false)}>
                 Paramètres enregistrés avec succès.
@@ -395,30 +426,9 @@ const Settings: React.FC = () => {
                 )}
               </CButton>
             </div>
-          </CCardBody>
-        </CCard>
+              </CTabPane>
 
-        <CCard className="mb-4">
-          <CCardHeader className="d-flex align-items-center justify-content-between">
-            <div>
-              <strong>Google Calendar</strong>
-              <small className="ms-2 text-muted">
-                Synchronisation des visites avec votre agenda Google.
-              </small>
-            </div>
-            {googleConnected ? (
-              <CBadge color="success" className="d-flex align-items-center gap-1">
-                <CIcon icon={cilCheckCircle} size="sm" />
-                Connecté
-              </CBadge>
-            ) : (
-              <CBadge color="secondary" className="d-flex align-items-center gap-1">
-                <CIcon icon={cilXCircle} size="sm" />
-                Non connecté
-              </CBadge>
-            )}
-          </CCardHeader>
-          <CCardBody>
+              <CTabPane visible={activeTab === 'google'}>
             {googleAlert && (
               <CAlert color={googleAlert.type} dismissible onClose={() => setGoogleAlert(null)}>
                 {googleAlert.message}
@@ -509,6 +519,8 @@ const Settings: React.FC = () => {
                 </CButton>
               </div>
             )}
+              </CTabPane>
+            </CTabContent>
           </CCardBody>
         </CCard>
       </CCol>
