@@ -27,6 +27,7 @@ import { cilCheckCircle, cilXCircle, cilLockLocked, cilLockUnlocked } from '@cor
 import SciConfigDataService, { SciConfigData } from '../../../services/sci_config.service'
 import AssociateDataService from '../../../services/associate.service'
 import VisitDataService from '../../../services/visit.service'
+import PropertyDataService from '../../../services/property.service'
 import http from '../../../utils/http-common'
 
 interface Associate {
@@ -43,6 +44,13 @@ interface GoogleCalendar {
   id: string
   summary: string
   primary: boolean
+}
+
+interface Property {
+  id: number
+  name: string
+  address?: string
+  city?: string
 }
 
 const Settings: React.FC = () => {
@@ -62,6 +70,7 @@ const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'sci' | 'google' | 'smtp' | 'imap' | 'cron'>('sci')
   const [showSmtpPass, setShowSmtpPass] = useState(false)
   const [showImapPass, setShowImapPass] = useState(false)
+  const [properties, setProperties] = useState<Property[]>([])
 
   const fetchGoogleCalendars = async () => {
     setGoogleCalendarsError(false)
@@ -93,6 +102,10 @@ const Settings: React.FC = () => {
         setGoogleConnected(r.data.connected)
         if (r.data.connected) fetchGoogleCalendars()
       })
+      .catch(() => {})
+
+    PropertyDataService.getAll()
+      .then((r) => setProperties(r.data))
       .catch(() => {})
   }, [])
 
@@ -745,14 +758,20 @@ const Settings: React.FC = () => {
                     <div className="form-text">Les emails reçus de cet expéditeur seront traités.</div>
                   </CCol>
                   <CCol md={4}>
-                    <CFormLabel>ID du bien associé</CFormLabel>
-                    <CFormInput
-                      type="number"
+                    <CFormLabel>Bien associé</CFormLabel>
+                    <CFormSelect
                       name="matera_property_id"
                       value={config.matera_property_id ?? ''}
-                      onChange={handleChange}
-                      placeholder="1"
-                    />
+                      onChange={handleChange as React.ChangeEventHandler<HTMLSelectElement>}
+                      disabled={properties.length === 0}
+                    >
+                      <option value="">— Aucun bien —</option>
+                      {properties.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}{p.city ? ` — ${p.city}` : ''}
+                        </option>
+                      ))}
+                    </CFormSelect>
                     <div className="form-text">Les charges seront liées à ce bien.</div>
                   </CCol>
                 </CRow>
