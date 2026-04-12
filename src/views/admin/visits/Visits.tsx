@@ -1,39 +1,24 @@
-import React, { useState, useEffect, useCallback } from 'react'
-import { Calendar, dateFnsLocalizer, SlotInfo, View } from 'react-big-calendar'
-import { format, parse, startOfWeek, getDay } from 'date-fns'
-import { fr } from 'date-fns/locale'
-import 'react-big-calendar/lib/css/react-big-calendar.css'
+import { useState, useEffect, useCallback, FC, ChangeEvent } from 'react'
+import FullCalendar from '@fullcalendar/react'
+import dayGridPlugin from '@fullcalendar/daygrid'
+import timeGridPlugin from '@fullcalendar/timegrid'
+import interactionPlugin from '@fullcalendar/interaction'
+import listPlugin from '@fullcalendar/list'
+import frLocale from '@fullcalendar/core/locales/fr'
+import type { DateSelectArg, EventClickArg } from '@fullcalendar/core'
+import { format } from 'date-fns'
 import {
-  CRow, CCol, CCard, CCardBody, CCardHeader,
+  CRow, CCol, CCard, CCardBody,
   CButton, CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter,
   CForm, CFormInput, CFormLabel, CFormSelect, CFormTextarea,
   CAlert, CBadge, CSpinner,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilCalendar, cilCheckCircle, cilXCircle, cilPlus, cilTrash } from '@coreui/icons'
+import { cilCalendar, cilPlus, cilTrash } from '@coreui/icons'
 import { useNavigate } from 'react-router-dom'
 import VisitDataService from '../../../services/visit.service'
 import PropertyDataService from '../../../services/property.service'
 import TenantDataService from '../../../services/tenant.service'
-
-const locales = { fr }
-const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales })
-
-const messages = {
-  allDay: 'Journée',
-  previous: '‹',
-  next: '›',
-  today: "Aujourd'hui",
-  month: 'Mois',
-  week: 'Semaine',
-  day: 'Jour',
-  agenda: 'Agenda',
-  date: 'Date',
-  time: 'Heure',
-  event: 'Visite',
-  noEventsInRange: 'Aucune visite sur cette période.',
-  showMore: (total: number) => `+ ${total} de plus`,
-}
 
 const typeColor: Record<string, string> = { visite: '#3b82f6', rdv: '#8b5cf6', autre: '#6b7280' }
 const statusColor: Record<string, string> = { scheduled: 'primary', completed: 'success', cancelled: 'danger' }
@@ -57,14 +42,17 @@ const emptyForm = {
 }
 
 interface CalEvent {
-  id: number
+  id: string
   title: string
   start: Date
   end: Date
-  resource: any
+  backgroundColor: string
+  borderColor: string
+  textColor: string
+  extendedProps: any
 }
 
-const Visits: React.FC = () => {
+const Visits: FC = () => {
   const navigate = useNavigate()
 
   const [events, setEvents] = useState<CalEvent[]>([])
@@ -81,9 +69,6 @@ const Visits: React.FC = () => {
   const [form, setForm] = useState({ ...emptyForm })
   const [saving, setSaving] = useState(false)
 
-  const [view, setView] = useState<View>('month')
-  const [date, setDate] = useState(new Date())
-
   // ─── Chargement initial ───────────────────────────────────────────────────
 
   const fetchVisits = useCallback(async () => {
@@ -91,10 +76,19 @@ const Visits: React.FC = () => {
       const { data } = await VisitDataService.getAll()
       setEvents(
         data.map((v: any) => {
-          const [hh, mm] = v.time.split(':').map(Number)
           const start = new Date(`${v.date}T${v.time}:00`)
           const end = new Date(start.getTime() + v.duration * 60_000)
-          return { id: v.id, title: v.title, start, end, resource: v }
+          const color = typeColor[v.type] || '#6b7280'
+          return {
+            id: String(v.id),
+            title: v.title,
+            start,
+            end,
+            backgroundColor: color,
+            borderColor: color,
+            textColor: '#fff',
+            extendedProps: v,
+          }
         }),
       )
     } catch {
@@ -122,7 +116,7 @@ const Visits: React.FC = () => {
 
   // ─── Formulaire ──────────────────────────────────────────────────────────
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setForm((prev) => {
       const updated = { ...prev, [name]: value }
@@ -135,16 +129,15 @@ const Visits: React.FC = () => {
     })
   }
 
-  const openCreate = (slot?: SlotInfo) => {
-    const d = slot ? format(slot.start, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')
-    const t = slot && view !== 'month' ? format(slot.start, 'HH:mm') : '10:00'
+  const openCreate = (slot?: { date: string; time: string }) => {
+    const d = slot?.date ?? format(new Date(), 'yyyy-MM-dd')
+    const t = slot?.time ?? '10:00'
     setEditing(null)
     setForm({ ...emptyForm, date: d, time: t })
     setModalVisible(true)
   }
 
-  const openEdit = (event: CalEvent) => {
-    const v = event.resource
+  const openEdit = (v: any) => {
     setEditing(v)
     setForm({
       title: v.title || '',
@@ -199,24 +192,6 @@ const Visits: React.FC = () => {
     }
   }
 
-  // ─── Style des événements ─────────────────────────────────────────────────
-
-  const eventStyleGetter = (event: CalEvent) => {
-    const color = typeColor[event.resource?.type] || '#6b7280'
-    const opacity = event.resource?.status === 'cancelled' ? 0.45 : 1
-    return {
-      style: {
-        backgroundColor: color,
-        borderColor: color,
-        opacity,
-        borderRadius: '6px',
-        color: '#fff',
-        fontSize: '0.8rem',
-        padding: '2px 6px',
-      },
-    }
-  }
-
   const filteredTenants = form.property_id
     ? tenants.filter((t: any) => String(t.property_id) === form.property_id)
     : tenants
@@ -252,23 +227,33 @@ const Visits: React.FC = () => {
               <CSpinner />
             </div>
           ) : (
-            <Calendar
-              localizer={localizer}
+            <FullCalendar
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
+              locale={frLocale}
+              initialView="dayGridMonth"
+              headerToolbar={{
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek',
+              }}
               events={events}
-              culture="fr"
-              messages={messages}
-              view={view}
-              onView={setView}
-              date={date}
-              onNavigate={setDate}
-              style={{ height: 620 }}
-              eventPropGetter={eventStyleGetter}
+              height={620}
               selectable
-              onSelectSlot={openCreate}
-              onSelectEvent={openEdit}
-              popup
-              startAccessor="start"
-              endAccessor="end"
+              select={(arg: DateSelectArg) => {
+                const d = format(arg.start, 'yyyy-MM-dd')
+                const t = arg.allDay ? '10:00' : format(arg.start, 'HH:mm')
+                openCreate({ date: d, time: t })
+              }}
+              eventClick={(arg: EventClickArg) => {
+                openEdit({ id: Number(arg.event.id), ...arg.event.extendedProps })
+              }}
+              eventDidMount={(info) => {
+                if (info.event.extendedProps.status === 'cancelled') {
+                  info.el.style.opacity = '0.45'
+                }
+              }}
+              dayMaxEvents
+              nowIndicator
             />
           )}
         </CCardBody>
