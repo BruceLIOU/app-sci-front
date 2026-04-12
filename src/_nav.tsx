@@ -23,6 +23,7 @@ interface NavItem {
   to?: string
   icon?: React.ReactNode
   items?: NavItem[]
+  roles?: ('admin' | 'viewer')[]
 }
 
 const _nav: NavItem[] = [
@@ -69,30 +70,35 @@ const _nav: NavItem[] = [
   {
     component: CNavTitle,
     name: 'Finance',
+    roles: ['admin'],
   },
   {
     component: CNavItem,
     name: 'Paiements',
     to: '/admin/payments',
     icon: <CIcon icon={cilEuro} customClassName="nav-icon" />,
+    roles: ['admin'],
   },
   {
     component: CNavItem,
     name: 'Quittances',
     to: '/admin/quittances',
     icon: <CIcon icon={cilList} customClassName="nav-icon" />,
+    roles: ['admin'],
   },
   {
     component: CNavItem,
     name: 'Charges',
     to: '/admin/charges',
     icon: <CIcon icon={cilBuilding} customClassName="nav-icon" />,
+    roles: ['admin'],
   },
   {
     component: CNavItem,
     name: 'Comptabilité',
     to: '/admin/comptability',
     icon: <CIcon icon={cilChartLine} customClassName="nav-icon" />,
+    roles: ['admin'],
   },
   {
     component: CNavTitle,
@@ -109,6 +115,7 @@ const _nav: NavItem[] = [
     name: 'Déclaration 2072',
     to: '/admin/declarations',
     icon: <CIcon icon={cilChartLine} customClassName="nav-icon" />,
+    roles: ['admin'],
   },
   {
     component: CNavItem,
@@ -119,12 +126,14 @@ const _nav: NavItem[] = [
   {
     component: CNavTitle,
     name: 'Application',
+    roles: ['admin'],
   },
   {
     component: CNavItem,
     name: 'Utilisateurs',
     to: '/admin/users',
     icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
+    roles: ['admin'],
   },
 ]
 

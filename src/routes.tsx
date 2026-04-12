@@ -22,6 +22,7 @@ interface Route {
   name: string
   element?: React.ComponentType
   exact?: boolean
+  roles?: ('admin' | 'viewer')[]
 }
 
 const routes: Route[] = [
@@ -32,17 +33,17 @@ const routes: Route[] = [
   { path: '/admin/tenants', name: 'Mes locataires', element: Tenants },
   { path: '/admin/leases', name: 'Baux', element: Leases },
   { path: '/admin/inspections', name: 'États des lieux', element: Inspections },
-  { path: '/admin/payments', name: 'Paiements', element: Payments },
-  { path: '/admin/quittances', name: 'Quittances', element: Quittances },
-  { path: '/admin/charges', name: 'Charges', element: Charges },
-  { path: '/admin/comptability', name: 'Comptabilité', element: Comptability },
+  { path: '/admin/payments', name: 'Paiements', element: Payments, roles: ['admin'] },
+  { path: '/admin/quittances', name: 'Quittances', element: Quittances, roles: ['admin'] },
+  { path: '/admin/charges', name: 'Charges', element: Charges, roles: ['admin'] },
+  { path: '/admin/comptability', name: 'Comptabilité', element: Comptability, roles: ['admin'] },
   { path: '/admin/associates', name: 'Associés', element: Associates },
-  { path: '/admin/declarations', name: 'Déclaration 2072', element: Declarations },
+  { path: '/admin/declarations', name: 'Déclaration 2072', element: Declarations, roles: ['admin'] },
   { path: '/admin/documents', name: 'Documents', element: Documents },
   { path: '/admin/settings', name: 'Paramètres', element: Settings },
   { path: '/admin/visits', name: 'Calendrier des visites', element: Visits },
   { path: '/admin/profile', name: 'Mon profil', element: Profile },
-  { path: '/admin/users', name: 'Utilisateurs', element: Users },
+  { path: '/admin/users', name: 'Utilisateurs', element: Users, roles: ['admin'] },
 ]
 
 export default routes

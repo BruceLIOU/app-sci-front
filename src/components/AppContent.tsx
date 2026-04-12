@@ -1,22 +1,36 @@
 import React, { Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { CContainer, CSpinner } from '@coreui/react'
+import { useSelector } from 'react-redux'
+import { RootState } from '../store'
 import routes from '../routes'
 
 const AppContent = () => {
+  const userRole = useSelector((state: RootState) => state.auth.user?.role ?? 'viewer')
+
   return (
     <CContainer lg>
       <Suspense fallback={<CSpinner color="primary" />}>
         <Routes>
-          {routes.map((route, idx) => (
-            route.element && (
+          {routes.map((route, idx) => {
+            if (!route.element) return null
+            if (route.roles && !route.roles.includes(userRole as any)) {
+              return (
+                <Route
+                  key={idx}
+                  path={route.path}
+                  element={<Navigate to="/dashboard" replace />}
+                />
+              )
+            }
+            return (
               <Route
                 key={idx}
                 path={route.path}
                 element={<route.element />}
               />
             )
-          ))}
+          })}
           <Route path="/" element={<Navigate to="dashboard" replace />} />
         </Routes>
       </Suspense>

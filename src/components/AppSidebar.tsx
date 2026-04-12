@@ -14,6 +14,11 @@ const AppSidebar = () => {
   const dispatch = useDispatch()
   const unfoldable = useSelector((state: RootState) => state.ui.sidebarUnfoldable)
   const sidebarShow = useSelector((state: RootState) => state.ui.sidebarShow)
+  const userRole = useSelector((state: RootState) => state.auth.user?.role ?? 'viewer')
+
+  const filteredNav = navigation.filter(
+    (item) => !item.roles || item.roles.includes(userRole as any),
+  )
 
   return (
     <CSidebar
@@ -27,7 +32,7 @@ const AppSidebar = () => {
       </CSidebarBrand>
       <CSidebarNav>
         <SimpleBar>
-          <AppSidebarNav items={navigation} />
+          <AppSidebarNav items={filteredNav} />
         </SimpleBar>
       </CSidebarNav>
       <CSidebarToggler
