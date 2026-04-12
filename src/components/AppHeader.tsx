@@ -55,7 +55,7 @@ const AppHeader = () => {
   }
 
   return (
-    <CHeader position="sticky" className="mb-4">
+    <CHeader position="sticky" className="mb-4 app-header">
       <CContainer fluid>
         <CHeaderToggler
           className="ps-1"
@@ -66,12 +66,18 @@ const AppHeader = () => {
         <CHeaderBrand className="mx-auto d-md-none">
           <CIcon icon={logo} height={48} />
         </CHeaderBrand>
-        <CHeaderNav className="d-none d-md-flex me-auto"></CHeaderNav>
+        <CHeaderNav className="d-none d-md-flex me-auto">
+          <div className="app-toolbar-meta ms-3">
+            <span className="app-toolbar-badge">Pilotage locatif</span>
+            <span className="app-toolbar-subtitle">Vue centralisee des biens, flux et alertes</span>
+          </div>
+        </CHeaderNav>
         <CHeaderNav>
           <CNavItem>
             <div ref={containerRef} style={{ position: 'relative' }}>
               <CNavLink
-                style={{ cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', padding: '0.4rem 0.6rem' }}
+                className="app-notification-trigger"
+                style={{ cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', padding: '0.55rem 0.8rem' }}
                 onClick={handleBellClick}
               >
                 <CIcon icon={cilBell} size="lg" />
@@ -87,15 +93,11 @@ const AppHeader = () => {
               </CNavLink>
 
               {popoverOpen && (
-                <div style={{
+                <div className="app-notification-popover" style={{
                   position: 'absolute',
                   top: 'calc(100% + 8px)',
                   right: 0,
                   width: 340,
-                  background: 'var(--cui-body-bg, #fff)',
-                  border: '1px solid var(--cui-border-color, #dee2e6)',
-                  borderRadius: 8,
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
                   zIndex: 1050,
                   overflow: 'hidden',
                 }}>
@@ -212,8 +214,8 @@ const AppHeader = () => {
           <AppHeaderDropdown />
         </CHeaderNav>
       </CContainer>
-      <CHeaderDivider />
-      <CContainer fluid>
+      <CHeaderDivider className="header-divider" />
+      <CContainer fluid className="app-breadcrumb-wrap">
         <AppBreadcrumb />
       </CContainer>
     </CHeader>

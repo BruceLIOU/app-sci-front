@@ -2,6 +2,39 @@
 //
 // If you want to customize your project please uncomment and update one of the following variables.
 
+$font-family-base: 'Manrope', sans-serif;
+$headings-font-family: 'Fraunces', serif;
+
+$primary: #0f766e;
+$secondary: #5b6475;
+$success: #15803d;
+$info: #0f766e;
+$warning: #c2410c;
+$danger: #be123c;
+$light: #f5f7f2;
+$dark: #12202f;
+
+$body-bg: #f3efe7;
+$body-color: #1d2939;
+
+$border-radius: 1rem;
+$border-radius-sm: 0.875rem;
+$border-radius-lg: 1.25rem;
+
+$sidebar-bg: #12202f;
+$sidebar-brand-bg: transparent;
+$sidebar-color: rgba(255, 248, 240, 0.76);
+$sidebar-nav-link-color: rgba(255, 248, 240, 0.74);
+$sidebar-nav-link-icon-color: rgba(186, 230, 216, 0.82);
+$sidebar-nav-link-hover-color: #fffdf8;
+$sidebar-nav-link-hover-bg: rgba(186, 230, 216, 0.1);
+$sidebar-nav-link-active-color: #fffdf8;
+$sidebar-nav-link-active-bg: linear-gradient(135deg, rgba(15, 118, 110, 0.96), rgba(13, 148, 136, 0.85));
+$sidebar-nav-link-active-icon-color: #ecfeff;
+
+$header-bg: rgba(255, 251, 245, 0.82);
+$header-border-color: rgba(18, 32, 47, 0.08);
+
 // Color system
 
 // scss-docs-start gray-color-variables

@@ -32,11 +32,11 @@ const EntityTableCard: React.FC<EntityTableCardProps> = ({
   const isAdmin = userRole === 'admin'
 
   return (
-    <CCard>
+    <CCard className="app-entity-card">
       <CCardHeader className="d-flex justify-content-between align-items-center">
-        <strong>{title}</strong>
+        <strong className="app-card-title">{title}</strong>
         {isAdmin && onAdd && (
-          <CButton color="primary" size="sm" onClick={onAdd}>
+          <CButton color="primary" size="sm" onClick={onAdd} className="app-ghost-button">
             <CIcon icon={cilPlus} className="me-1" />
             {addLabel}
           </CButton>

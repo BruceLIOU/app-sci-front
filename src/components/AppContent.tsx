@@ -9,7 +9,7 @@ const AppContent = () => {
   const userRole = useSelector((state: RootState) => state.auth.user?.role ?? 'viewer')
 
   return (
-    <CContainer lg>
+    <CContainer lg className="app-content-container">
       <Suspense fallback={<CSpinner color="primary" />}>
         <Routes>
           {routes.map((route, idx) => {

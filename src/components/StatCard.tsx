@@ -19,7 +19,7 @@ interface StatCardProps {
  */
 const StatCard: React.FC<StatCardProps> = ({ value, label, color, sm = 4 }) => (
   <CCol sm={sm}>
-    <CCard className={`text-white bg-${color} mb-3`}>
+    <CCard className={`text-white bg-${color} mb-3 app-metric-card`}>
       <CCardBody>
         <div className="fs-4 fw-semibold">{value}</div>
         <div>{label}</div>

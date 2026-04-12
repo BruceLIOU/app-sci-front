@@ -40,14 +40,14 @@ const AppHeaderDropdown = () => {
 
   return (
     <CDropdown variant="nav-item">
-      <CDropdownToggle className="py-0" caret={false}>
+      <CDropdownToggle className="py-0 px-2 app-profile-trigger" caret={false}>
         {user?.avatar ? (
           <CAvatar src={user.avatar} size="md" />
         ) : (
           <CAvatar color="primary" size="md">{initials}</CAvatar>
         )}
       </CDropdownToggle>
-      <CDropdownMenu className="pt-0" style={{ minWidth: '220px' }}>
+      <CDropdownMenu className="pt-0 app-dropdown-menu" style={{ minWidth: '220px' }}>
         <CDropdownHeader className="bg-body-secondary fw-semibold py-2">
           <div className="small text-truncate">{user?.name}</div>
           <div className="text-medium-emphasis" style={{ fontSize: '0.72rem' }}>{user?.email}</div>

@@ -73,70 +73,37 @@ const MetricCard = ({
   onClick: () => void
   solid?: boolean
 }) => {
-  const cardStyle = solid
-    ? {
-      background: `linear-gradient(135deg, ${accent} 0%, ${accent}DD 100%)`,
-      border: 'none',
-      boxShadow: '0 16px 32px rgba(15, 23, 42, 0.12)',
-    }
-    : {
-      background: `linear-gradient(145deg, rgba(255,255,255,0.98) 0%, ${accent}12 100%)`,
-      border: `1px solid ${accent}22`,
-      boxShadow: '0 10px 24px rgba(15, 23, 42, 0.08)',
-    }
-
-  const iconWrapStyle = solid
-    ? {
-      width: 58,
-      height: 58,
-      borderRadius: 18,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'rgba(255,255,255,0.14)',
-      border: '1px solid rgba(255,255,255,0.18)',
-      color: 'rgba(255,255,255,0.95)',
-      flexShrink: 0,
-    }
-    : {
-      width: 58,
-      height: 58,
-      borderRadius: 18,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: `${accent}18`,
-      border: `1px solid ${accent}26`,
-      color: accent,
-      flexShrink: 0,
-    }
+  const cardStyle = {
+    '--metric-accent': accent,
+    cursor: 'pointer',
+    borderRadius: 20,
+  } as React.CSSProperties
 
   return (
     <CCard
-      className="h-100 overflow-hidden"
-      style={{ ...cardStyle, cursor: 'pointer', borderRadius: 20 }}
+      className={`h-100 overflow-hidden app-metric-card${solid ? ' app-metric-card-solid' : ''}`}
+      style={cardStyle}
       onClick={onClick}
     >
       <CCardBody className="d-flex align-items-start justify-content-between gap-3" style={{ minHeight: 142, padding: '1.25rem 1.3rem' }}>
-        <div className={solid ? 'text-white' : ''}>
+        <div>
           <div
-            className="text-uppercase fw-semibold mb-2"
+            className="text-uppercase fw-semibold mb-2 app-metric-eyebrow"
             style={{
               fontSize: '0.68rem',
               letterSpacing: '0.08em',
-              color: solid ? 'rgba(255,255,255,0.72)' : accent,
             }}
           >
             {eyebrow}
           </div>
-          <div className="fw-bold mb-1" style={{ fontSize: '2rem', lineHeight: 1.05 }}>
+          <div className="fw-bold mb-1 app-metric-value" style={{ fontSize: '2rem', lineHeight: 1.05 }}>
             {value}
           </div>
-          <div style={{ color: solid ? 'rgba(255,255,255,0.92)' : 'var(--cui-body-color)' }}>
+          <div className="app-metric-label">
             {label}
           </div>
         </div>
-        <div style={iconWrapStyle}>
+        <div className="app-metric-icon-wrap">
           <CIcon icon={icon} size="xxl" />
         </div>
       </CCardBody>
@@ -242,26 +209,47 @@ const Dashboard = () => {
 
   return (
     <>
-      <CRow className="mb-4 align-items-end">
-        <CCol md={8}>
-          <div>
-            <h2 className="mb-1">Dashboard</h2>
-            <div className="text-body-secondary">Vue filtrée sur {formatPeriodLabel(selectedYear)}</div>
-          </div>
+      <CRow className="mb-4 g-3 align-items-stretch">
+        <CCol lg={8}>
+          <CCard className="app-page-hero h-100 border-0">
+            <CCardBody className="p-0 position-relative">
+              <div className="app-page-kicker mb-3">Tableau de pilotage</div>
+              <h2 className="mb-2 app-display-title">Une vue plus claire sur votre activite locative</h2>
+              <p className="app-page-description mb-4">
+                Suivez votre parc, votre tresorerie et vos prochaines actions depuis une interface plus lisible,
+                plus dense en information utile et plus agreable a parcourir.
+              </p>
+              <div className="d-flex flex-wrap gap-2">
+                <span className="app-filter-chip">{pluralize(properties.length,'bien','biens')}</span>
+                <span className="app-filter-chip">{pluralize(activeLeases.length, 'bail actif', 'baux actifs')}</span>
+                <span className="app-filter-chip">{pluralize(totalLatePayments, 'retard', 'retards')}</span>
+              </div>
+            </CCardBody>
+          </CCard>
         </CCol>
-        <CCol md={4}>
-          <label className="form-label">Année</label>
-          <CFormSelect
-            value={selectedYear}
-            onChange={(event) => setSelectedYear(event.target.value)}
-            aria-label="Sélectionner une année"
-          >
-            <option value={CURRENT_YEAR}>Année en cours ({CURRENT_YEAR})</option>
-            {yearOptions.filter((year) => year !== CURRENT_YEAR).map((year) => (
-              <option key={year} value={year}>{year}</option>
-            ))}
-            <option value="all">Tout voir</option>
-          </CFormSelect>
+        <CCol lg={4}>
+          <CCard className="app-panel-card h-100 border-0">
+            <CCardBody>
+              <div className="text-uppercase fw-semibold mb-2" style={{ fontSize: '0.74rem', letterSpacing: '0.08em', color: 'var(--app-accent)' }}>
+                Perimetre d'analyse
+              </div>
+              <h5 className="mb-2">Filtrer la periode d'observation</h5>
+              <div className="text-body-secondary mb-3">Vue actuelle: {formatPeriodLabel(selectedYear)}</div>
+              <label className="form-label fw-semibold">Annee</label>
+              <CFormSelect
+                className="app-filter-select"
+                value={selectedYear}
+                onChange={(event) => setSelectedYear(event.target.value)}
+                aria-label="Sélectionner une année"
+              >
+                <option value={CURRENT_YEAR}>Année en cours ({CURRENT_YEAR})</option>
+                {yearOptions.filter((year) => year !== CURRENT_YEAR).map((year) => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+                <option value="all">Tout voir</option>
+              </CFormSelect>
+            </CCardBody>
+          </CCard>
         </CCol>
       </CRow>
 
@@ -270,7 +258,7 @@ const Dashboard = () => {
           <MetricCard
             eyebrow="Parc"
             value={properties.length}
-            label={properties.length === 0 ? 'Aucun bien enregistré' : `${properties.length} bien${properties.length > 1 ? 's' : ''} enregistré${properties.length > 1 ? 's' : ''}`}
+            label={properties.length === 0 ? 'Aucun bien enregistré' : `Bien${properties.length > 1 ? 's' : ''} enregistré${properties.length > 1 ? 's' : ''}`}
             icon={cilHome}
             accent="#5b6ee1"
             onClick={() => navigate('/admin/properties')}
@@ -280,7 +268,7 @@ const Dashboard = () => {
           <MetricCard
             eyebrow="Occupation"
             value={tenants.length}
-            label={tenants.length === 0 ? 'Aucun locataire actif' : `${tenants.length} locataire${tenants.length > 1 ? 's' : ''} actif${tenants.length > 1 ? 's' : ''}`}
+            label={tenants.length === 0 ? 'Aucun locataire actif' : `Locataire${tenants.length > 1 ? 's' : ''} actif${tenants.length > 1 ? 's' : ''}`}
             icon={cilContact}
             accent="#4f9cf9"
             onClick={() => navigate('/admin/tenants')}
@@ -290,7 +278,7 @@ const Dashboard = () => {
           <MetricCard
             eyebrow="Contrats"
             value={activeLeases.length}
-            label={activeLeases.length === 0 ? 'Aucun bail actif' : `${activeLeases.length} ${activeLeases.length > 1 ? 'Baux' : 'Bail'} actif${activeLeases.length > 1 ? 's' : ''}`}
+            label={activeLeases.length === 0 ? 'Aucun bail actif' : `${activeLeases.length > 1 ? 'Baux' : 'Bail'} actif${activeLeases.length > 1 ? 's' : ''}`}
             icon={cilDescription}
             accent="#49b773"
             onClick={() => navigate('/admin/leases')}
@@ -300,7 +288,7 @@ const Dashboard = () => {
           <MetricCard
             eyebrow="Agenda"
             value={upcomingVisits.length}
-            label={upcomingVisits.length === 0 ? 'Aucune visite à venir' : `${upcomingVisits.length} visite${upcomingVisits.length > 1 ? 's' : ''} à venir`}
+            label={upcomingVisits.length === 0 ? 'Aucune visite à venir' : `Visite${upcomingVisits.length > 1 ? 's' : ''} à venir`}
             icon={cilCalendar}
             accent="#f4b63f"
             onClick={() => navigate('/admin/visits')}
@@ -359,7 +347,7 @@ const Dashboard = () => {
       <CRow className="mb-4">
         {/* Graphique loyers vs charges */}
         <CCol md={8}>
-          <CCard className="h-100">
+          <CCard className="h-100 app-panel-card">
             <CCardHeader>
               <strong>Loyers perçus vs charges payées</strong>
             </CCardHeader>
@@ -413,7 +401,7 @@ const Dashboard = () => {
 
         {/* Résumé financier */}
         <CCol md={4}>
-          <CCard className="h-100">
+          <CCard className="h-100 app-panel-card">
             <CCardHeader><strong>Résumé financier</strong></CCardHeader>
             <CCardBody>
               <div className="d-flex justify-content-between py-2 border-bottom">
@@ -450,7 +438,7 @@ const Dashboard = () => {
 
       <CRow className="mb-4">
         <CCol md={6}>
-          <CCard className="h-100">
+          <CCard className="h-100 app-panel-card">
             <CCardHeader><strong>Répartition des loyers</strong></CCardHeader>
             <CCardBody className="d-flex justify-content-center align-items-center" style={{ minHeight: 280 }}>
               {!hasRentDonutData ? (
@@ -485,7 +473,7 @@ const Dashboard = () => {
           </CCard>
         </CCol>
         <CCol md={6}>
-          <CCard className="h-100">
+          <CCard className="h-100 app-panel-card">
             <CCardHeader><strong>Répartition des charges</strong></CCardHeader>
             <CCardBody className="d-flex justify-content-center align-items-center" style={{ minHeight: 280 }}>
               {!hasChargeDonutData ? (

@@ -48,16 +48,42 @@ const Login = () => {
   }
 
   return (
-    <div className="bg-light min-vh-100 d-flex flex-row align-items-center">
-      <CContainer>
-        <CRow className="justify-content-center">
-          <CCol md={5} lg={4}>
-            <CCard className="p-4 shadow-sm">
+    <div className="app-login-shell d-flex flex-row align-items-center">
+      <CContainer className="app-login-content py-4 py-lg-5">
+        <CRow className="justify-content-center align-items-center g-4">
+          <CCol lg={6}>
+            <div className="app-login-showcase p-4 p-lg-5">
+              <div className="app-page-kicker mb-3">Gestion locative nouvelle generation</div>
+              <h1 className="app-login-showcase-title mb-3">Un espace de pilotage plus clair pour vos biens, vos flux et vos equipes.</h1>
+              <p className="app-login-note mb-4">
+                Centralisez les biens, locataires, baux, paiements et documents dans une interface plus
+                contemporaine, plus lisible et orientee action.
+              </p>
+
+              <div className="app-kpi-inline">
+                <div className="app-kpi-inline-item">
+                  <div className="app-kpi-inline-value">1</div>
+                  <div className="app-kpi-inline-label">entree unique pour toute l'activite</div>
+                </div>
+                <div className="app-kpi-inline-item">
+                  <div className="app-kpi-inline-value">24/7</div>
+                  <div className="app-kpi-inline-label">acces a vos donnees et alertes</div>
+                </div>
+                <div className="app-kpi-inline-item">
+                  <div className="app-kpi-inline-value">0</div>
+                  <div className="app-kpi-inline-label">mot de passe a retenir avec le magic link</div>
+                </div>
+              </div>
+            </div>
+          </CCol>
+
+          <CCol md={8} lg={5} xl={4}>
+            <CCard className="app-login-panel p-4 p-lg-4 border-0">
               <CCardBody className="text-center">
                 <div className="mb-4">
-                  <h2 className="fw-bold mb-1">SCI Gestion</h2>
-                  <p className="text-medium-emphasis small">
-                    Accédez à votre espace de gestion immobilière
+                  <h2 className="fw-bold mb-1">Connexion securisee</h2>
+                  <p className="text-medium-emphasis small mb-0">
+                    Recevez un lien de connexion temporaire par email
                   </p>
                 </div>
 
@@ -81,8 +107,9 @@ const Login = () => {
                 ) : (
                   <form onSubmit={handleSubmit} className="text-start">
                     <div className="mb-3">
-                      <CFormLabel htmlFor="email">Adresse email</CFormLabel>
+                      <CFormLabel htmlFor="email" className="fw-semibold">Adresse email</CFormLabel>
                       <CFormInput
+                        className="app-login-input"
                         id="email"
                         type="email"
                         value={email}
@@ -92,7 +119,7 @@ const Login = () => {
                         autoFocus
                       />
                     </div>
-                    <CButton type="submit" color="primary" className="w-100 py-2" disabled={loading}>
+                    <CButton type="submit" color="primary" className="w-100 py-2 app-login-button" disabled={loading}>
                       {loading ? <CSpinner size="sm" className="me-2" /> : null}
                       Recevoir un lien de connexion
                     </CButton>
