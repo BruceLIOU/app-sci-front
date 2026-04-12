@@ -12,7 +12,7 @@ import { AppHeaderDropdown } from './header/index'
 import { logo } from 'src/assets/brand/logo'
 import { set } from '../store'
 import { RootState } from '../store'
-import NotificationService, { Notification } from '../services/notification.service'
+import { useNotifications } from '../hooks/useNotifications'
 import { DateUtils } from 'src/utils/date'
 
 const typeColor: Record<string, string> = {
@@ -24,23 +24,9 @@ const AppHeader = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const sidebarShow = useSelector((state: RootState) => state.ui.sidebarShow)
-  const [unreadCount, setUnreadCount] = useState(0)
-  const [unreadNotifs, setUnreadNotifs] = useState<Notification[]>([])
+  const { unreadCount, recentUnread, popoverLoaded, loadUnread, markRead, markAllRead } = useNotifications()
   const [popoverOpen, setPopoverOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
-
-  const fetchCount = () => {
-    NotificationService.getUnreadCount()
-      .then((r) => setUnreadCount(r.data.count))
-      .catch(() => {})
-  }
-
-  useEffect(() => {
-    fetchCount()
-    const interval = setInterval(fetchCount, 60_000)
-    return () => clearInterval(interval)
-  }, [])
 
   // Fermer le popover au clic extérieur
   useEffect(() => {
@@ -60,23 +46,7 @@ const AppHeader = () => {
       return
     }
     setPopoverOpen(true)
-    setLoading(true)
-    NotificationService.getAll(true)
-      .then((r) => setUnreadNotifs(r.data))
-      .catch(() => setUnreadNotifs([]))
-      .finally(() => setLoading(false))
-  }
-
-  const handleMarkRead = async (id: number) => {
-    await NotificationService.markRead(id).catch(() => {})
-    setUnreadNotifs((prev) => prev.filter((n) => n.id !== id))
-    setUnreadCount((c) => Math.max(0, c - 1))
-  }
-
-  const handleMarkAllRead = async () => {
-    await NotificationService.markAllRead().catch(() => {})
-    setUnreadNotifs([])
-    setUnreadCount(0)
+    loadUnread()
   }
 
   const goToPage = () => {
@@ -146,7 +116,7 @@ const AppHeader = () => {
                     </span>
                     {unreadCount > 0 && (
                       <button
-                        onClick={handleMarkAllRead}
+                        onClick={markAllRead}
                         style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.78rem', color: 'var(--cui-success, #2eb85c)', padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}
                         title="Tout marquer comme lu"
                       >
@@ -157,20 +127,20 @@ const AppHeader = () => {
 
                   {/* Liste */}
                   <div style={{ maxHeight: 320, overflowY: 'auto' }}>
-                    {loading ? (
+                    {!popoverLoaded ? (
                       <div style={{ textAlign: 'center', padding: '20px', color: 'var(--cui-secondary-color, #6c757d)', fontSize: '0.85rem' }}>
                         Chargement…
                       </div>
-                    ) : unreadNotifs.length === 0 ? (
+                    ) : recentUnread.length === 0 ? (
                       <div style={{ textAlign: 'center', padding: '24px 16px', color: 'var(--cui-secondary-color, #6c757d)', fontSize: '0.85rem' }}>
                         <CIcon icon={cilEnvelopeOpen} size="lg" style={{ opacity: 0.3, display: 'block', margin: '0 auto 8px' }} />
                         Aucune notification non lue
                       </div>
                     ) : (
-                      unreadNotifs.map((n) => (
+                      recentUnread.map((n) => (
                         <div
                           key={n.id}
-                          onClick={() => handleMarkRead(n.id)}
+                          onClick={() => markRead(n.id)}
                           style={{
                             display: 'flex',
                             alignItems: 'flex-start',

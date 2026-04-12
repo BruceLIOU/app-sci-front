@@ -123,7 +123,7 @@ const Charges = () => {
 
   return (
     <>
-      <CRow className="mb-4 text-center">
+      <CRow className="mb-4 text-center justify-content-center">
         {Object.entries(charges.reduce((acc: Record<string, number>, c) => { acc[c.type] = (acc[c.type] || 0) + parseFloat(c.amount || 0); return acc }, {})).slice(0, 3).map(([type, amount]) => (
           <StatCard key={type} value={`${(amount as number).toFixed(2)} €`} label={typeLabel[type]} color={typeColor[type] || 'secondary'} />
         ))}
