@@ -1,1 +1,12 @@
 // Here you can add other styles
+
+// Dark mode overrides
+[data-coreui-theme="dark"] {
+  .bg-light {
+    background-color: var(--cui-secondary-bg) !important;
+  }
+
+  .border {
+    border-color: var(--cui-border-color) !important;
+  }
+}

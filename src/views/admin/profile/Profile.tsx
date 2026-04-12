@@ -39,7 +39,7 @@ const Profile: React.FC = () => {
       const { data } = await AuthService.updatePreferences(fd)
       dispatch(updatePreferences(data.preferences))
       // Appliquer le thème sur le document
-      document.documentElement.setAttribute('data-bs-theme', checked ? 'dark' : 'light')
+      document.documentElement.setAttribute('data-coreui-theme', checked ? 'dark' : 'light')
     } catch { /* ignore */ }
   }
 

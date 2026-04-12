@@ -28,7 +28,7 @@ const AppInner: React.FC = () => {
         dispatch(setUser(data))
         // Appliquer le thème sauvegardé
         if (data.preferences?.darkMode) {
-          document.documentElement.setAttribute('data-bs-theme', 'dark')
+          document.documentElement.setAttribute('data-coreui-theme', 'dark')
         }
       })
       .catch(() => dispatch(setUser(null)))

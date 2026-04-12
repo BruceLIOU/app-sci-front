@@ -34,7 +34,7 @@ const AppHeaderDropdown = () => {
       fd.append('darkMode', String(checked))
       const { data } = await AuthService.updatePreferences(fd)
       dispatch(updatePreferences(data.preferences))
-      document.documentElement.setAttribute('data-bs-theme', checked ? 'dark' : 'light')
+      document.documentElement.setAttribute('data-coreui-theme', checked ? 'dark' : 'light')
     } catch { /* ignore */ }
   }
 
@@ -48,7 +48,7 @@ const AppHeaderDropdown = () => {
         )}
       </CDropdownToggle>
       <CDropdownMenu className="pt-0" style={{ minWidth: '220px' }}>
-        <CDropdownHeader className="bg-light fw-semibold py-2">
+        <CDropdownHeader className="bg-body-secondary fw-semibold py-2">
           <div className="small text-truncate">{user?.name}</div>
           <div className="text-medium-emphasis" style={{ fontSize: '0.72rem' }}>{user?.email}</div>
         </CDropdownHeader>
