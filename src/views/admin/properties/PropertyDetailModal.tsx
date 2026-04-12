@@ -26,6 +26,8 @@ import CIcon from '@coreui/icons-react'
 import { cilPen, cilTrash, cilPlus } from '@coreui/icons'
 import { MapContainer, TileLayer, Marker } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
+import { useSelector } from 'react-redux'
+import { RootState } from '../../../store'
 
 interface PropertyDetailModalProps {
   visible: boolean
@@ -66,6 +68,8 @@ const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   const statusLabel: Record<string, string> = { active: 'Actif', expired: 'Expiré', terminated: 'Résilié' }
   const statusColor: Record<string, string> = { active: 'success', expired: 'warning', terminated: 'danger' }
   const typeLabel: Record<string, string> = { nu: 'Location nue', meublé: 'Meublé', commercial: 'Commercial' }
+  const userRole = useSelector((state: RootState) => state.auth.user?.role ?? 'viewer')
+  const isAdmin = userRole === 'admin'
   if (!property) return null
 
   const images: string[] = (() => {
@@ -236,14 +240,16 @@ const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                     <span className="fw-semibold text-medium-emphasis small">
                       {leases.length} bail{leases.length > 1 ? 'x' : ''} associé{leases.length > 1 ? 's' : ''}
                     </span>
-                    <CButton
-                      color="primary"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => { setEditingLease(null); setLeaseModalVisible(true) }}
-                    >
-                      <CIcon icon={cilPlus} className="me-1" />Nouveau bail
-                    </CButton>
+                    {isAdmin && (
+                      <CButton
+                        color="primary"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => { setEditingLease(null); setLeaseModalVisible(true) }}
+                      >
+                        <CIcon icon={cilPlus} className="me-1" />Nouveau bail
+                      </CButton>
+                    )}
                   </div>
                   {leasesLoading ? (
                     <div className="text-center py-3"><CSpinner size="sm" /></div>
@@ -258,13 +264,15 @@ const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                               <CBadge color={statusColor[l.status]} className="me-2">{statusLabel[l.status]}</CBadge>
                               <span className="small fw-semibold">{l.Tenant ? `${l.Tenant.civility ?? ''} ${l.Tenant.firstname} ${l.Tenant.lastname}` : 'Sans locataire'}</span>
                             </div>
-                            <CButton
-                              color="light"
-                              size="sm"
-                              onClick={() => { setEditingLease(l); setLeaseModalVisible(true) }}
-                            >
-                              <CIcon icon={cilPen} />
-                            </CButton>
+                              {isAdmin && (
+                                <CButton
+                                  color="light"
+                                  size="sm"
+                                  onClick={() => { setEditingLease(l); setLeaseModalVisible(true) }}
+                                >
+                                  <CIcon icon={cilPen} />
+                                </CButton>
+                              )}
                           </div>
                           <div className="text-muted small mt-1">
                             {l.start_date} → {l.end_date || 'En cours'} &nbsp;·&nbsp;
@@ -319,14 +327,18 @@ const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
         <CButton color="secondary" onClick={onClose}>
           Fermer
         </CButton>
-        <CButton color="warning" onClick={onEdit}>
-          <CIcon icon={cilPen} className="me-1" />
-          Modifier
-        </CButton>
-        <CButton color="danger" onClick={onDelete}>
-          <CIcon icon={cilTrash} className="me-1" />
-          Supprimer
-        </CButton>
+        {isAdmin && (
+          <CButton color="warning" onClick={onEdit}>
+            <CIcon icon={cilPen} className="me-1" />
+            Modifier
+          </CButton>
+        )}
+        {isAdmin && (
+          <CButton color="danger" onClick={onDelete}>
+            <CIcon icon={cilTrash} className="me-1" />
+            Supprimer
+          </CButton>
+        )}
       </CModalFooter>
     </CModal>
 

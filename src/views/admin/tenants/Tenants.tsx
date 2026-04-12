@@ -10,6 +10,7 @@ import {
   CButton, CTooltip, CContainer,
 } from '@coreui/react'
 import { DateUtils } from 'src/utils/date'
+import useIsAdmin from '../../../hooks/useIsAdmin'
 
 const Tenants = () => {
   const [data, setData] = useState<any[]>([])
@@ -32,6 +33,7 @@ const Tenants = () => {
   })
 
   const resetFilters = () => { setFilterCivility(''); setFilterCity('') }
+  const isAdmin = useIsAdmin()
 
   const handleViewTenant = (id: number) => { setTenantId(id); setModalType('view'); setModalVisible(true) }
   const handleEditTenant = (id: number) => { setTenantId(id); setModalType('edit'); setModalVisible(true) }
@@ -52,9 +54,11 @@ const Tenants = () => {
     <>
       <CContainer>
         <div className="d-flex justify-content-md-end mb-4">
-          <CButton color="primary" onClick={handleCreateTenant}>
-            <CIcon icon={cilPlus} className="text-danger mx-2" />Ajouter un locataire
-          </CButton>
+          {isAdmin && (
+            <CButton color="primary" onClick={handleCreateTenant}>
+              <CIcon icon={cilPlus} className="text-danger mx-2" />Ajouter un locataire
+            </CButton>
+          )}
         </div>
 
         <ViewControlBar
@@ -108,8 +112,8 @@ const Tenants = () => {
                     </CCardText>
                     <div className="d-grid gap-2 d-md-flex justify-content-md-end">
                       <CTooltip content="Voir"><CButton color="light" onClick={() => handleViewTenant(item.id)}><CIcon icon={cilContact} /></CButton></CTooltip>
-                      <CTooltip content="Modifier"><CButton color="light" onClick={() => handleEditTenant(item.id)}><CIcon icon={cilPen} /></CButton></CTooltip>
-                      <CTooltip content="Supprimer"><CButton color="light" onClick={() => handleDeleteTenant(item.id)}><CIcon icon={cilTrash} /></CButton></CTooltip>
+                      {isAdmin && <CTooltip content="Modifier"><CButton color="light" onClick={() => handleEditTenant(item.id)}><CIcon icon={cilPen} /></CButton></CTooltip>}
+                      {isAdmin && <CTooltip content="Supprimer"><CButton color="light" onClick={() => handleDeleteTenant(item.id)}><CIcon icon={cilTrash} /></CButton></CTooltip>}
                     </div>
                   </CCardBody>
                   <CCardFooter><small className="text-medium-emphasis">{DateUtils.formatWithTime(item.createdAt)}</small></CCardFooter>
@@ -147,8 +151,8 @@ const Tenants = () => {
                   </CCardBody>
                   <div className="d-flex gap-1 me-3" style={{ flexShrink: 0 }}>
                     <CTooltip content="Voir"><CButton color="light" size="sm" onClick={() => handleViewTenant(item.id)}><CIcon icon={cilContact} /></CButton></CTooltip>
-                    <CTooltip content="Modifier"><CButton color="light" size="sm" onClick={() => handleEditTenant(item.id)}><CIcon icon={cilPen} /></CButton></CTooltip>
-                    <CTooltip content="Supprimer"><CButton color="light" size="sm" onClick={() => handleDeleteTenant(item.id)}><CIcon icon={cilTrash} /></CButton></CTooltip>
+                    {isAdmin && <CTooltip content="Modifier"><CButton color="light" size="sm" onClick={() => handleEditTenant(item.id)}><CIcon icon={cilPen} /></CButton></CTooltip>}
+                    {isAdmin && <CTooltip content="Supprimer"><CButton color="light" size="sm" onClick={() => handleDeleteTenant(item.id)}><CIcon icon={cilTrash} /></CButton></CTooltip>}
                   </div>
                 </div>
               </CCard>

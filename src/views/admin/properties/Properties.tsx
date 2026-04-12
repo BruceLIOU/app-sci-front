@@ -13,6 +13,7 @@ import {
 import CIcon from '@coreui/icons-react'
 import { cilPlus, cilPen, cilTrash } from '@coreui/icons'
 import { DateUtils } from 'src/utils/date'
+import useIsAdmin from '../../../hooks/useIsAdmin'
 
 // Ratio hauteur/largeur de l'image selon le nombre de colonnes de la grille
 const gridImgRatio: Record<number, string> = {
@@ -50,6 +51,7 @@ const Properties = () => {
   })
 
   const resetFilters = () => { setFilterType(''); setFilterCity(''); setFilterPieces('') }
+  const isAdmin = useIsAdmin()
 
   const handleViewProperty = async (id: number) => {
     try {
@@ -92,9 +94,11 @@ const Properties = () => {
       <CContainer>
         {/* Bouton d'ajout */}
         <div className="d-flex justify-content-end mb-4">
-          <CButton color="primary" onClick={handleCreateProperty}>
-            <CIcon icon={cilPlus} className="text-danger mx-2" />Ajouter un bien
-          </CButton>
+          {isAdmin && (
+            <CButton color="primary" onClick={handleCreateProperty}>
+              <CIcon icon={cilPlus} className="text-danger mx-2" />Ajouter un bien
+            </CButton>
+          )}
         </div>
 
         {/* Carte des biens */}
@@ -181,22 +185,26 @@ const Properties = () => {
                       Superficie : {item.area} m²
                     </CCardText>
                     <div className="d-grid gap-2 d-md-flex justify-content-md-end">
-                      <CTooltip content="Modifier">
-                        <CButton
-                          color="light"
-                          onClick={(e) => { e.stopPropagation(); handleEditProperty(item.id) }}
-                        >
-                          <CIcon icon={cilPen} />
-                        </CButton>
-                      </CTooltip>
-                      <CTooltip content="Supprimer">
-                        <CButton
-                          color="light"
-                          onClick={(e) => { e.stopPropagation(); handleDeleteProperty(item.id) }}
-                        >
-                          <CIcon icon={cilTrash} />
-                        </CButton>
-                      </CTooltip>
+                      {isAdmin && (
+                        <CTooltip content="Modifier">
+                          <CButton
+                            color="light"
+                            onClick={(e) => { e.stopPropagation(); handleEditProperty(item.id) }}
+                          >
+                            <CIcon icon={cilPen} />
+                          </CButton>
+                        </CTooltip>
+                      )}
+                      {isAdmin && (
+                        <CTooltip content="Supprimer">
+                          <CButton
+                            color="light"
+                            onClick={(e) => { e.stopPropagation(); handleDeleteProperty(item.id) }}
+                          >
+                            <CIcon icon={cilTrash} />
+                          </CButton>
+                        </CTooltip>
+                      )}
                     </div>
                   </CCardBody>
                   <CCardFooter>
@@ -244,24 +252,28 @@ const Properties = () => {
                     <small className="text-medium-emphasis ms-auto">{DateUtils.formatWithTime(item.createdAt)}</small>
                   </CCardBody>
                   <div className="d-flex gap-2 me-3" style={{ flexShrink: 0 }}>
-                    <CTooltip content="Modifier">
-                      <CButton
-                        color="light"
-                        size="sm"
-                        onClick={(e) => { e.stopPropagation(); handleEditProperty(item.id) }}
-                      >
-                        <CIcon icon={cilPen} />
-                      </CButton>
-                    </CTooltip>
-                    <CTooltip content="Supprimer">
-                      <CButton
-                        color="light"
-                        size="sm"
-                        onClick={(e) => { e.stopPropagation(); handleDeleteProperty(item.id) }}
-                      >
-                        <CIcon icon={cilTrash} />
-                      </CButton>
-                    </CTooltip>
+                    {isAdmin && (
+                      <CTooltip content="Modifier">
+                        <CButton
+                          color="light"
+                          size="sm"
+                          onClick={(e) => { e.stopPropagation(); handleEditProperty(item.id) }}
+                        >
+                          <CIcon icon={cilPen} />
+                        </CButton>
+                      </CTooltip>
+                    )}
+                    {isAdmin && (
+                      <CTooltip content="Supprimer">
+                        <CButton
+                          color="light"
+                          size="sm"
+                          onClick={(e) => { e.stopPropagation(); handleDeleteProperty(item.id) }}
+                        >
+                          <CIcon icon={cilTrash} />
+                        </CButton>
+                      </CTooltip>
+                    )}
                   </div>
                 </div>
               </CCard>
@@ -309,22 +321,26 @@ const Properties = () => {
                       Superficie : {item.area} m²
                     </CCardText>
                     <div className="d-grid gap-2 d-md-flex justify-content-md-end">
-                      <CTooltip content="Modifier">
-                        <CButton
-                          color="light"
-                          onClick={(e) => { e.stopPropagation(); handleEditProperty(item.id) }}
-                        >
-                          <CIcon icon={cilPen} />
-                        </CButton>
-                      </CTooltip>
-                      <CTooltip content="Supprimer">
-                        <CButton
-                          color="light"
-                          onClick={(e) => { e.stopPropagation(); handleDeleteProperty(item.id) }}
-                        >
-                          <CIcon icon={cilTrash} />
-                        </CButton>
-                      </CTooltip>
+                      {isAdmin && (
+                        <CTooltip content="Modifier">
+                          <CButton
+                            color="light"
+                            onClick={(e) => { e.stopPropagation(); handleEditProperty(item.id) }}
+                          >
+                            <CIcon icon={cilPen} />
+                          </CButton>
+                        </CTooltip>
+                      )}
+                      {isAdmin && (
+                        <CTooltip content="Supprimer">
+                          <CButton
+                            color="light"
+                            onClick={(e) => { e.stopPropagation(); handleDeleteProperty(item.id) }}
+                          >
+                            <CIcon icon={cilTrash} />
+                          </CButton>
+                        </CTooltip>
+                      )}
                     </div>
                   </CCardBody>
                   <CCardFooter>

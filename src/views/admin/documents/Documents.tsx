@@ -10,6 +10,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilPlus, cilTrash, cilCloudDownload, cilFolder, cilFile, cilDescription, cilNotes } from '@coreui/icons'
+import useIsAdmin from '../../../hooks/useIsAdmin'
 
 const CATEGORIES = [
   { value: 'identite', label: "Carte d'identité / Passeport", color: 'warning' },
@@ -65,6 +66,8 @@ const Documents = () => {
     } catch { /* silently */ }
     finally { setLoading(false) }
   }
+
+  const isAdmin = useIsAdmin()
 
   useEffect(() => {
     fetchDocs()
@@ -161,9 +164,11 @@ const Documents = () => {
               <option value="">Toutes les catégories</option>
               {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
             </CFormSelect>
-            <CButton color="primary" size="sm" onClick={() => setAddModal(true)}>
-              <CIcon icon={cilPlus} className="me-1" />Ajouter
-            </CButton>
+            {isAdmin && (
+              <CButton color="primary" size="sm" onClick={() => setAddModal(true)}>
+                <CIcon icon={cilPlus} className="me-1" />Ajouter
+              </CButton>
+            )}
           </div>
         </CCardHeader>
         <CCardBody>
@@ -222,9 +227,11 @@ const Documents = () => {
                           >
                             <CIcon icon={cilCloudDownload} />
                           </CButton>
-                          <CButton color="light" size="sm" onClick={() => { setToDelete(doc); setDeleteModal(true) }}>
-                            <CIcon icon={cilTrash} />
-                          </CButton>
+                          {isAdmin && (
+                            <CButton color="light" size="sm" onClick={() => { setToDelete(doc); setDeleteModal(true) }}>
+                              <CIcon icon={cilTrash} />
+                            </CButton>
+                          )}
                         </div>
                       </CTableDataCell>
                     </CTableRow>
