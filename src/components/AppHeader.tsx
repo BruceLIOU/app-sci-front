@@ -14,7 +14,7 @@ import { RootState } from '../store'
 
 const AppHeader = () => {
   const dispatch = useDispatch()
-  const sidebarShow = useSelector((state: RootState) => state.sidebarShow)
+  const sidebarShow = useSelector((state: RootState) => state.ui.sidebarShow)
 
   return (
     <CHeader position="sticky" className="mb-4">
