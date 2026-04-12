@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   CCard,
   CCardBody,
@@ -11,24 +12,170 @@ import {
   CButton,
   CAlert,
   CSpinner,
+  CBadge,
 } from '@coreui/react'
+import CIcon from '@coreui/icons-react'
+import { cilCheckCircle, cilXCircle } from '@coreui/icons'
 import SciConfigDataService, { SciConfigData } from '../../../services/sci_config.service'
+import AssociateDataService from '../../../services/associate.service'
+import VisitDataService from '../../../services/visit.service'
+import http from '../../../utils/http-common'
+
+interface Associate {
+  id: number
+  civility: string
+  firstname: string
+  lastname: string
+  email: string | null
+  phone: string | null
+  role: string
+}
+
+interface GoogleCalendar {
+  id: string
+  summary: string
+  primary: boolean
+}
 
 const Settings: React.FC = () => {
+  const location = useLocation()
+  const navigate = useNavigate()
+
   const [config, setConfig] = useState<SciConfigData>({})
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [gerants, setGerants] = useState<Associate[]>([])
+  const [googleCalendars, setGoogleCalendars] = useState<GoogleCalendar[]>([])
+  const [googleConnected, setGoogleConnected] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [googleCalendarsError, setGoogleCalendarsError] = useState(false)
+  const [googleAlert, setGoogleAlert] = useState<{ type: 'success' | 'danger' | 'info'; message: string } | null>(null)
+
+  const fetchGoogleCalendars = async () => {
+    setGoogleCalendarsError(false)
+    try {
+      const rc = await http.get<GoogleCalendar[]>('/visits/google/calendars')
+      setGoogleCalendars(rc.data)
+    } catch (e: any) {
+      const msg = e?.response?.data?.message || e.message || ''
+      console.error('fetchGoogleCalendars error:', msg)
+      setGoogleCalendarsError(true)
+      setGoogleAlert({ type: 'danger', message: `Erreur chargement calendriers : ${msg}` })
+    }
+  }
 
   useEffect(() => {
     SciConfigDataService.get()
       .then((r) => setConfig(r.data))
       .catch(() => {})
+
+    AssociateDataService.getAll()
+      .then((r) => {
+        const all: Associate[] = r.data
+        setGerants(all.filter((a) => a.role === 'Gérant' || a.role === 'Gérant associé'))
+      })
+      .catch(() => {})
+
+    VisitDataService.getGoogleStatus()
+      .then((r) => {
+        setGoogleConnected(r.data.connected)
+        if (r.data.connected) fetchGoogleCalendars()
+      })
+      .catch(() => {})
   }, [])
+
+  // Gestion du retour OAuth
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const google = params.get('google')
+    if (google === 'success') {
+      setGoogleConnected(true)
+      setGoogleAlert({ type: 'success', message: 'Google Calendar connecté avec succès !' })
+      fetchGoogleCalendars()
+      navigate('/admin/settings', { replace: true })
+    } else if (google === 'error') {
+      setGoogleAlert({ type: 'danger', message: "Échec de la connexion à Google Calendar. Vérifiez vos identifiants OAuth." })
+      navigate('/admin/settings', { replace: true })
+    }
+  }, [location.search, navigate])
+
+  const handleGoogleReconnect = async () => {
+    setGoogleLoading(true)
+    try {
+      await VisitDataService.disconnectGoogle()
+      setGoogleConnected(false)
+      setGoogleCalendars([])
+      setGoogleCalendarsError(false)
+      setConfig((prev) => ({ ...prev, google_calendar_id: null }))
+      // Relance immédiatement le flux OAuth
+      const { data } = await VisitDataService.getGoogleAuthUrl()
+      window.location.href = data.url
+    } catch {
+      setGoogleAlert({ type: 'danger', message: 'Erreur lors de la reconnexion Google.' })
+      setGoogleLoading(false)
+    }
+  }
+
+  const handleGoogleConnect = async () => {
+    setGoogleLoading(true)
+    try {
+      const { data } = await VisitDataService.getGoogleAuthUrl()
+      window.location.href = data.url
+    } catch {
+      setGoogleAlert({ type: 'danger', message: "Impossible d'obtenir l'URL d'autorisation Google." })
+      setGoogleLoading(false)
+    }
+  }
+
+  const handleGoogleDisconnect = async () => {
+    setGoogleLoading(true)
+    try {
+      await VisitDataService.disconnectGoogle()
+      setGoogleConnected(false)
+      setGoogleCalendars([])
+      setGoogleCalendarsError(false)
+      setConfig((prev) => ({ ...prev, google_calendar_id: null }))
+      setGoogleAlert({ type: 'info', message: 'Google Calendar déconnecté.' })
+    } catch {
+      setGoogleAlert({ type: 'danger', message: 'Impossible de déconnecter Google Calendar.' })
+    } finally {
+      setGoogleLoading(false)
+    }
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setSaved(false)
     setConfig((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+  }
+
+  const handleGerantSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSaved(false)
+    const id = e.target.value ? Number(e.target.value) : null
+    if (!id) {
+      setConfig((prev) => ({
+        ...prev,
+        manager_associate_id: null,
+        manager_civility: '',
+        manager_firstname: '',
+        manager_lastname: '',
+        manager_email: '',
+        manager_phone: '',
+      }))
+      return
+    }
+    const associate = gerants.find((a) => a.id === id)
+    if (associate) {
+      setConfig((prev) => ({
+        ...prev,
+        manager_associate_id: associate.id,
+        manager_civility: associate.civility || '',
+        manager_firstname: associate.firstname || '',
+        manager_lastname: associate.lastname || '',
+        manager_email: associate.email || '',
+        manager_phone: associate.phone || '',
+      }))
+    }
   }
 
   const handleSave = async () => {
@@ -162,6 +309,29 @@ const Settings: React.FC = () => {
             <h6 className="fw-semibold text-uppercase text-muted mb-3">Gérant</h6>
 
             <CRow className="mb-3">
+              <CCol md={12}>
+                <CFormLabel>Sélectionner un gérant associé</CFormLabel>
+                <CFormSelect
+                  value={config.manager_associate_id ?? ''}
+                  onChange={handleGerantSelect}
+                  disabled={gerants.length === 0}
+                >
+                  <option value="">— Saisie manuelle —</option>
+                  {gerants.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.civility} {a.firstname} {a.lastname}
+                    </option>
+                  ))}
+                </CFormSelect>
+                <div className="form-text">
+                  {gerants.length === 0
+                    ? 'Aucun associé avec le rôle Gérant ou Gérant associé trouvé.'
+                    : 'Sélectionner un associé gérant auto-remplira les champs ci-dessous.'}
+                </div>
+              </CCol>
+            </CRow>
+
+            <CRow className="mb-3">
               <CCol md={2}>
                 <CFormLabel>Civilité</CFormLabel>
                 <CFormSelect
@@ -225,6 +395,120 @@ const Settings: React.FC = () => {
                 )}
               </CButton>
             </div>
+          </CCardBody>
+        </CCard>
+
+        <CCard className="mb-4">
+          <CCardHeader className="d-flex align-items-center justify-content-between">
+            <div>
+              <strong>Google Calendar</strong>
+              <small className="ms-2 text-muted">
+                Synchronisation des visites avec votre agenda Google.
+              </small>
+            </div>
+            {googleConnected ? (
+              <CBadge color="success" className="d-flex align-items-center gap-1">
+                <CIcon icon={cilCheckCircle} size="sm" />
+                Connecté
+              </CBadge>
+            ) : (
+              <CBadge color="secondary" className="d-flex align-items-center gap-1">
+                <CIcon icon={cilXCircle} size="sm" />
+                Non connecté
+              </CBadge>
+            )}
+          </CCardHeader>
+          <CCardBody>
+            {googleAlert && (
+              <CAlert color={googleAlert.type} dismissible onClose={() => setGoogleAlert(null)}>
+                {googleAlert.message}
+              </CAlert>
+            )}
+
+            {googleConnected ? (
+              <>
+                {googleCalendarsError ? (
+                  <CAlert color="warning" className="mb-3">
+                    Impossible de charger la liste des calendriers. Les permissions ont peut-être changé.
+                    Déconnectez puis reconnectez votre compte Google pour autoriser les nouveaux accès.
+                    <div className="mt-2 d-flex gap-2">
+                      <CButton
+                        color="warning"
+                        size="sm"
+                        onClick={handleGoogleReconnect}
+                        disabled={googleLoading}
+                      >
+                        {googleLoading ? <CSpinner size="sm" className="me-1" /> : null}
+                        Se reconnecter
+                      </CButton>
+                    </div>
+                  </CAlert>
+                ) : (
+                  <CRow className="mb-3">
+                    <CCol md={12}>
+                      <CFormLabel>Calendrier à synchroniser</CFormLabel>
+                      <CFormSelect
+                        name="google_calendar_id"
+                        value={config.google_calendar_id ?? ''}
+                        onChange={handleChange as React.ChangeEventHandler<HTMLSelectElement>}
+                      >
+                        <option value="">— Calendrier principal (primary) —</option>
+                        {googleCalendars.map((cal) => (
+                          <option key={cal.id} value={cal.id}>
+                            {cal.summary}{cal.primary ? ' (principal)' : ''}
+                          </option>
+                        ))}
+                      </CFormSelect>
+                      <div className="form-text">
+                        Les visites seront synchronisées vers ce calendrier.
+                      </div>
+                    </CCol>
+                  </CRow>
+                )}
+                <div className="d-flex justify-content-between align-items-center">
+                  <CButton
+                    color="danger"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleGoogleDisconnect}
+                    disabled={googleLoading}
+                  >
+                    {googleLoading ? <CSpinner size="sm" className="me-1" /> : <CIcon icon={cilXCircle} className="me-1" />}
+                    Déconnecter Google Calendar
+                  </CButton>
+                  <CButton color="primary" onClick={handleSave} disabled={saving}>
+                    {saving ? (
+                      <>
+                        <CSpinner size="sm" className="me-2" />
+                        Enregistrement…
+                      </>
+                    ) : (
+                      'Enregistrer'
+                    )}
+                  </CButton>
+                </div>
+              </>
+            ) : (
+              <div className="d-flex flex-column align-items-start gap-2">
+                <p className="text-muted mb-2">
+                  Connectez votre compte Google pour synchroniser automatiquement vos visites avec Google Calendar.
+                </p>
+                <CButton
+                  color="light"
+                  onClick={handleGoogleConnect}
+                  disabled={googleLoading}
+                >
+                  {googleLoading ? (
+                    <CSpinner size="sm" className="me-2" />
+                  ) : (
+                    <svg className="me-2" width="16" height="16" viewBox="0 0 488 512" fill="currentColor">
+                      <path d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z" />
+                    </svg>
+                  )}
+                  Connecter Google Calendar
+                </CButton>
+              </div>
+            )}
           </CCardBody>
         </CCard>
       </CCol>

@@ -7,11 +7,11 @@ import {
   CRow, CCol, CCard, CCardBody, CCardHeader,
   CButton, CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter,
   CForm, CFormInput, CFormLabel, CFormSelect, CFormTextarea,
-  CAlert, CBadge, CSpinner, CTooltip,
+  CAlert, CBadge, CSpinner,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilCalendar, cilCheckCircle, cilXCircle, cilPlus, cilTrash } from '@coreui/icons'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import VisitDataService from '../../../services/visit.service'
 import PropertyDataService from '../../../services/property.service'
 import TenantDataService from '../../../services/tenant.service'
@@ -65,7 +65,6 @@ interface CalEvent {
 }
 
 const Visits: React.FC = () => {
-  const location = useLocation()
   const navigate = useNavigate()
 
   const [events, setEvents] = useState<CalEvent[]>([])
@@ -74,7 +73,6 @@ const Visits: React.FC = () => {
   const [loading, setLoading] = useState(true)
 
   const [googleConnected, setGoogleConnected] = useState(false)
-  const [googleLoading, setGoogleLoading] = useState(false)
   const [alert, setAlert] = useState<{ type: 'success' | 'danger' | 'info'; message: string } | null>(null)
 
   const [modalVisible, setModalVisible] = useState(false)
@@ -121,45 +119,6 @@ const Visits: React.FC = () => {
   }, [fetchVisits, fetchGoogleStatus])
 
   // ─── Gestion paramètre OAuth callback ────────────────────────────────────
-
-  useEffect(() => {
-    const params = new URLSearchParams(location.search)
-    const google = params.get('google')
-    if (google === 'success') {
-      setGoogleConnected(true)
-      setAlert({ type: 'success', message: 'Google Calendar connecté avec succès !' })
-      navigate('/admin/visits', { replace: true })
-    } else if (google === 'error') {
-      setAlert({ type: 'danger', message: "Échec de la connexion à Google Calendar. Vérifiez vos identifiants OAuth." })
-      navigate('/admin/visits', { replace: true })
-    }
-  }, [location.search, navigate])
-
-  // ─── Google Calendar ─────────────────────────────────────────────────────
-
-  const handleGoogleConnect = async () => {
-    setGoogleLoading(true)
-    try {
-      const { data } = await VisitDataService.getGoogleAuthUrl()
-      window.location.href = data.url
-    } catch {
-      setAlert({ type: 'danger', message: "Impossible d'obtenir l'URL d'autorisation Google." })
-      setGoogleLoading(false)
-    }
-  }
-
-  const handleGoogleDisconnect = async () => {
-    setGoogleLoading(true)
-    try {
-      await VisitDataService.disconnectGoogle()
-      setGoogleConnected(false)
-      setAlert({ type: 'info', message: 'Google Calendar déconnecté.' })
-    } catch {
-      setAlert({ type: 'danger', message: 'Impossible de déconnecter Google Calendar.' })
-    } finally {
-      setGoogleLoading(false)
-    }
-  }
 
   // ─── Formulaire ──────────────────────────────────────────────────────────
 
@@ -279,43 +238,6 @@ const Visits: React.FC = () => {
           </h4>
         </CCol>
         <CCol xs="auto" className="d-flex gap-2 align-items-center">
-          {/* Bouton Google Calendar */}
-          {googleConnected ? (
-            <CTooltip content="Déconnecter Google Calendar">
-              <CButton
-                color="success"
-                variant="outline"
-                size="sm"
-                onClick={handleGoogleDisconnect}
-                disabled={googleLoading}
-              >
-                {googleLoading ? (
-                  <CSpinner size="sm" className="me-1" />
-                ) : (
-                  <CIcon icon={cilCheckCircle} className="me-1" />
-                )}
-                Google Calendar connecté
-              </CButton>
-            </CTooltip>
-          ) : (
-            <CTooltip content="Synchroniser avec Google Calendar">
-              <CButton
-                color="light"
-                size="sm"
-                onClick={handleGoogleConnect}
-                disabled={googleLoading}
-              >
-                {googleLoading ? (
-                  <CSpinner size="sm" className="me-1" />
-                ) : (
-                  <svg className="me-1" width="16" height="16" viewBox="0 0 488 512" fill="currentColor">
-                    <path d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z" />
-                  </svg>
-                )}
-                Connecter Google Calendar
-              </CButton>
-            </CTooltip>
-          )}
           <CButton color="primary" size="sm" onClick={() => openCreate()}>
             <CIcon icon={cilPlus} className="me-1" />
             Nouvelle visite
