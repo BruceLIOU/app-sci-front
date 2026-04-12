@@ -34,7 +34,6 @@ const AppSidebar = () => {
         </span>
         <span className="app-sidebar-brand-text">
           <span className="app-sidebar-brand-title">Pilotage Immo</span>
-          <span className="app-sidebar-brand-subtitle">Gestion locative, finance et documents</span>
         </span>
       </CSidebarBrand>
       <CSidebarNav>

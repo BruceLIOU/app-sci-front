@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import {
-  CContainer, CHeader, CHeaderBrand, CHeaderDivider,
+  CContainer, CHeader, CHeaderBrand,
   CHeaderNav, CHeaderToggler, CNavLink, CNavItem, CBadge,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
@@ -66,11 +66,8 @@ const AppHeader = () => {
         <CHeaderBrand className="mx-auto d-md-none">
           <CIcon icon={logo} height={48} />
         </CHeaderBrand>
-        <CHeaderNav className="d-none d-md-flex me-auto">
-          <div className="app-toolbar-meta ms-3">
-            <span className="app-toolbar-badge">Pilotage locatif</span>
-            <span className="app-toolbar-subtitle">Vue centralisee des biens, flux et alertes</span>
-          </div>
+        <CHeaderNav className="me-auto app-header-breadcrumb-inline">
+          <AppBreadcrumb />
         </CHeaderNav>
         <CHeaderNav>
           <CNavItem>
@@ -213,10 +210,6 @@ const AppHeader = () => {
         <CHeaderNav className="ms-3">
           <AppHeaderDropdown />
         </CHeaderNav>
-      </CContainer>
-      <CHeaderDivider className="header-divider" />
-      <CContainer fluid className="app-breadcrumb-wrap">
-        <AppBreadcrumb />
       </CContainer>
     </CHeader>
   )

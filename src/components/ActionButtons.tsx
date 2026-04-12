@@ -34,12 +34,12 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
       {isAdmin && (
         <>
           <CTooltip content={editTooltip}>
-            <CButton color="light" size="sm" className="me-1" onClick={onEdit}>
+            <CButton color="light" size="sm" className="me-1 app-table-action-button" onClick={onEdit}>
               <CIcon icon={cilPen} />
             </CButton>
           </CTooltip>
           <CTooltip content={deleteTooltip}>
-            <CButton color="light" size="sm" onClick={onDelete}>
+            <CButton color="light" size="sm" className="app-table-action-button" onClick={onDelete}>
               <CIcon icon={cilTrash} />
             </CButton>
           </CTooltip>

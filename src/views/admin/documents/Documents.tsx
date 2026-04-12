@@ -11,6 +11,8 @@ import {
 import CIcon from '@coreui/icons-react'
 import { cilPlus, cilTrash, cilCloudDownload, cilFolder, cilFile, cilDescription, cilNotes } from '@coreui/icons'
 import useIsAdmin from '../../../hooks/useIsAdmin'
+import StatCard from '../../../components/StatCard'
+import TableEmptyRow from '../../../components/TableEmptyRow'
 
 const CATEGORIES = [
   { value: 'identite', label: "Carte d'identité / Passeport", color: 'warning' },
@@ -133,39 +135,46 @@ const Documents = () => {
 
   return (
     <>
-      {/* Stats */}
-      <CRow className="mb-4 text-center">
-        <CCol sm={4}>
-          <CCard className="text-white bg-primary mb-3">
-            <CCardBody><div className="fs-4 fw-semibold">{docs.length}</div><div>Documents</div></CCardBody>
-          </CCard>
-        </CCol>
-        <CCol sm={4}>
-          <CCard className="text-white bg-warning mb-3">
-            <CCardBody><div className="fs-4 fw-semibold">{docs.filter((d) => d.entity_type === 'tenant').length}</div><div>Locataires</div></CCardBody>
-          </CCard>
-        </CCol>
-        <CCol sm={4}>
-          <CCard className="text-white bg-info mb-3">
-            <CCardBody><div className="fs-4 fw-semibold">{docs.filter((d) => d.entity_type === 'property').length}</div><div>Biens</div></CCardBody>
+      <CRow className="mb-4">
+        <CCol>
+          <CCard className="app-page-hero border-0">
+            <CCardBody className="p-0 position-relative">
+              <div className="app-page-kicker mb-3">Gestion documentaire</div>
+              <h2 className="mb-2 app-display-title">Centralisez tous les documents de gestion</h2>
+              <p className="app-page-description mb-4">
+                Classez, filtrez et retrouvez rapidement les pieces liees aux locataires, biens et baux.
+              </p>
+              <div className="d-flex flex-wrap gap-2">
+                <span className="app-filter-chip">{docs.length} documents</span>
+                <span className="app-filter-chip">{filteredDocs.length} affiches</span>
+                <span className="app-filter-chip">{CATEGORIES.length} categories</span>
+              </div>
+            </CCardBody>
           </CCard>
         </CCol>
       </CRow>
 
-      <CCard>
+      {/* Stats */}
+      <CRow className="mb-4 text-center">
+        <StatCard value={docs.length} label="Documents" color="primary" sm={4} />
+        <StatCard value={docs.filter((d) => d.entity_type === 'tenant').length} label="Locataires" color="warning" sm={4} />
+        <StatCard value={docs.filter((d) => d.entity_type === 'property').length} label="Biens" color="info" sm={4} />
+      </CRow>
+
+      <CCard className="app-panel-card app-table-card">
         <CCardHeader className="d-flex justify-content-between align-items-center flex-wrap gap-2">
           <strong>Mes documents</strong>
           <div className="d-flex gap-2 flex-wrap align-items-center">
-            <CFormSelect size="sm" style={{ width: 170 }} value={filterEntityType} onChange={(e) => setFilterEntityType(e.target.value)}>
+            <CFormSelect className="app-view-filter" size="sm" style={{ width: 180 }} value={filterEntityType} onChange={(e) => setFilterEntityType(e.target.value)}>
               <option value="">Toutes les entités</option>
               {ENTITY_TYPES.map((et) => <option key={et.value} value={et.value}>{et.label}</option>)}
             </CFormSelect>
-            <CFormSelect size="sm" style={{ width: 200 }} value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
+            <CFormSelect className="app-view-filter" size="sm" style={{ width: 220 }} value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
               <option value="">Toutes les catégories</option>
               {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
             </CFormSelect>
             {isAdmin && (
-              <CButton color="primary" size="sm" onClick={() => setAddModal(true)}>
+              <CButton color="primary" size="sm" className="app-ghost-button" onClick={() => setAddModal(true)}>
                 <CIcon icon={cilPlus} className="me-1" />Ajouter
               </CButton>
             )}
@@ -189,12 +198,7 @@ const Documents = () => {
               </CTableHead>
               <CTableBody>
                 {filteredDocs.length === 0 ? (
-                  <CTableRow>
-                    <CTableDataCell colSpan={7} className="text-center text-muted py-5">
-                      <CIcon icon={cilFolder} size="xl" className="mb-2 d-block mx-auto" />
-                      Aucun document
-                    </CTableDataCell>
-                  </CTableRow>
+                  <TableEmptyRow colSpan={7} message="Aucun document" />
                 ) : filteredDocs.map((doc) => {
                   const cat = catInfo(doc.category)
                   return (

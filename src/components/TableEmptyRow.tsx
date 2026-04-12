@@ -10,8 +10,8 @@ const TableEmptyRow: React.FC<TableEmptyRowProps> = ({
   colSpan,
   message = 'Aucun élément enregistré',
 }) => (
-  <CTableRow>
-    <CTableDataCell colSpan={colSpan} className="text-center text-muted">
+  <CTableRow className="app-table-empty-row">
+    <CTableDataCell colSpan={colSpan} className="text-center text-muted py-5">
       {message}
     </CTableDataCell>
   </CTableRow>

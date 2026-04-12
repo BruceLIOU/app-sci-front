@@ -86,7 +86,7 @@ const ViewControlBar: React.FC<ViewControlBarProps> = ({
   const showSeparator = showModes && showFilters
 
   return (
-    <div className="d-flex align-items-center flex-wrap gap-2 py-3 border-top border-bottom mb-4">
+    <div className="app-view-control-bar d-flex align-items-center flex-wrap gap-2 py-3 mb-4">
       {/* Boutons de mode d'affichage */}
       {showModes && (
         <CButtonGroup>
@@ -94,6 +94,7 @@ const ViewControlBar: React.FC<ViewControlBarProps> = ({
             <CTooltip key={mode} content={modeTooltips[mode]}>
               <CButton
                 color={viewMode === mode ? 'primary' : 'light'}
+                className="app-view-toggle"
                 onClick={() => onViewModeChange!(mode)}
               >
                 <CIcon icon={modeIcons[mode]} />
@@ -111,6 +112,7 @@ const ViewControlBar: React.FC<ViewControlBarProps> = ({
               <CButton
                 color={gridCols === n ? 'primary' : 'light'}
                 size="sm"
+                className="app-view-toggle"
                 onClick={() => onGridColsChange!(n)}
               >
                 <GridColIcon cols={n} />
@@ -126,6 +128,7 @@ const ViewControlBar: React.FC<ViewControlBarProps> = ({
       {filters.map((f, i) => (
         <CFormSelect
           key={i}
+          className="app-view-filter"
           size="sm"
           style={{ width: f.width ?? 160 }}
           value={f.value}
@@ -144,6 +147,7 @@ const ViewControlBar: React.FC<ViewControlBarProps> = ({
       {hasActiveFilter && onResetFilters && filteredCount != null && (
         <CTooltip content="Réinitialiser les filtres">
           <CButton color="light" size="sm" onClick={onResetFilters}>
+            
             <CIcon icon={cilFilterX} className="me-1" />
             <CBadge color="danger" shape="rounded-pill">
               {filteredCount}/{totalCount}

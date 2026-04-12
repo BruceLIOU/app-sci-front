@@ -19,6 +19,7 @@ import { useNavigate } from 'react-router-dom'
 import VisitDataService from '../../../services/visit.service'
 import PropertyDataService from '../../../services/property.service'
 import TenantDataService from '../../../services/tenant.service'
+import StatCard from '../../../components/StatCard'
 
 const typeColor: Record<string, string> = { visite: '#3b82f6', rdv: '#8b5cf6', autre: '#6b7280' }
 const statusColor: Record<string, string> = { scheduled: 'primary', completed: 'success', cancelled: 'danger' }
@@ -196,6 +197,11 @@ const Visits: FC = () => {
     ? tenants.filter((t: any) => String(t.property_id) === form.property_id)
     : tenants
 
+  const totalVisits = events.length
+  const scheduledVisits = events.filter((e) => e.extendedProps?.status === 'scheduled').length
+  const completedVisits = events.filter((e) => e.extendedProps?.status === 'completed').length
+  const cancelledVisits = events.filter((e) => e.extendedProps?.status === 'cancelled').length
+
   return (
     <>
       {/* Alerte */}
@@ -205,56 +211,84 @@ const Visits: FC = () => {
         </CAlert>
       )}
 
+      <CRow className="mb-4">
+        <CCol>
+          <CCard className="app-page-hero border-0">
+            <CCardBody className="p-0 position-relative">
+              <div className="app-page-kicker mb-3">Agenda locatif</div>
+              <h2 className="mb-2 app-display-title">Calendrier des visites</h2>
+              <p className="app-page-description mb-4">
+                Organisez les rendez-vous, suivez les statuts et gardez une vision claire des prochaines actions terrain.
+              </p>
+              <div className="d-flex flex-wrap gap-2">
+                <span className="app-filter-chip">{totalVisits} visites</span>
+                <span className="app-filter-chip">{scheduledVisits} planifiees</span>
+                <span className="app-filter-chip">{cancelledVisits} annulees</span>
+              </div>
+            </CCardBody>
+          </CCard>
+        </CCol>
+      </CRow>
+
+      <CRow className="mb-4 text-center">
+        <StatCard value={totalVisits} label="Total des visites" color="primary" sm={3} />
+        <StatCard value={scheduledVisits} label="Planifiées" color="info" sm={3} />
+        <StatCard value={completedVisits} label="Effectuées" color="success" sm={3} />
+        <StatCard value={cancelledVisits} label="Annulées" color="danger" sm={3} />
+      </CRow>
+
       <CRow className="mb-3 align-items-center">
         <CCol>
-          <h4 className="mb-0">
+          <h5 className="mb-0 app-card-title">
             <CIcon icon={cilCalendar} className="me-2" />
-            Calendrier des visites
-          </h4>
+            Planning
+          </h5>
         </CCol>
         <CCol xs="auto" className="d-flex gap-2 align-items-center">
-          <CButton color="primary" size="sm" onClick={() => openCreate()}>
+          <CButton color="primary" size="sm" className="app-ghost-button" onClick={() => openCreate()}>
             <CIcon icon={cilPlus} className="me-1" />
             Nouvelle visite
           </CButton>
         </CCol>
       </CRow>
 
-      <CCard>
-        <CCardBody style={{ minHeight: 600 }}>
+      <CCard className="app-panel-card app-calendar-card">
+        <CCardBody className="app-calendar-shell" style={{ minHeight: 600 }}>
           {loading ? (
             <div className="d-flex justify-content-center align-items-center" style={{ height: 500 }}>
               <CSpinner />
             </div>
           ) : (
-            <FullCalendar
-              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-              locale={frLocale}
-              initialView="dayGridMonth"
-              headerToolbar={{
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek',
-              }}
-              events={events}
-              height={620}
-              selectable
-              select={(arg: DateSelectArg) => {
-                const d = format(arg.start, 'yyyy-MM-dd')
-                const t = arg.allDay ? '10:00' : format(arg.start, 'HH:mm')
-                openCreate({ date: d, time: t })
-              }}
-              eventClick={(arg: EventClickArg) => {
-                openEdit({ id: Number(arg.event.id), ...arg.event.extendedProps })
-              }}
-              eventDidMount={(info) => {
-                if (info.event.extendedProps.status === 'cancelled') {
-                  info.el.style.opacity = '0.45'
-                }
-              }}
-              dayMaxEvents
-              nowIndicator
-            />
+            <div className="app-calendar">
+              <FullCalendar
+                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
+                locale={frLocale}
+                initialView="dayGridMonth"
+                headerToolbar={{
+                  left: 'prev,next today',
+                  center: 'title',
+                  right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek',
+                }}
+                events={events}
+                height={620}
+                selectable
+                select={(arg: DateSelectArg) => {
+                  const d = format(arg.start, 'yyyy-MM-dd')
+                  const t = arg.allDay ? '10:00' : format(arg.start, 'HH:mm')
+                  openCreate({ date: d, time: t })
+                }}
+                eventClick={(arg: EventClickArg) => {
+                  openEdit({ id: Number(arg.event.id), ...arg.event.extendedProps })
+                }}
+                eventDidMount={(info) => {
+                  if (info.event.extendedProps.status === 'cancelled') {
+                    info.el.style.opacity = '0.45'
+                  }
+                }}
+                dayMaxEvents
+                nowIndicator
+              />
+            </div>
           )}
         </CCardBody>
       </CCard>

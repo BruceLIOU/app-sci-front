@@ -120,6 +120,25 @@ const Users = () => {
 
   return (
     <>
+      <CRow className="mb-4">
+        <CCol>
+          <CCard className="app-page-hero border-0">
+            <CCardBody className="p-0 position-relative">
+              <div className="app-page-kicker mb-3">Administration</div>
+              <h2 className="mb-2 app-display-title">Pilotez les acces utilisateurs</h2>
+              <p className="app-page-description mb-4">
+                Gere les invitations, les roles et le suivi des comptes dans une interface uniforme avec le reste du back-office.
+              </p>
+              <div className="d-flex flex-wrap gap-2">
+                <span className="app-filter-chip">{users.length} comptes</span>
+                <span className="app-filter-chip">{pendingCount} invitations</span>
+                <span className="app-filter-chip">{adminCount} administrateurs</span>
+              </div>
+            </CCardBody>
+          </CCard>
+        </CCol>
+      </CRow>
+
       <CRow className="mb-4 text-center">
         <StatCard value={users.length} label="Utilisateurs" color="primary" />
         <StatCard value={activeCount} label="Comptes actifs" color="success" />
@@ -135,10 +154,10 @@ const Users = () => {
 
       <CRow>
         <CCol>
-          <CCard>
+          <CCard className="app-panel-card app-table-card">
             <CCardHeader className="d-flex justify-content-between align-items-center">
               <strong>Gestion des utilisateurs</strong>
-              <CButton color="primary" size="sm" onClick={() => { setInviteModal(true); setInviteSuccess(null); setInviteError(null) }}>
+              <CButton color="primary" size="sm" className="app-ghost-button" onClick={() => { setInviteModal(true); setInviteSuccess(null); setInviteError(null) }}>
                 <CIcon icon={cilUserPlus} className="me-2" />
                 Inviter un utilisateur
               </CButton>
@@ -182,6 +201,7 @@ const Users = () => {
                         </CTableDataCell>
                         <CTableDataCell>
                           <CFormSelect
+                            className="app-view-filter"
                             size="sm"
                             value={user.role}
                             onChange={(e) => handleRoleChange(user, e.target.value)}

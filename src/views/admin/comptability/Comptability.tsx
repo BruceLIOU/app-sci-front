@@ -6,6 +6,8 @@ import {
 } from '@coreui/react'
 import { CChartBar } from '@coreui/react-chartjs'
 import { DateUtils } from 'src/utils/date'
+import StatCard from '../../../components/StatCard'
+import TableEmptyRow from '../../../components/TableEmptyRow'
 
 const Comptability = () => {
   const [payments, setPayments] = useState<any[]>([])
@@ -45,23 +47,54 @@ const Comptability = () => {
     return acc
   }, {})
 
+  const propertyEntries = Object.entries(byProperty) as Array<[string, { paid: number; total: number }]>
+
   return (
     <>
+      <CRow className="mb-4">
+        <CCol>
+          <CCard className="app-page-hero border-0">
+            <CCardBody className="p-0 position-relative">
+              <div className="app-page-kicker mb-3">Pilotage comptable</div>
+              <h2 className="mb-2 app-display-title">Suivi financier de votre parc</h2>
+              <p className="app-page-description mb-3">
+                Visualisez les loyers encaisses, les retards et la performance de recouvrement avec une vue
+                centralisee sur les paiements.
+              </p>
+              <div className="d-flex flex-wrap gap-2">
+                <span className="app-filter-chip">{payments.length} paiements</span>
+                <span className="app-filter-chip">{totalExpected.toFixed(2)} € attendus</span>
+                <span className="app-filter-chip">{recoveryRate} % recouvres</span>
+              </div>
+            </CCardBody>
+          </CCard>
+        </CCol>
+      </CRow>
+
       <CRow className="mb-4 text-center">
-        <CCol sm={3}><CCard className="text-white bg-success mb-3"><CCardBody><div className="fs-4 fw-semibold">{totalPaid.toFixed(2)} €</div><div>Loyers perçus</div></CCardBody></CCard></CCol>
-        <CCol sm={3}><CCard className="text-white bg-warning mb-3"><CCardBody><div className="fs-4 fw-semibold">{totalPending.toFixed(2)} €</div><div>En attente</div></CCardBody></CCard></CCol>
-        <CCol sm={3}><CCard className="text-white bg-danger mb-3"><CCardBody><div className="fs-4 fw-semibold">{totalLate.toFixed(2)} €</div><div>En retard</div></CCardBody></CCard></CCol>
-        <CCol sm={3}><CCard className="text-white bg-info mb-3"><CCardBody><div className="fs-4 fw-semibold">{recoveryRate} %</div><div>Taux de recouvrement</div></CCardBody></CCard></CCol>
+        <StatCard value={`${totalPaid.toFixed(2)} €`} label="Loyers perçus" color="success" sm={3} />
+        <StatCard value={`${totalPending.toFixed(2)} €`} label="En attente" color="warning" sm={3} />
+        <StatCard value={`${totalLate.toFixed(2)} €`} label="En retard" color="danger" sm={3} />
+        <StatCard value={`${recoveryRate} %`} label="Taux de recouvrement" color="info" sm={3} />
       </CRow>
 
       {months.length > 0 && (
-        <CCard className="mb-4">
+        <CCard className="mb-4 app-panel-card">
           <CCardHeader><strong>Loyers par mois</strong></CCardHeader>
           <CCardBody>
             <CChartBar
               style={{ height: '280px' }}
-              data={{ labels: months.map((m) => DateUtils.formatMonthYear(m)), datasets: [{ label: 'Perçus (€)', backgroundColor: 'rgba(40,167,69,0.7)', data: paidByMonth }, { label: 'En attente / Retard (€)', backgroundColor: 'rgba(255,193,7,0.7)', data: pendingByMonth }] }}
-              options={{ maintainAspectRatio: false, plugins: { legend: { display: true } } }}
+              data={{
+                labels: months.map((m) => DateUtils.formatMonthYear(m)),
+                datasets: [
+                  { label: 'Perçus (€)', backgroundColor: 'rgba(21, 128, 61, 0.78)', data: paidByMonth },
+                  { label: 'En attente / Retard (€)', backgroundColor: 'rgba(234, 88, 12, 0.75)', data: pendingByMonth },
+                ],
+              }}
+              options={{
+                maintainAspectRatio: false,
+                plugins: { legend: { display: true, position: 'bottom' } },
+              }}
             />
           </CCardBody>
         </CCard>
@@ -69,43 +102,56 @@ const Comptability = () => {
 
       <CRow>
         <CCol md={6}>
-          <CCard className="mb-4">
+          <CCard className="mb-4 app-panel-card">
             <CCardHeader><strong>Revenus par bien</strong></CCardHeader>
             <CCardBody>
-              {Object.keys(byProperty).length === 0 ? <p className="text-muted">Aucune donnée disponible</p>
-              : Object.entries(byProperty).map(([name, val]: [string, any]) => (
-                <div key={name} className="mb-3">
-                  <div className="d-flex justify-content-between mb-1">
-                    <span>{name}</span>
-                    <span>{val.paid.toFixed(2)} € / {val.total.toFixed(2)} €</span>
+              {propertyEntries.length === 0 ? (
+                <p className="text-muted">Aucune donnée disponible</p>
+              ) : (
+                propertyEntries.map(([name, val]) => (
+                  <div key={name} className="mb-3">
+                    <div className="d-flex justify-content-between mb-1">
+                      <span>{name}</span>
+                      <span>{val.paid.toFixed(2)} € / {val.total.toFixed(2)} €</span>
+                    </div>
+                    <CProgress value={val.total > 0 ? (val.paid / val.total) * 100 : 0} color="success" />
                   </div>
-                  <CProgress value={val.total > 0 ? (val.paid / val.total) * 100 : 0} color="success" />
-                </div>
-              ))}
+                ))
+              )}
             </CCardBody>
           </CCard>
         </CCol>
 
         <CCol md={6}>
-          <CCard className="mb-4">
+          <CCard className="mb-4 app-panel-card app-table-card">
             <CCardHeader><strong>Détail des paiements</strong></CCardHeader>
             <CCardBody>
-              <CTable align="middle" hover responsive bordered small>
-                <CTableHead color="light"><CTableRow><CTableHeaderCell>Mois</CTableHeaderCell><CTableHeaderCell>Locataire</CTableHeaderCell><CTableHeaderCell>Montant</CTableHeaderCell><CTableHeaderCell>Statut</CTableHeaderCell></CTableRow></CTableHead>
+              <CTable align="middle" hover responsive bordered>
+                <CTableHead color="light">
+                  <CTableRow>
+                    <CTableHeaderCell>Mois</CTableHeaderCell>
+                    <CTableHeaderCell>Locataire</CTableHeaderCell>
+                    <CTableHeaderCell>Montant</CTableHeaderCell>
+                    <CTableHeaderCell>Statut</CTableHeaderCell>
+                  </CTableRow>
+                </CTableHead>
                 <CTableBody>
-                  {payments.length === 0 ? <CTableRow><CTableDataCell colSpan={4} className="text-center text-muted">Aucun paiement</CTableDataCell></CTableRow>
-                  : payments.map((p) => (
-                    <CTableRow key={p.id}>
-                      <CTableDataCell>{DateUtils.formatMonthYear(p.month) || '-'}</CTableDataCell>
-                      <CTableDataCell>{p.Tenant ? `${p.Tenant.firstname} ${p.Tenant.lastname}` : '-'}</CTableDataCell>
-                      <CTableDataCell>{parseFloat(p.amount || 0).toFixed(2)} €</CTableDataCell>
-                      <CTableDataCell>
-                        <CBadge color={p.status === 'paid' ? 'success' : p.status === 'late' ? 'danger' : 'warning'}>
-                          {p.status === 'paid' ? 'Payé' : p.status === 'late' ? 'Retard' : 'Attente'}
-                        </CBadge>
-                      </CTableDataCell>
-                    </CTableRow>
-                  ))}
+                  {payments.length === 0 ? (
+                    <TableEmptyRow colSpan={4} message="Aucun paiement" />
+                  ) : (
+                    payments.map((p) => (
+                      <CTableRow key={p.id}>
+                        <CTableDataCell>{DateUtils.formatMonthYear(p.month) || '-'}</CTableDataCell>
+                        <CTableDataCell>{p.Tenant ? `${p.Tenant.firstname} ${p.Tenant.lastname}` : '-'}</CTableDataCell>
+                        <CTableDataCell>{parseFloat(p.amount || 0).toFixed(2)} €</CTableDataCell>
+                        <CTableDataCell>
+                          <CBadge color={p.status === 'paid' ? 'success' : p.status === 'late' ? 'danger' : 'warning'}>
+                            {p.status === 'paid' ? 'Payé' : p.status === 'late' ? 'Retard' : 'Attente'}
+                          </CBadge>
+                        </CTableDataCell>
+                      </CTableRow>
+                    ))
+                  )}
                 </CTableBody>
               </CTable>
             </CCardBody>

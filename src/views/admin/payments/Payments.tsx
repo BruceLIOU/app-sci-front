@@ -128,7 +128,7 @@ const Payments = () => {
         )}
         <ViewControlBar
           filters={[
-            { value: filterYear, onChange: setFilterYear, options: availableYears.map((y) => ({ value: y, label: y })), placeholder: 'Toutes les années', width: 140 },
+            { value: filterYear, onChange: setFilterYear, options: availableYears.map((y) => ({ value: y, label: y })), placeholder: 'Toutes les années', width: 188 },
             { value: filterStatus, onChange: setFilterStatus, options: Object.entries(statusLabel).map(([v, l]) => ({ value: v, label: l })), placeholder: 'Tous les statuts', width: 160 },
           ]}
           hasActiveFilter={filterStatus !== '' || filterYear !== ''}

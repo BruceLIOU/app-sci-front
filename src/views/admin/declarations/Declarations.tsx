@@ -11,6 +11,8 @@ import CIcon from '@coreui/icons-react'
 import { cilCloudDownload } from '@coreui/icons'
 import http from '../../../utils/http-common'
 import { DateUtils } from 'src/utils/date'
+import StatCard from '../../../components/StatCard'
+import TableEmptyRow from '../../../components/TableEmptyRow'
 
 const currentYear = new Date().getFullYear()
 const years = Array.from({ length: 5 }, (_, i) => currentYear - i)
@@ -75,35 +77,59 @@ const Declarations = () => {
 
   return (
     <>
-      <div className="d-flex justify-content-between align-items-center mb-4 no-print">
-        <div className="d-flex align-items-center gap-3">
-          <h5 className="mb-0">Déclaration annuelle — Formulaire 2072</h5>
-          <CFormSelect size="sm" value={year} onChange={(e) => setYear(Number(e.target.value))} style={{ width: 120 }}>
-            {years.map((y) => <option key={y} value={y}>{y}</option>)}
-          </CFormSelect>
-        </div>
-        <CButton color="primary" size="sm" onClick={handleGeneratePdf} disabled={generating}>
-          <CIcon icon={cilCloudDownload} className="me-1" />
-          {generating ? 'Génération…' : 'Générer le PDF 2072-S'}
-        </CButton>
-      </div>
+      <CRow className="mb-4 g-3 no-print">
+        <CCol lg={8}>
+          <CCard className="app-page-hero h-100 border-0">
+            <CCardBody className="p-0 position-relative">
+              <div className="app-page-kicker mb-3">Declaration fiscale</div>
+              <h2 className="mb-2 app-display-title">Preparation du formulaire 2072 simplifiee</h2>
+              <p className="app-page-description mb-4">
+                Controlez vos revenus, charges et quote-parts puis exportez la declaration annuelle au format PDF.
+              </p>
+              <div className="d-flex flex-wrap gap-2">
+                <span className="app-filter-chip">Exercice {year}</span>
+                <span className="app-filter-chip">{yearPayments.length} loyers percus</span>
+                <span className="app-filter-chip">{yearCharges.length} charges deduites</span>
+              </div>
+            </CCardBody>
+          </CCard>
+        </CCol>
+        <CCol lg={4}>
+          <CCard className="app-panel-card h-100 border-0">
+            <CCardBody>
+              <div className="text-uppercase fw-semibold mb-2" style={{ fontSize: '0.74rem', letterSpacing: '0.08em', color: 'var(--app-accent)' }}>
+                Parametres
+              </div>
+              <h5 className="mb-3">Annee de declaration</h5>
+              <CFormSelect className="app-filter-select mb-3" value={year} onChange={(e) => setYear(Number(e.target.value))}>
+                {years.map((y) => <option key={y} value={y}>{y}</option>)}
+              </CFormSelect>
+              <CButton color="primary" className="app-ghost-button w-100" onClick={handleGeneratePdf} disabled={generating}>
+                <CIcon icon={cilCloudDownload} className="me-1" />
+                {generating ? 'Generation…' : 'Generer le PDF 2072-S'}
+              </CButton>
+            </CCardBody>
+          </CCard>
+        </CCol>
+      </CRow>
 
       <CRow className="mb-4 text-center">
-        <CCol sm={4}><CCard className="text-white bg-success mb-3"><CCardBody><div className="fs-4 fw-semibold">{totalRevenues.toFixed(2)} €</div><div>Revenus locatifs {year}</div></CCardBody></CCard></CCol>
-        <CCol sm={4}><CCard className="text-white bg-danger mb-3"><CCardBody><div className="fs-4 fw-semibold">{totalCharges.toFixed(2)} €</div><div>Charges déductibles {year}</div></CCardBody></CCard></CCol>
-        <CCol sm={4}><CCard className={`text-white mb-3 ${netResult >= 0 ? 'bg-info' : 'bg-warning'}`}><CCardBody><div className="fs-4 fw-semibold">{netResult.toFixed(2)} €</div><div>Résultat net {netResult >= 0 ? '(bénéfice)' : '(déficit)'}</div></CCardBody></CCard></CCol>
+        <StatCard value={`${totalRevenues.toFixed(2)} €`} label={`Revenus locatifs ${year}`} color="success" sm={4} />
+        <StatCard value={`${totalCharges.toFixed(2)} €`} label={`Charges deductibles ${year}`} color="danger" sm={4} />
+        <StatCard value={`${netResult.toFixed(2)} €`} label={`Resultat net ${netResult >= 0 ? '(benefice)' : '(deficit)'}`} color={netResult >= 0 ? 'info' : 'warning'} sm={4} />
       </CRow>
 
       <CRow className="mb-4">
         <CCol md={6}>
-          <CCard className="mb-4">
+          <CCard className="mb-4 app-panel-card app-table-card">
             <CCardHeader><strong>Revenus par bien — {year}</strong></CCardHeader>
             <CCardBody>
-              <CTable bordered small align="middle">
+              <CTable bordered align="middle" responsive hover>
                 <CTableHead color="light"><CTableRow><CTableHeaderCell>Bien</CTableHeaderCell><CTableHeaderCell>Revenus</CTableHeaderCell><CTableHeaderCell>Charges</CTableHeaderCell><CTableHeaderCell>Net</CTableHeaderCell></CTableRow></CTableHead>
                 <CTableBody>
-                  {byProperty.length === 0 ? <CTableRow><CTableDataCell colSpan={4} className="text-center text-muted">Aucun bien</CTableDataCell></CTableRow>
-                  : byProperty.map((p) => (
+                  {byProperty.length === 0 ? (
+                    <TableEmptyRow colSpan={4} message="Aucun bien" />
+                  ) : byProperty.map((p) => (
                     <CTableRow key={p.id}>
                       <CTableDataCell>{p.type} - {p.city}</CTableDataCell>
                       <CTableDataCell>{p.revenues.toFixed(2)} €</CTableDataCell>
@@ -124,14 +150,15 @@ const Declarations = () => {
         </CCol>
 
         <CCol md={6}>
-          <CCard className="mb-4">
-            <CCardHeader><strong>Quote-part par associé — {year}</strong></CCardHeader>
+          <CCard className="mb-4 app-panel-card app-table-card">
+            <CCardHeader><strong>Quote-part par associe — {year}</strong></CCardHeader>
             <CCardBody>
-              <CTable bordered small align="middle">
-                <CTableHead color="light"><CTableRow><CTableHeaderCell>Associé</CTableHeaderCell><CTableHeaderCell>Rôle</CTableHeaderCell><CTableHeaderCell>Parts</CTableHeaderCell><CTableHeaderCell>Quote-part</CTableHeaderCell></CTableRow></CTableHead>
+              <CTable bordered align="middle" responsive hover>
+                <CTableHead color="light"><CTableRow><CTableHeaderCell>Associe</CTableHeaderCell><CTableHeaderCell>Role</CTableHeaderCell><CTableHeaderCell>Parts</CTableHeaderCell><CTableHeaderCell>Quote-part</CTableHeaderCell></CTableRow></CTableHead>
                 <CTableBody>
-                  {byAssociate.length === 0 ? <CTableRow><CTableDataCell colSpan={4} className="text-center text-muted">Aucun associé</CTableDataCell></CTableRow>
-                  : byAssociate.map((a) => (
+                  {byAssociate.length === 0 ? (
+                    <TableEmptyRow colSpan={4} message="Aucun associe" />
+                  ) : byAssociate.map((a) => (
                     <CTableRow key={a.id}>
                       <CTableDataCell>{a.civility || ''} {a.firstname} {a.lastname}</CTableDataCell>
                       <CTableDataCell><CBadge color={a.role === 'Gérant' ? 'primary' : 'secondary'}>{a.role}</CBadge></CTableDataCell>
@@ -146,14 +173,15 @@ const Declarations = () => {
         </CCol>
       </CRow>
 
-      <CCard className="mb-4">
-        <CCardHeader><strong>Détail des loyers perçus — {year}</strong></CCardHeader>
+      <CCard className="mb-4 app-panel-card app-table-card">
+        <CCardHeader><strong>Detail des loyers percus — {year}</strong></CCardHeader>
         <CCardBody>
-          <CTable bordered small align="middle" hover>
-            <CTableHead color="light"><CTableRow><CTableHeaderCell>Locataire</CTableHeaderCell><CTableHeaderCell>Bien</CTableHeaderCell><CTableHeaderCell>Période</CTableHeaderCell><CTableHeaderCell>Date paiement</CTableHeaderCell><CTableHeaderCell>Montant</CTableHeaderCell></CTableRow></CTableHead>
+          <CTable bordered align="middle" hover responsive>
+            <CTableHead color="light"><CTableRow><CTableHeaderCell>Locataire</CTableHeaderCell><CTableHeaderCell>Bien</CTableHeaderCell><CTableHeaderCell>Periode</CTableHeaderCell><CTableHeaderCell>Date paiement</CTableHeaderCell><CTableHeaderCell>Montant</CTableHeaderCell></CTableRow></CTableHead>
             <CTableBody>
-              {yearPayments.length === 0 ? <CTableRow><CTableDataCell colSpan={5} className="text-center text-muted">Aucun loyer perçu pour {year}</CTableDataCell></CTableRow>
-              : yearPayments.map((p) => (
+              {yearPayments.length === 0 ? (
+                <TableEmptyRow colSpan={5} message={`Aucun loyer percu pour ${year}`} />
+              ) : yearPayments.map((p) => (
                 <CTableRow key={p.id}>
                   <CTableDataCell>{p.Tenant ? `${p.Tenant.firstname} ${p.Tenant.lastname}` : '-'}</CTableDataCell>
                   <CTableDataCell>{p.Property ? `${p.Property.type} - ${p.Property.city}` : '-'}</CTableDataCell>
@@ -167,20 +195,21 @@ const Declarations = () => {
         </CCardBody>
       </CCard>
 
-      <CCard>
-        <CCardHeader><strong>Détail des charges déductibles — {year}</strong></CCardHeader>
+      <CCard className="app-panel-card app-table-card">
+        <CCardHeader><strong>Detail des charges deductibles — {year}</strong></CCardHeader>
         <CCardBody>
-          <CTable bordered small align="middle" hover>
-            <CTableHead color="light"><CTableRow><CTableHeaderCell>Type</CTableHeaderCell><CTableHeaderCell>Description</CTableHeaderCell><CTableHeaderCell>Bien</CTableHeaderCell><CTableHeaderCell>Fréquence</CTableHeaderCell><CTableHeaderCell>Montant annualisé</CTableHeaderCell></CTableRow></CTableHead>
+          <CTable bordered align="middle" hover responsive>
+            <CTableHead color="light"><CTableRow><CTableHeaderCell>Type</CTableHeaderCell><CTableHeaderCell>Description</CTableHeaderCell><CTableHeaderCell>Bien</CTableHeaderCell><CTableHeaderCell>Frequence</CTableHeaderCell><CTableHeaderCell>Montant annualise</CTableHeaderCell></CTableRow></CTableHead>
             <CTableBody>
-              {yearCharges.length === 0 ? <CTableRow><CTableDataCell colSpan={5} className="text-center text-muted">Aucune charge déductible pour {year}</CTableDataCell></CTableRow>
-              : yearCharges.map((c) => {
+              {yearCharges.length === 0 ? (
+                <TableEmptyRow colSpan={5} message={`Aucune charge deductible pour ${year}`} />
+              ) : yearCharges.map((c) => {
                 const a = parseFloat(c.amount || 0)
                 return (
                   <CTableRow key={c.id}>
                     <CTableDataCell>{c.type}</CTableDataCell>
                     <CTableDataCell>{c.description || '-'}</CTableDataCell>
-                    <CTableDataCell>{c.Property ? `${c.Property.type} - ${c.Property.city}` : 'Général'}</CTableDataCell>
+                    <CTableDataCell>{c.Property ? `${c.Property.type} - ${c.Property.city}` : 'General'}</CTableDataCell>
                     <CTableDataCell>{c.frequency}</CTableDataCell>
                     <CTableDataCell>{a.toFixed(2)} €</CTableDataCell>
                   </CTableRow>
