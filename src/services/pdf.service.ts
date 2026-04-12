@@ -21,6 +21,21 @@ class PdfDataService {
     return http.post(`/pdf/attestation/${leaseId}`)
   }
 
+  /** Envoie le bail par email au locataire (génération à la volée) */
+  emailBail(leaseId: number) {
+    return http.post(`/pdf/bail/${leaseId}/email`)
+  }
+
+  /** Envoie une quittance par email au locataire */
+  emailQuittance(quittanceId: number) {
+    return http.post(`/pdf/quittance/${quittanceId}/email`)
+  }
+
+  /** Envoie un état des lieux par email au locataire */
+  emailEtatDesLieux(inspectionId: number) {
+    return http.post(`/pdf/etat-des-lieux/${inspectionId}/email`)
+  }
+
   /** Retourne l'URL de prévisualisation directe du bail (sans sauvegarde) */
   previewBailUrl(leaseId: number): string {
     const base = (import.meta as any).env?.VITE_API_URL ?? 'http://localhost:3000/api'

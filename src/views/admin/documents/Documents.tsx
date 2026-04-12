@@ -134,7 +134,7 @@ const Documents = () => {
   return (
     <>
       {/* Stats */}
-      <CRow className="mb-4">
+      <CRow className="mb-4 text-center">
         <CCol sm={4}>
           <CCard className="text-white bg-primary mb-3">
             <CCardBody><div className="fs-4 fw-semibold">{docs.length}</div><div>Documents</div></CCardBody>

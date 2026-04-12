@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import LeaseDataService from '../../../services/lease.service'
 import TenantDataService from '../../../services/tenant.service'
 import PropertyDataService from '../../../services/property.service'
+import PdfDataService from '../../../services/pdf.service'
 import DocumentsSection from '../../../components/DocumentsSection'
 import ViewControlBar from '../../../components/ViewControlBar'
 import ActionButtons from '../../../components/ActionButtons'
@@ -15,9 +16,10 @@ import {
   CCol, CRow, CTable, CTableBody, CTableDataCell,
   CTableHead, CTableHeaderCell, CTableRow, CBadge, CButton, CModal, CModalHeader,
   CModalTitle, CModalBody, CFormInput, CFormSelect, CFormTextarea, CTooltip,
+  CSpinner, CAlert,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilInfo } from '@coreui/icons'
+import { cilInfo, cilSend } from '@coreui/icons'
 import { DateUtils } from 'src/utils/date'
 
 const statusLabel: Record<string, string> = { active: 'Actif', expired: 'Expiré', terminated: 'Résilié' }
@@ -37,6 +39,8 @@ const Leases = () => {
   const [filterStatus, setFilterStatus] = useState('')
   const [filterLeaseType, setFilterLeaseType] = useState('')
   const [viewing, setViewing] = useState<any>(null)
+  const [emailSendingId, setEmailSendingId] = useState<number | null>(null)
+  const [emailResult, setEmailResult] = useState<{ type: 'success' | 'danger'; message: string } | null>(null)
 
   const {
     items: leases,
@@ -67,9 +71,27 @@ const Leases = () => {
   })
   const resetFilters = () => { setFilterStatus(''); setFilterLeaseType('') }
 
+  const handleEmailBail = async (id: number) => {
+    setEmailSendingId(id)
+    setEmailResult(null)
+    try {
+      const res = await PdfDataService.emailBail(id)
+      setEmailResult({ type: 'success', message: res.data.message })
+    } catch (e: any) {
+      setEmailResult({ type: 'danger', message: e?.response?.data?.message || "Erreur lors de l'envoi." })
+    } finally {
+      setEmailSendingId(null)
+    }
+  }
+
   return (
     <>
-      <CRow className="mb-4">
+      {emailResult && (
+        <CAlert color={emailResult.type} dismissible onClose={() => setEmailResult(null)} className="mb-3">
+          {emailResult.message}
+        </CAlert>
+      )}
+      <CRow className="mb-4 text-center">
         <StatCard value={totalActive} label="Baux actifs" color="success" />
         <StatCard value={`${totalRent.toFixed(2)} €`} label="Loyers mensuels charges comprises" color="info" />
         <StatCard value={leases.length} label="Total baux" color="secondary" />
@@ -120,6 +142,11 @@ const Leases = () => {
                     <CTooltip content="Détails">
                       <CButton color="light" size="sm" className="me-1" onClick={() => { setViewing(l); setViewModal(true) }}>
                         <CIcon icon={cilInfo} />
+                      </CButton>
+                    </CTooltip>
+                    <CTooltip content="Envoyer bail par email">
+                      <CButton color="light" size="sm" className="me-1" disabled={emailSendingId === l.id} onClick={() => handleEmailBail(l.id)}>
+                        {emailSendingId === l.id ? <CSpinner size="sm" /> : <CIcon icon={cilSend} />}
                       </CButton>
                     </CTooltip>
                   </ActionButtons>
@@ -179,7 +206,12 @@ const Leases = () => {
             <strong className="d-block mb-2">Documents</strong>
             <DocumentsSection entityType="lease" entityId={viewing.id} />
             <hr />
-            <div className="d-flex justify-content-end"><CButton color="primary" onClick={() => setViewModal(false)}>Fermer</CButton></div>
+            <div className="d-flex justify-content-end gap-2">
+              <CButton color="info" variant="outline" disabled={emailSendingId === viewing?.id} onClick={() => handleEmailBail(viewing.id)}>
+                {emailSendingId === viewing?.id ? <CSpinner size="sm" className="me-1" /> : <CIcon icon={cilSend} className="me-1" />}
+                Envoyer bail par email
+              </CButton>
+              <CButton color="primary" onClick={() => setViewModal(false)}>Fermer</CButton></div>
           </CModalBody>
         </CModal>
       )}

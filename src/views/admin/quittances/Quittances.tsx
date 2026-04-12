@@ -18,7 +18,7 @@ import {
   CModalTitle, CModalBody, CFormInput, CFormSelect, CTooltip, CSpinner, CAlert,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilDescription, cilExternalLink, cilCloudDownload } from '@coreui/icons'
+import { cilDescription, cilExternalLink, cilCloudDownload, cilSend } from '@coreui/icons'
 
 const Quittances = () => {
   const [tenants, setTenants] = useState<any[]>([])
@@ -30,6 +30,8 @@ const Quittances = () => {
   const [pdfGenerating, setPdfGenerating] = useState(false)
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [quittanceDocs, setQuittanceDocs] = useState<Record<number, any>>({})
+  const [emailSendingId, setEmailSendingId] = useState<number | null>(null)
+  const [emailResult, setEmailResult] = useState<{ type: 'success' | 'danger'; message: string } | null>(null)
 
   const emptyForm = { tenant_id: '', property_id: '', lease_id: '', payment_id: '', period: '', rent_amount: '', charges_amount: '0', total_amount: '', issue_date: new Date().toISOString().split('T')[0] }
 
@@ -87,6 +89,19 @@ const Quittances = () => {
     } catch (err) { console.error(err) }
   }
 
+  const handleEmailQuittance = async (id: number) => {
+    setEmailSendingId(id)
+    setEmailResult(null)
+    try {
+      const res = await PdfDataService.emailQuittance(id)
+      setEmailResult({ type: 'success', message: res.data.message })
+    } catch (e: any) {
+      setEmailResult({ type: 'danger', message: e?.response?.data?.message || 'Erreur lors de l\'envoi.' })
+    } finally {
+      setEmailSendingId(null)
+    }
+  }
+
   const handleGeneratePdf = async () => {
     if (!printing?.id) return
     setPdfGenerating(true); setPdfUrl(null)
@@ -101,7 +116,12 @@ const Quittances = () => {
 
   return (
     <>
-      <CRow className="mb-4">
+      {emailResult && (
+        <CAlert color={emailResult.type} dismissible onClose={() => setEmailResult(null)} className="mb-3">
+          {emailResult.message}
+        </CAlert>
+      )}
+      <CRow className="mb-4 text-center">
         <StatCard value={quittances.length} label="Quittances émises" color="primary" />
         <StatCard value={`${quittances.reduce((s, q) => s + parseFloat(q.total_amount || 0), 0).toFixed(2)} €`} label="Montant total" color="success" />
         <StatCard value={new Set(quittances.map((q) => q.tenant_id)).size} label="Locataires concernés" color="info" />
@@ -146,6 +166,11 @@ const Quittances = () => {
                         </CButton>
                       </CTooltip>
                     )}
+                    <CTooltip content="Envoyer par email">
+                      <CButton color="light" size="sm" className="me-1" disabled={emailSendingId === q.id} onClick={() => handleEmailQuittance(q.id)}>
+                        {emailSendingId === q.id ? <CSpinner size="sm" /> : <CIcon icon={cilSend} />}
+                      </CButton>
+                    </CTooltip>
                   </ActionButtons>
                 </CTableDataCell>
               </CTableRow>
@@ -219,6 +244,10 @@ const Quittances = () => {
             <hr />
             <div className="d-flex gap-2 justify-content-end">
               <CButton color="secondary" onClick={() => { setPrintModal(false); setPdfUrl(null) }}>Fermer</CButton>
+              <CButton color="info" variant="outline" onClick={() => printing && handleEmailQuittance(printing.id)} disabled={emailSendingId === printing?.id}>
+                {emailSendingId === printing?.id ? <CSpinner size="sm" className="me-1" /> : <CIcon icon={cilSend} className="me-1" />}
+                Envoyer par email
+              </CButton>
               <CButton color="primary" onClick={handleGeneratePdf} disabled={pdfGenerating}>
                 {pdfGenerating ? <CSpinner size="sm" className="me-1" /> : <CIcon icon={cilDescription} className="me-1" />}
                 Générer PDF

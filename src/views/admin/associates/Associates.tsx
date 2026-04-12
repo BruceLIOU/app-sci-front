@@ -32,11 +32,11 @@ const Associates = () => {
   })
 
   const totalShares = associates.reduce((s, a) => s + parseFloat(a.shares || 0), 0)
-  const gerant = associates.find((a) => a.role === 'Gérant')
+  const gerant = associates.find((a) => a.role === 'Gérant' || a.role === 'Gérant associé')
 
   return (
     <>
-      <CRow className="mb-4">
+      <CRow className="mb-4 text-center">
         <StatCard value={associates.length} label="Associés" color="primary" />
         <StatCard
           value={`${totalShares.toFixed(2)} %`}

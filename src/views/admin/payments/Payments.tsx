@@ -59,7 +59,7 @@ const Payments = () => {
 
   return (
     <>
-      <CRow className="mb-4">
+      <CRow className="mb-4 text-center">
         <StatCard value={`${totalPaid.toFixed(2)} €`} label="Loyers perçus" color="success" />
         <StatCard value={`${totalPending.toFixed(2)} €`} label="En attente / En retard" color="warning" />
         <StatCard value={payments.length} label="Total des paiements" color="info" />

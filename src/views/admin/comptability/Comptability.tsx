@@ -42,7 +42,7 @@ const Comptability = () => {
 
   return (
     <>
-      <CRow className="mb-4">
+      <CRow className="mb-4 text-center">
         <CCol sm={3}><CCard className="text-white bg-success mb-3"><CCardBody><div className="fs-4 fw-semibold">{totalPaid.toFixed(2)} €</div><div>Loyers perçus</div></CCardBody></CCard></CCol>
         <CCol sm={3}><CCard className="text-white bg-warning mb-3"><CCardBody><div className="fs-4 fw-semibold">{totalPending.toFixed(2)} €</div><div>En attente</div></CCardBody></CCard></CCol>
         <CCol sm={3}><CCard className="text-white bg-danger mb-3"><CCardBody><div className="fs-4 fw-semibold">{totalLate.toFixed(2)} €</div><div>En retard</div></CCardBody></CCard></CCol>

@@ -20,7 +20,7 @@ import {
   CSpinner, CAlert,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilInfo, cilDescription, cilExternalLink, cilCloudDownload } from '@coreui/icons'
+import { cilInfo, cilDescription, cilExternalLink, cilCloudDownload, cilSend } from '@coreui/icons'
 import { DateUtils } from 'src/utils/date'
 
 const typeLabel: Record<string, string> = { entree: 'Entrée', sortie: 'Sortie' }
@@ -38,6 +38,8 @@ const Inspections = () => {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [viewing, setViewing] = useState<any>(null)
   const [inspectionDocs, setInspectionDocs] = useState<Record<number, any>>({})
+  const [emailSending, setEmailSending] = useState(false)
+  const [emailResult, setEmailResult] = useState<{ type: 'success' | 'danger'; message: string } | null>(null)
 
   const {
     items: inspections,
@@ -109,7 +111,7 @@ const Inspections = () => {
 
   return (
     <>
-      <CRow className="mb-4">
+      <CRow className="mb-4 text-center">
         <StatCard value={inspections.filter((i) => i.type === 'entree').length} label="États d'entrée" color="success" />
         <StatCard value={inspections.filter((i) => i.type === 'sortie').length} label="États de sortie" color="danger" />
         <StatCard value={inspections.filter((i) => i.status === 'pending').length} label="En attente" color="warning" />
@@ -224,7 +226,27 @@ const Inspections = () => {
                 </a>
               </CAlert>
             )}
+            {emailResult && (
+              <CAlert color={emailResult.type} dismissible onClose={() => setEmailResult(null)} className="mb-3">
+                {emailResult.message}
+              </CAlert>
+            )}
             <div className="d-flex justify-content-end gap-2">
+              <CButton color="info" variant="outline" disabled={emailSending} onClick={async () => {
+                setEmailSending(true)
+                setEmailResult(null)
+                try {
+                  const res = await PdfDataService.emailEtatDesLieux(viewing.id)
+                  setEmailResult({ type: 'success', message: res.data.message })
+                } catch (e: any) {
+                  setEmailResult({ type: 'danger', message: e?.response?.data?.message || "Erreur lors de l'envoi." })
+                } finally {
+                  setEmailSending(false)
+                }
+              }}>
+                {emailSending ? <CSpinner size="sm" className="me-1" /> : <CIcon icon={cilSend} className="me-1" />}
+                Envoyer par email
+              </CButton>
               <CButton color="info" variant="outline" disabled={pdfGenerating} onClick={async () => {
                 setPdfGenerating(true)
                 try {

@@ -76,7 +76,7 @@ const Declarations = () => {
         <CButton color="primary" size="sm" onClick={() => window.print()}><CIcon icon={cilPrint} className="me-1" />Imprimer</CButton>
       </div>
 
-      <CRow className="mb-4">
+      <CRow className="mb-4 text-center">
         <CCol sm={4}><CCard className="text-white bg-success mb-3"><CCardBody><div className="fs-4 fw-semibold">{totalRevenues.toFixed(2)} €</div><div>Revenus locatifs {year}</div></CCardBody></CCard></CCol>
         <CCol sm={4}><CCard className="text-white bg-danger mb-3"><CCardBody><div className="fs-4 fw-semibold">{totalCharges.toFixed(2)} €</div><div>Charges déductibles {year}</div></CCardBody></CCard></CCol>
         <CCol sm={4}><CCard className={`text-white mb-3 ${netResult >= 0 ? 'bg-info' : 'bg-warning'}`}><CCardBody><div className="fs-4 fw-semibold">{netResult.toFixed(2)} €</div><div>Résultat net {netResult >= 0 ? '(bénéfice)' : '(déficit)'}</div></CCardBody></CCard></CCol>

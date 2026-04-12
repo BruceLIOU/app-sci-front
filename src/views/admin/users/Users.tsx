@@ -117,7 +117,7 @@ const Users = () => {
 
   return (
     <>
-      <CRow className="mb-4">
+      <CRow className="mb-4 text-center">
         <StatCard value={users.length} label="Utilisateurs" color="primary" />
         <StatCard value={activeCount} label="Comptes actifs" color="success" />
         <StatCard value={pendingCount} label="Invitations en attente" color="warning" />
