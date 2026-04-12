@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import {
   CCard, CCardBody, CCardHeader, CCol, CRow, CTable, CTableBody,
   CTableDataCell, CTableHead, CTableHeaderCell, CTableRow, CBadge, CSpinner, CFormSelect,
+  CButton, CModal, CModalBody, CModalHeader, CModalTitle, CAlert,
 } from '@coreui/react'
 import { CChartBar, CChartDoughnut } from '@coreui/react-chartjs'
 import CIcon from '@coreui/icons-react'
 import { cilCalendar, cilChartPie, cilContact, cilDescription, cilEuro, cilHome, cilWarning } from '@coreui/icons'
+import { useDispatch } from 'react-redux'
 import PropertyDataService from '../../services/property.service'
 import TenantDataService from '../../services/tenant.service'
 import LeaseDataService from '../../services/lease.service'
@@ -14,6 +16,9 @@ import PaymentDataService from '../../services/payment.service'
 import ChargeDataService from '../../services/charge.service'
 import VisitDataService from '../../services/visit.service'
 import { DateUtils } from 'src/utils/date'
+import OwnerConfigDataService, { OwnerConfigData } from '../../services/owner_config.service'
+import SettingsOnboarding from '../admin/settings/SettingsOnboarding'
+import { setOwnerProfileType } from '../../store'
 
 const statusLabel: Record<string, string> = { paid: 'Payé', pending: 'En attente', late: 'En retard' }
 const statusColor: Record<string, string> = { paid: 'success', pending: 'warning', late: 'danger' }
@@ -112,12 +117,21 @@ const MetricCard = ({
 }
 
 const Dashboard = () => {
+  const dispatch = useDispatch()
   const [properties, setProperties] = useState<any[]>([])
   const [tenants, setTenants] = useState<any[]>([])
   const [leases, setLeases] = useState<any[]>([])
   const [payments, setPayments] = useState<any[]>([])
   const [charges, setCharges] = useState<any[]>([])
   const [visits, setVisits] = useState<any[]>([])
+  const [ownerConfig, setOwnerConfig] = useState<OwnerConfigData>({ owner_profile_type: 'INDIVIDUAL' })
+  const [googleConnected, setGoogleConnected] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [onboardingSaving, setOnboardingSaving] = useState(false)
+  const [onboardingSaved, setOnboardingSaved] = useState(false)
+  const [onboardingError, setOnboardingError] = useState<string | null>(null)
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false)
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false)
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR)
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
@@ -130,15 +144,77 @@ const Dashboard = () => {
       PaymentDataService.getAll(),
       ChargeDataService.getAll(),
       VisitDataService.getAll(),
-    ]).then(([p, t, l, pay, chg, vis]) => {
+      OwnerConfigDataService.get(),
+      VisitDataService.getGoogleStatus(),
+    ]).then(([p, t, l, pay, chg, vis, ownerResponse, googleResponse]) => {
       setProperties(p.data)
       setTenants(t.data.filter((tenant: any) => tenant.is_active !== false))
       setLeases(l.data)
       setPayments(pay.data)
       setCharges(chg.data)
       setVisits(vis.data)
+      setOwnerConfig({ owner_profile_type: 'INDIVIDUAL', ...ownerResponse.data })
+      setGoogleConnected(Boolean(googleResponse.data?.connected))
     }).catch(console.error).finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    setOnboardingDismissed(window.localStorage.getItem('dashboard_onboarding_dismissed_v1') === '1')
+  }, [])
+
+  const isOnboardingIncomplete = () => {
+    const profileType = ownerConfig.owner_profile_type || 'INDIVIDUAL'
+    const hasOwnerName = Boolean(ownerConfig.name && ownerConfig.name.trim())
+    const hasSiretIfNeeded = (profileType !== 'PROFESSIONAL' && profileType !== 'SCI') || Boolean((ownerConfig.siret || '').replace(/\D/g, '').length === 14)
+    const hasSmtp = Boolean(ownerConfig.smtp_host && ownerConfig.smtp_user)
+    return !(hasOwnerName && hasSiretIfNeeded && hasSmtp)
+  }
+
+  const shouldShowOnboardingPrompt = !onboardingDismissed && isOnboardingIncomplete()
+  const isDarkTheme = document.documentElement.getAttribute('data-coreui-theme') === 'dark'
+  const chartTextColor = isDarkTheme ? '#cbd5e1' : '#4b5563'
+  const chartGridColor = isDarkTheme ? 'rgba(148, 163, 184, 0.2)' : 'rgba(100, 116, 139, 0.22)'
+
+  const handleSaveOnboarding = async () => {
+    setOnboardingSaving(true)
+    setOnboardingSaved(false)
+    setOnboardingError(null)
+    try {
+      const fd = new FormData()
+      Object.entries(ownerConfig).forEach(([k, v]) => {
+        if (v != null && k !== 'id') fd.append(k, String(v))
+      })
+      const response = await OwnerConfigDataService.update(fd)
+      setOwnerConfig(response.data)
+      setOnboardingSaved(true)
+      if (response.data.owner_profile_type) {
+        dispatch(setOwnerProfileType(response.data.owner_profile_type as 'SCI' | 'PROFESSIONAL' | 'INDIVIDUAL'))
+      }
+      const nextProfileType = response.data.owner_profile_type || 'INDIVIDUAL'
+      const nextHasOwnerName = Boolean(response.data.name && response.data.name.trim())
+      const nextHasSiretIfNeeded = (nextProfileType !== 'PROFESSIONAL' && nextProfileType !== 'SCI') || Boolean((response.data.siret || '').replace(/\D/g, '').length === 14)
+      const nextHasSmtp = Boolean(response.data.smtp_host && response.data.smtp_user)
+      if (nextHasOwnerName && nextHasSiretIfNeeded && nextHasSmtp) {
+        setShowOnboardingModal(false)
+        setOnboardingDismissed(true)
+        window.localStorage.setItem('dashboard_onboarding_dismissed_v1', '1')
+      }
+    } catch (e: any) {
+      setOnboardingError(e?.response?.data?.message || e?.message || 'Erreur lors de la sauvegarde de la configuration.')
+    } finally {
+      setOnboardingSaving(false)
+    }
+  }
+
+  const handleGoogleConnectFromModal = async () => {
+    setGoogleLoading(true)
+    try {
+      const { data } = await VisitDataService.getGoogleAuthUrl()
+      window.location.href = data.url
+    } finally {
+      setGoogleLoading(false)
+    }
+  }
 
   const yearOptions = Array.from(new Set([
     ...payments.map((payment) => toPaymentYear(payment)).filter(Boolean),
@@ -224,6 +300,17 @@ const Dashboard = () => {
                 <span className="app-filter-chip">{pluralize(activeLeases.length, 'bail actif', 'baux actifs')}</span>
                 <span className="app-filter-chip">{pluralize(totalLatePayments, 'retard', 'retards')}</span>
               </div>
+              {shouldShowOnboardingPrompt && (
+                <div className="app-onboarding-cta mt-4">
+                  <div>
+                    <div className="app-onboarding-cta-title">Finalisez votre configuration initiale</div>
+                    <div className="app-onboarding-cta-subtitle">Quelques informations manquent pour exploiter tout le potentiel de l&apos;application.</div>
+                  </div>
+                  <CButton color="primary" onClick={() => setShowOnboardingModal(true)}>
+                    Lancer l&apos;onboarding
+                  </CButton>
+                </div>
+              )}
             </CCardBody>
           </CCard>
         </CCol>
@@ -378,7 +465,11 @@ const Dashboard = () => {
                   options={{
                     maintainAspectRatio: false,
                     plugins: {
-                      legend: { display: true, position: 'bottom' },
+                      legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: { color: chartTextColor },
+                      },
                       tooltip: {
                         callbacks: {
                           label: (context: any) => `${context.dataset.label}: ${(context.parsed.y || 0).toFixed(2)} €`,
@@ -390,7 +481,17 @@ const Dashboard = () => {
                         },
                       },
                     },
-                    scales: { y: { beginAtZero: true } },
+                    scales: {
+                      x: {
+                        ticks: { color: chartTextColor },
+                        grid: { color: chartGridColor },
+                      },
+                      y: {
+                        beginAtZero: true,
+                        ticks: { color: chartTextColor },
+                        grid: { color: chartGridColor },
+                      },
+                    },
                   }}
                   style={{ height: 260 }}
                 />
@@ -457,7 +558,10 @@ const Dashboard = () => {
                     }}
                     options={{
                       plugins: {
-                        legend: { position: 'bottom' },
+                        legend: {
+                          position: 'bottom',
+                          labels: { color: chartTextColor },
+                        },
                         tooltip: {
                           callbacks: {
                             label: (context: any) => `${context.label}: ${(context.raw || 0).toFixed(2)} €`,
@@ -499,7 +603,10 @@ const Dashboard = () => {
                     }}
                     options={{
                       plugins: {
-                        legend: { position: 'bottom' },
+                        legend: {
+                          position: 'bottom',
+                          labels: { color: chartTextColor },
+                        },
                         tooltip: {
                           callbacks: {
                             label: (context: any) => `${context.label}: ${(context.raw || 0).toFixed(2)} €`,
@@ -515,6 +622,42 @@ const Dashboard = () => {
           </CCard>
         </CCol>
       </CRow>
+
+      <CModal
+        visible={showOnboardingModal}
+        onClose={() => setShowOnboardingModal(false)}
+        size="xl"
+        alignment="center"
+        className="app-onboarding-modal"
+      >
+        <CModalHeader>
+          <CModalTitle>Onboarding de demarrage</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          {onboardingSaved && (
+            <CAlert color="success" dismissible onClose={() => setOnboardingSaved(false)}>
+              Configuration enregistree avec succes.
+            </CAlert>
+          )}
+          {onboardingError && (
+            <CAlert color="danger" dismissible onClose={() => setOnboardingError(null)}>
+              {onboardingError}
+            </CAlert>
+          )}
+          <SettingsOnboarding
+            mode="modal"
+            config={ownerConfig}
+            setConfig={setOwnerConfig}
+            onSave={handleSaveOnboarding}
+            saving={onboardingSaving}
+            googleConnected={googleConnected}
+            googleLoading={googleLoading}
+            onGoogleConnect={handleGoogleConnectFromModal}
+            properties={properties}
+            openTab={() => navigate('/admin/settings')}
+          />
+        </CModalBody>
+      </CModal>
     </>
   )
 }

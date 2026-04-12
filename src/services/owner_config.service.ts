@@ -38,9 +38,22 @@ export interface OwnerConfigData {
   charge_cron_enabled?: boolean
 }
 
+export interface SiretLookupData {
+  siret: string
+  siren?: string
+  name?: string
+  legal_form?: string
+  address?: string
+  zipcode?: string
+  city?: string
+  rcs?: string
+}
+
 class OwnerConfigDataService {
   get() { return http.get<OwnerConfigData>('/owner-config') }
   update(data: FormData) { return http.put<OwnerConfigData>('/owner-config', data) }
+  lookupSiret(siret: string) { return http.get<SiretLookupData>(`/owner-config/siret/${siret}`) }
+  testEmailConnection() { return http.post<{ message: string }>('/owner-config/test-email') }
 }
 
 export default new OwnerConfigDataService()

@@ -9,6 +9,7 @@ class VisitDataService {
 
   getGoogleStatus() { return http.get('/visits/google/status') }
   getGoogleAuthUrl() { return http.get('/visits/google/url') }
+  testGoogleConnection() { return http.get<{ connected: boolean; message: string }>('/visits/google/test') }
   disconnectGoogle() { return http.delete('/visits/google/disconnect') }
 }
 

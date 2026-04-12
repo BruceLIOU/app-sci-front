@@ -621,6 +621,238 @@ a {
   color: #334155;
 }
 
+/* Onboarding settings */
+.app-onboarding-card {
+  border: 1px solid rgba(18, 32, 47, 0.1) !important;
+  border-radius: 1.35rem !important;
+  background:
+    radial-gradient(circle at 8% 8%, rgba(20, 184, 166, 0.12), transparent 34%),
+    radial-gradient(circle at 92% 12%, rgba(251, 191, 36, 0.12), transparent 28%),
+    linear-gradient(165deg, rgba(255, 255, 255, 0.96), rgba(246, 250, 255, 0.95)) !important;
+  box-shadow: 0 18px 44px rgba(18, 32, 47, 0.1);
+}
+
+.app-onboarding-card-min {
+  background: rgba(255, 255, 255, 0.88) !important;
+}
+
+.app-onboarding-kicker {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.68rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 118, 110, 0.2);
+  color: #0f766e;
+  background: rgba(15, 118, 110, 0.08);
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  margin-bottom: 0.5rem;
+}
+
+.app-onboarding-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.app-onboarding-step {
+  border: 1px solid rgba(18, 32, 47, 0.11);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.86);
+  padding: 0.7rem;
+  display: flex;
+  align-items: center;
+  gap: 0.62rem;
+  text-align: left;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.app-onboarding-step:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(18, 32, 47, 0.08);
+}
+
+.app-onboarding-step.is-active {
+  border-color: rgba(15, 118, 110, 0.5);
+  background: rgba(240, 253, 250, 0.82);
+}
+
+.app-onboarding-step.is-done {
+  border-color: rgba(21, 128, 61, 0.38);
+  background: rgba(240, 253, 244, 0.9);
+}
+
+.app-onboarding-step-index {
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  background: rgba(18, 32, 47, 0.08);
+  color: #17324d;
+  flex-shrink: 0;
+}
+
+.app-onboarding-step.is-active .app-onboarding-step-index,
+.app-onboarding-step.is-done .app-onboarding-step-index {
+  background: #0f766e;
+  color: #ffffff;
+}
+
+.app-onboarding-step-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.app-onboarding-step-content strong {
+  font-size: 0.88rem;
+  line-height: 1.1;
+  color: #0f2942;
+}
+
+.app-onboarding-step-content small {
+  color: #587188;
+  font-size: 0.74rem;
+  line-height: 1.2;
+}
+
+.app-onboarding-panel {
+  border: 1px solid rgba(18, 32, 47, 0.09);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.78);
+  padding: 1rem;
+}
+
+.app-onboarding-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(15, 118, 110, 0.26);
+  background: linear-gradient(135deg, rgba(240, 253, 250, 0.92), rgba(255, 251, 235, 0.9));
+  animation: appOnboardingFadeUp 340ms ease-out;
+}
+
+.app-onboarding-cta-title {
+  color: #0f2942;
+  font-weight: 700;
+}
+
+.app-onboarding-cta-subtitle {
+  color: #49677f;
+  font-size: 0.9rem;
+}
+
+.app-onboarding-modal .modal-content {
+  border: 1px solid rgba(18, 32, 47, 0.12);
+  border-radius: 1.2rem;
+  overflow: hidden;
+  box-shadow: 0 28px 68px rgba(2, 6, 23, 0.2);
+  animation: appOnboardingModalIn 260ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.app-onboarding-modal .modal-header {
+  background: linear-gradient(180deg, rgba(249, 250, 251, 0.98), rgba(240, 247, 245, 0.95));
+  border-bottom-color: rgba(18, 32, 47, 0.08);
+}
+
+.app-onboarding-modal .modal-body {
+  background: rgba(255, 255, 255, 0.97);
+}
+
+[data-coreui-theme='dark'] .app-onboarding-cta {
+  border-color: rgba(45, 212, 191, 0.32);
+  background: linear-gradient(135deg, rgba(13, 37, 42, 0.9), rgba(50, 36, 12, 0.78));
+}
+
+[data-coreui-theme='dark'] .app-onboarding-cta-title {
+  color: #d7f8f2;
+}
+
+[data-coreui-theme='dark'] .app-onboarding-cta-subtitle {
+  color: #b7d3cf;
+}
+
+[data-coreui-theme='dark'] .app-onboarding-modal .modal-content {
+  border-color: rgba(148, 163, 184, 0.2);
+  background: #101722;
+  box-shadow: 0 28px 68px rgba(0, 0, 0, 0.5);
+}
+
+[data-coreui-theme='dark'] .app-onboarding-modal .modal-header {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(15, 32, 36, 0.94));
+  border-bottom-color: rgba(148, 163, 184, 0.2);
+  color: #e2e8f0;
+}
+
+[data-coreui-theme='dark'] .app-onboarding-modal .modal-body {
+  background: rgba(13, 18, 28, 0.96);
+}
+
+[data-coreui-theme='dark'] .app-onboarding-panel {
+  border-color: rgba(148, 163, 184, 0.24);
+  background: rgba(15, 23, 42, 0.58);
+}
+
+[data-coreui-theme='dark'] .app-onboarding-step {
+  border-color: rgba(148, 163, 184, 0.24);
+  background: rgba(15, 23, 42, 0.72);
+}
+
+[data-coreui-theme='dark'] .app-onboarding-step-content strong {
+  color: #e2e8f0;
+}
+
+[data-coreui-theme='dark'] .app-onboarding-step-content small {
+  color: #9fb3ca;
+}
+
+@keyframes appOnboardingFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes appOnboardingModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 992px) {
+  .app-onboarding-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-onboarding-cta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 576px) {
+  .app-onboarding-steps {
+    grid-template-columns: 1fr;
+  }
+}
+
 .app-table-card .table .form-check-input {
   width: 1.05rem;
   height: 1.05rem;
