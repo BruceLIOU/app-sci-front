@@ -73,7 +73,7 @@ const Profile: React.FC = () => {
 
   if (!user) return null
 
-  const initials = user.name
+  const initials = (user.name || '')
     .split(' ')
     .map((w) => w[0])
     .join('')
