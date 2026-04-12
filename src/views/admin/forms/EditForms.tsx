@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import PropertyDataService from '../../../services/property.service'
 import TenantDataService from '../../../services/tenant.service'
-import { CFormInput, CForm, CCol, CButton, CFormSelect, CFormLabel, CFormCheck, CFormTextarea, CInputGroup, CInputGroupText } from '@coreui/react'
+import { CFormInput, CForm, CCol, CButton, CFormSelect, CFormLabel, CFormCheck, CFormTextarea, CInputGroup, CInputGroupText, CAlert } from '@coreui/react'
 import AddressAutocomplete from '../../../components/AddressAutocomplete'
+import { propertyFormSchema, tenantFormSchema, toFieldErrors } from '../../../validation/schemas'
+import { FormInputField, FormSelectField } from '../../../components/FormFields'
 
 const ROOM_TYPES = ['Chambre', 'Salon', 'Séjour', 'Salle de bain', "Salle d'eau", 'WC / Toilettes', 'Cuisine', 'Cuisine ouverte', 'Bureau', 'Dressing', 'Buanderie', 'Garage', 'Cave', 'Grenier', 'Terrasse', 'Balcon', 'Véranda', "Entrée / Hall", 'Autre']
 const FEATURE_LIST = ['Domotique', 'Ballon eau chaude thermodynamique', 'Chauffe-eau solaire', 'Pompe à chaleur', 'Climatisation', 'Cheminée / Poêle', 'Panneau solaire photovoltaïque', 'Double vitrage', 'Triple vitrage', 'Parquet', 'Cuisine équipée', 'Fibre optique', 'Alarme', 'Interphone / Digicode', 'Ascenseur', 'Parking', 'Box / Garage', 'Cave', 'Jardin', 'Piscine']
@@ -16,6 +18,8 @@ interface EditFormsProps {
 const EditForms = ({ setModalVisible, data, entities }: EditFormsProps) => {
   const [validated, setValidated] = useState(false)
   const [properties, setProperties] = useState<any[]>([])
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [submitError, setSubmitError] = useState<string>('')
   const isTenant = entities === 'tenants'
 
   // État pour la branche properties
@@ -50,6 +54,10 @@ const EditForms = ({ setModalVisible, data, entities }: EditFormsProps) => {
   }, [isTenant])
 
   const handleChangeInput = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const field = e.target.name
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => ({ ...prev, [field]: '' }))
+    }
     setInputValue({ ...inputValue, [e.target.name]: e.target.value })
   }
 
@@ -70,6 +78,15 @@ const EditForms = ({ setModalVisible, data, entities }: EditFormsProps) => {
     e.preventDefault()
     e.stopPropagation()
     setValidated(true)
+    setSubmitError('')
+
+    const parsed = isTenant ? tenantFormSchema.safeParse(inputValue) : propertyFormSchema.safeParse(inputValue)
+    if (!parsed.success) {
+      setFieldErrors(toFieldErrors(parsed.error))
+      return
+    }
+
+    setFieldErrors({})
     const formData = new FormData()
     Object.entries(inputValue).forEach(([key, val]) => {
       if (val !== '' && val !== null && val !== undefined) formData.append(key, String(val))
@@ -90,12 +107,27 @@ const EditForms = ({ setModalVisible, data, entities }: EditFormsProps) => {
       if (isTenant) await TenantDataService.update(data[0].id, formData)
       else await PropertyDataService.update(data[0].id, formData)
       setModalVisible(false)
-    } catch (error: any) { console.log(error.message) }
+    } catch (error: any) {
+      const apiErrors = error?.response?.data?.errors
+      if (apiErrors && typeof apiErrors === 'object') {
+        const nextErrors: Record<string, string> = {}
+        Object.entries(apiErrors).forEach(([k, v]) => {
+          nextErrors[k] = Array.isArray(v) ? String(v[0]) : String(v)
+        })
+        setFieldErrors(nextErrors)
+      }
+      setSubmitError(error?.response?.data?.message || error.message || 'Erreur lors de la validation du formulaire.')
+    }
   }
 
   if (isTenant) {
     return (
       <CForm className="row g-3 needs-validation" noValidate validated={validated} onSubmit={handleSubmit}>
+        {submitError && (
+          <CCol md={12}>
+            <CAlert color="danger" className="mb-0">{submitError}</CAlert>
+          </CCol>
+        )}
         {/* Avatar */}
         <CCol md={12}>
           <CFormLabel>Photo du locataire</CFormLabel>
@@ -116,9 +148,9 @@ const EditForms = ({ setModalVisible, data, entities }: EditFormsProps) => {
             <option value="MME">Mme</option>
           </CFormSelect>
         </CCol>
-        <CCol md={6}><CFormInput type="text" name="firstname" label="Prénom" value={inputValue.firstname} onChange={handleChangeInput} /></CCol>
-        <CCol md={6}><CFormInput type="text" name="lastname" label="Nom" value={inputValue.lastname} required onChange={handleChangeInput} /></CCol>
-        <CCol md={6}><CFormInput type="email" name="email" label="Email" value={inputValue.email} required onChange={handleChangeInput} /></CCol>
+        <CCol md={6}><FormInputField type="text" name="firstname" label="Prénom" value={inputValue.firstname} required error={fieldErrors.firstname} onChange={handleChangeInput} /></CCol>
+        <CCol md={6}><FormInputField type="text" name="lastname" label="Nom" value={inputValue.lastname} required error={fieldErrors.lastname} onChange={handleChangeInput} /></CCol>
+        <CCol md={6}><FormInputField type="email" name="email" label="Email" value={inputValue.email} error={fieldErrors.email} onChange={handleChangeInput} /></CCol>
         <CCol md={6}><CFormInput type="text" name="mobile" label="Téléphone" value={inputValue.mobile} onChange={handleChangeInput} /></CCol>
         <CCol md={6}>
           <CFormSelect label="Bien associé" name="property_id" value={inputValue.property_id} onChange={handleChangeInput}>
@@ -153,26 +185,34 @@ const EditForms = ({ setModalVisible, data, entities }: EditFormsProps) => {
 
   return (
     <CForm className="row g-3 needs-validation" noValidate validated={validated} onSubmit={handleSubmit}>
+      {submitError && (
+        <CCol md={12}>
+          <CAlert color="danger" className="mb-0">{submitError}</CAlert>
+        </CCol>
+      )}
       {/* Adresse avec auto-complétion */}
       <CCol md={12}>
         <AddressAutocomplete
           label="Adresse"
+          required
+          invalid={Boolean(fieldErrors.address)}
+          feedbackInvalid={fieldErrors.address}
           value={inputValue.address}
           onChange={(val) => setInputValue((prev: any) => ({ ...prev, address: val }))}
           onSelect={(data) => setInputValue((prev: any) => ({ ...prev, ...data }))}
         />
       </CCol>
-      <CCol md={6}><CFormInput type="number" name="zipcode" label="Code postal" value={inputValue.zipcode} onChange={handleChangeInput} /></CCol>
-      <CCol md={6}><CFormInput type="text" name="city" label="Ville" value={inputValue.city} required onChange={handleChangeInput} /></CCol>
+      <CCol md={6}><FormInputField type="number" name="zipcode" label="Code postal" value={inputValue.zipcode} required error={fieldErrors.zipcode} onChange={handleChangeInput} /></CCol>
+      <CCol md={6}><FormInputField type="text" name="city" label="Ville" value={inputValue.city} required error={fieldErrors.city} onChange={handleChangeInput} /></CCol>
       <CCol md={6}>
-        <CFormSelect label="Type" name="type" value={inputValue.type} onChange={handleChangeInput}>
+        <FormSelectField label="Type" name="type" value={inputValue.type} required error={fieldErrors.type} onChange={handleChangeInput}>
           <option value="" disabled>--Choisir--</option>
           <option value="Maison">Maison</option>
           <option value="Appartement">Appartement</option>
-        </CFormSelect>
+        </FormSelectField>
       </CCol>
-      <CCol md={6}><CFormInput type="number" name="pieces" label="Pièces" value={inputValue.pieces} onChange={handleChangeInput} /></CCol>
-      <CCol md={6}><CFormInput type="number" name="area" label="Superficie (m²)" value={inputValue.area} onChange={handleChangeInput} /></CCol>
+      <CCol md={6}><FormInputField type="number" name="pieces" label="Pièces" value={inputValue.pieces} required error={fieldErrors.pieces} onChange={handleChangeInput} /></CCol>
+      <CCol md={6}><FormInputField type="number" name="area" label="Superficie (m²)" value={inputValue.area} required error={fieldErrors.area} onChange={handleChangeInput} /></CCol>
 
       {/* Coordonnées GPS (auto-remplies via auto-complétion) */}
       <CCol md={6}>

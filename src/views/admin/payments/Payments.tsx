@@ -15,6 +15,8 @@ import {
   CTableHead, CTableHeaderCell, CTableRow, CBadge, CFormInput, CFormSelect,
 } from '@coreui/react'
 import { DateUtils } from 'src/utils/date'
+import { paymentFormSchema } from '../../../validation/schemas'
+import { FormInputField, FormSelectField } from '../../../components/FormFields'
 
 const statusLabel: Record<string, string> = { paid: 'Payé', pending: 'En attente', late: 'En retard' }
 const statusColor: Record<string, string> = { paid: 'success', pending: 'warning', late: 'danger' }
@@ -37,11 +39,13 @@ const Payments = () => {
     deleteModal, setDeleteModal,
     editing, toDelete,
     form: formData,
+    formErrors,
     handleChange, openCreate, openEdit, openDelete,
     handleSubmit, handleDelete, fetchAll,
   } = useEntityCrud({
     service: PaymentDataService,
     emptyForm,
+    validationSchema: paymentFormSchema,
     toForm: (p) => ({ tenant_id: p.tenant_id || '', property_id: p.property_id || '', amount: p.amount || '', month: p.month || '', due_date: p.due_date || '', paid_date: p.paid_date || '', status: p.status || 'pending' }),
   })
 
@@ -178,9 +182,9 @@ const Payments = () => {
       >
         <CCol md={6}><CFormSelect label="Locataire" name="tenant_id" value={formData.tenant_id} onChange={handleChange}><option value="">-- Sélectionner --</option>{tenants.map((t) => <option key={t.id} value={t.id}>{`${t.civility || ''} ${t.firstname} ${t.lastname}`}</option>)}</CFormSelect></CCol>
         <CCol md={6}><CFormSelect label="Bien" name="property_id" value={formData.property_id} onChange={handleChange}><option value="">-- Sélectionner --</option>{properties.map((p) => <option key={p.id} value={p.id}>{`${p.type} - ${p.address}, ${p.city}`}</option>)}</CFormSelect></CCol>
-        <CCol md={4}><CFormInput type="text" name="month" label="Mois (ex: Janvier 2024)" value={formData.month} onChange={handleChange} required /></CCol>
-        <CCol md={4}><CFormInput type="number" name="amount" label="Montant (€)" value={formData.amount} onChange={handleChange} required /></CCol>
-        <CCol md={4}><CFormSelect label="Statut" name="status" value={formData.status} onChange={handleChange}><option value="pending">En attente</option><option value="paid">Payé</option><option value="late">En retard</option></CFormSelect></CCol>
+        <CCol md={4}><FormInputField type="text" name="month" label="Mois (ex: Janvier 2024)" value={formData.month} onChange={handleChange} required error={formErrors.month} /></CCol>
+        <CCol md={4}><FormInputField type="number" name="amount" label="Montant (€)" value={formData.amount} onChange={handleChange} required error={formErrors.amount} /></CCol>
+        <CCol md={4}><FormSelectField label="Statut" name="status" value={formData.status} onChange={handleChange} error={formErrors.status}><option value="pending">En attente</option><option value="paid">Payé</option><option value="late">En retard</option></FormSelectField></CCol>
         <CCol md={6}><CFormInput type="date" name="due_date" label="Date d'échéance" value={formData.due_date} onChange={handleChange} /></CCol>
         <CCol md={6}><CFormInput type="date" name="paid_date" label="Date de paiement" value={formData.paid_date} onChange={handleChange} /></CCol>
       </CrudModal>

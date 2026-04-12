@@ -20,6 +20,8 @@ import {
 import CIcon from '@coreui/icons-react'
 import { cilDescription, cilExternalLink, cilCloudDownload, cilSend } from '@coreui/icons'
 import { DateUtils } from 'src/utils/date'
+import { quittanceFormSchema } from '../../../validation/schemas'
+import { FormInputField } from '../../../components/FormFields'
 
 const Quittances = () => {
   const [tenants, setTenants] = useState<any[]>([])
@@ -46,12 +48,14 @@ const Quittances = () => {
     items: quittances,
     modalVisible, setModalVisible,
     deleteModal, setDeleteModal,
-    editing, toDelete, form, setForm,
+    editing, toDelete, form, formErrors,
+    setFieldValue, validateForm,
     handleChange, openCreate, openEdit, openDelete,
     handleDelete, fetchAll,
   } = useEntityCrud({
     service: QuittanceDataService,
     emptyForm,
+    validationSchema: quittanceFormSchema,
     toForm: (q) => ({ tenant_id: q.tenant_id || '', property_id: q.property_id || '', lease_id: q.lease_id || '', payment_id: q.payment_id || '', period: q.period || '', rent_amount: q.rent_amount || '', charges_amount: q.charges_amount || '0', total_amount: q.total_amount || '', issue_date: q.issue_date || '' }),
   })
 
@@ -81,12 +85,13 @@ const Quittances = () => {
       const c = parseFloat(e.target.name === 'charges_amount' ? e.target.value : form.charges_amount) || 0
       updated.total_amount = (r + c).toFixed(2)
     }
-    setForm(updated)
+    Object.entries(updated).forEach(([key, value]) => setFieldValue(key, value))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const total = (parseFloat(form.rent_amount || '0') + parseFloat(form.charges_amount || '0')).toFixed(2)
+    if (!validateForm({ total_amount: total })) return
     const fd = new FormData()
     Object.entries({ ...form, total_amount: total }).forEach(([k, v]) => fd.append(k, v as string))
     try {
@@ -298,11 +303,11 @@ const Quittances = () => {
         <CCol md={6}><CFormSelect label="Locataire" name="tenant_id" value={form.tenant_id} onChange={handleQuittanceChange}><option value="">-- Sélectionner --</option>{tenants.map((t) => <option key={t.id} value={t.id}>{`${t.civility || ''} ${t.firstname} ${t.lastname}`}</option>)}</CFormSelect></CCol>
         <CCol md={6}><CFormSelect label="Bien" name="property_id" value={form.property_id} onChange={handleQuittanceChange}><option value="">-- Sélectionner --</option>{properties.map((p) => <option key={p.id} value={p.id}>{`${p.type} - ${p.address}, ${p.city}`}</option>)}</CFormSelect></CCol>
         <CCol md={6}><CFormSelect label="Bail associé (optionnel)" name="lease_id" value={form.lease_id} onChange={handleQuittanceChange}><option value="">-- Aucun --</option>{leases.map((l) => <option key={l.id} value={l.id}>{`Bail ${l.Property?.city || ''} — ${l.start_date}`}</option>)}</CFormSelect></CCol>
-        <CCol md={6}><CFormInput type="text" name="period" label="Période (ex: Janvier 2024)" value={form.period} onChange={handleQuittanceChange} required /></CCol>
-        <CCol md={4}><CFormInput type="number" name="rent_amount" label="Loyer hors charges (€)" value={form.rent_amount} onChange={handleQuittanceChange} required /></CCol>
-        <CCol md={4}><CFormInput type="number" name="charges_amount" label="Charges (€)" value={form.charges_amount} onChange={handleQuittanceChange} /></CCol>
-        <CCol md={4}><CFormInput type="number" name="total_amount" label="Total (€)" value={(rent + charges).toFixed(2)} readOnly /></CCol>
-        <CCol md={6}><CFormInput type="date" name="issue_date" label="Date d'émission" value={form.issue_date} onChange={handleQuittanceChange} required /></CCol>
+        <CCol md={6}><FormInputField type="text" name="period" label="Période (ex: Janvier 2024)" value={form.period} onChange={handleQuittanceChange} required error={formErrors.period} /></CCol>
+        <CCol md={4}><FormInputField type="number" name="rent_amount" label="Loyer hors charges (€)" value={form.rent_amount} onChange={handleQuittanceChange} required error={formErrors.rent_amount} /></CCol>
+        <CCol md={4}><FormInputField type="number" name="charges_amount" label="Charges (€)" value={form.charges_amount} onChange={handleQuittanceChange} error={formErrors.charges_amount} /></CCol>
+        <CCol md={4}><FormInputField type="number" name="total_amount" label="Total (€)" value={(rent + charges).toFixed(2)} readOnly /></CCol>
+        <CCol md={6}><FormInputField type="date" name="issue_date" label="Date d'émission" value={form.issue_date} onChange={handleQuittanceChange} required error={formErrors.issue_date} /></CCol>
       </CrudModal>
 
       {printing && (

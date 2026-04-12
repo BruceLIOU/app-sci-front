@@ -14,6 +14,8 @@ import EntityTableCard from '../../../components/EntityTableCard'
 import StatCard from '../../../components/StatCard'
 import TableEmptyRow from '../../../components/TableEmptyRow'
 import useEntityCrud from '../../../hooks/useEntityCrud'
+import { associateFormSchema } from '../../../validation/schemas'
+import { FormInputField } from '../../../components/FormFields'
 
 const emptyForm = { civility: 'MR', firstname: '', lastname: '', email: '', phone: '', address: '', shares: '', role: 'Associé' }
 
@@ -23,11 +25,13 @@ const Associates = () => {
     modalVisible, setModalVisible,
     deleteModal, setDeleteModal,
     editing, toDelete, form,
+    formErrors,
     handleChange, openCreate, openEdit, openDelete,
     handleSubmit, handleDelete,
   } = useEntityCrud({
     service: AssociateDataService,
     emptyForm,
+    validationSchema: associateFormSchema,
     toForm: (a) => ({ civility: a.civility || 'MR', firstname: a.firstname || '', lastname: a.lastname || '', email: a.email || '', phone: a.phone || '', address: a.address || '', shares: a.shares || '', role: a.role || 'Associé' }),
   })
 
@@ -111,12 +115,12 @@ const Associates = () => {
         onSubmit={handleSubmit}
       >
         <CCol md={4}><CFormSelect label="Civilité" name="civility" value={form.civility} onChange={handleChange}><option value="MR">M.</option><option value="MME">Mme</option></CFormSelect></CCol>
-        <CCol md={4}><CFormInput type="text" name="firstname" label="Prénom" value={form.firstname} onChange={handleChange} /></CCol>
-        <CCol md={4}><CFormInput type="text" name="lastname" label="Nom" value={form.lastname} onChange={handleChange} required /></CCol>
-        <CCol md={6}><CFormInput type="email" name="email" label="Email" value={form.email} onChange={handleChange} /></CCol>
+        <CCol md={4}><FormInputField type="text" name="firstname" label="Prénom" value={form.firstname} onChange={handleChange} /></CCol>
+        <CCol md={4}><FormInputField type="text" name="lastname" label="Nom" value={form.lastname} onChange={handleChange} required error={formErrors.lastname} /></CCol>
+        <CCol md={6}><FormInputField type="email" name="email" label="Email" value={form.email} onChange={handleChange} error={formErrors.email} /></CCol>
         <CCol md={6}><CFormInput type="text" name="phone" label="Téléphone" value={form.phone} onChange={handleChange} /></CCol>
         <CCol md={8}><CFormTextarea label="Adresse" name="address" rows={2} value={form.address} onChange={handleChange} /></CCol>
-        <CCol md={4}><CFormInput type="number" name="shares" label="Parts (%)" min="0" max="100" step="0.01" value={form.shares} onChange={handleChange} required /></CCol>
+        <CCol md={4}><FormInputField type="number" name="shares" label="Parts (%)" min="0" max="100" step="0.01" value={form.shares} onChange={handleChange} required error={formErrors.shares} /></CCol>
         <CCol md={4}><CFormSelect label="Rôle" name="role" value={form.role} onChange={handleChange}><option value="Associé">Associé</option><option value="Gérant">Gérant</option><option value="Gérant associé">Gérant associé</option></CFormSelect></CCol>
       </CrudModal>
 

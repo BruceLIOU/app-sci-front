@@ -22,6 +22,8 @@ import {
 import CIcon from '@coreui/icons-react'
 import { cilInfo, cilDescription, cilExternalLink, cilCloudDownload, cilSend } from '@coreui/icons'
 import { DateUtils } from 'src/utils/date'
+import { inspectionFormSchema } from '../../../validation/schemas'
+import { FormInputField, FormSelectField } from '../../../components/FormFields'
 
 const typeLabel: Record<string, string> = { entree: 'Entrée', sortie: 'Sortie' }
 const typeColor: Record<string, string> = { entree: 'success', sortie: 'danger' }
@@ -45,12 +47,14 @@ const Inspections = () => {
     items: inspections,
     modalVisible, setModalVisible,
     deleteModal, setDeleteModal,
-    editing, toDelete, form, setForm,
+    editing, toDelete, form, formErrors, setFieldValue,
+    validateForm,
     handleChange, openCreate, openEdit, openDelete,
     handleDelete: baseHandleDelete, fetchAll,
   } = useEntityCrud({
     service: InspectionDataService,
     emptyForm,
+    validationSchema: inspectionFormSchema,
     toForm: (i) => ({ property_id: i.property_id || '', tenant_id: i.tenant_id || '', lease_id: i.lease_id || '', type: i.type, date: i.date, status: i.status, general_notes: i.general_notes || '' }),
   })
 
@@ -77,11 +81,13 @@ const Inspections = () => {
       const activeLease = leases.find((l: any) => String(l.property_id) === pid && l.status === 'active')
       if (activeLease?.tenant_id) tenantId = String(activeLease.tenant_id)
     }
-    setForm({ ...form, property_id: pid, tenant_id: tenantId })
+    setFieldValue('property_id', pid)
+    setFieldValue('tenant_id', tenantId)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!validateForm()) return
     const fd = new FormData()
     Object.entries(form).forEach(([k, v]) => fd.append(k, v))
     try {
@@ -173,10 +179,10 @@ const Inspections = () => {
         onSubmit={handleSubmit}
         submitLabel={editing ? 'Modifier' : 'Créer'}
       >
-        <CCol md={6}><CFormSelect label="Bien" name="property_id" value={form.property_id} onChange={handlePropertyChange} required><option value="">-- Sélectionner --</option>{properties.map((p) => <option key={p.id} value={p.id}>{`${p.type} - ${p.address}, ${p.city}`}</option>)}</CFormSelect></CCol>
+        <CCol md={6}><FormSelectField label="Bien" name="property_id" value={form.property_id} onChange={handlePropertyChange} required error={formErrors.property_id}><option value="">-- Sélectionner --</option>{properties.map((p) => <option key={p.id} value={p.id}>{`${p.type} - ${p.address}, ${p.city}`}</option>)}</FormSelectField></CCol>
         <CCol md={6}><CFormSelect label="Locataire" name="tenant_id" value={form.tenant_id} onChange={handleChange}><option value="">-- Sélectionner --</option>{tenants.map((t) => <option key={t.id} value={t.id}>{`${t.civility || ''} ${t.firstname} ${t.lastname}`}</option>)}</CFormSelect></CCol>
         <CCol md={4}><CFormSelect label="Type" name="type" value={form.type} onChange={handleChange}><option value="entree">État d'entrée</option><option value="sortie">État de sortie</option></CFormSelect></CCol>
-        <CCol md={4}><CFormInput type="date" name="date" label="Date" value={form.date} onChange={handleChange} required /></CCol>
+        <CCol md={4}><FormInputField type="date" name="date" label="Date" value={form.date} onChange={handleChange} required error={formErrors.date} /></CCol>
         <CCol md={4}><CFormSelect label="Statut" name="status" value={form.status} onChange={handleChange}><option value="pending">En attente</option><option value="completed">Complété</option></CFormSelect></CCol>
         <CCol md={12}><CFormTextarea label="Observations générales" name="general_notes" rows={2} value={form.general_notes} onChange={handleChange} /></CCol>
       </CrudModal>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { CFormInput, CFormLabel } from '@coreui/react'
+import RequiredLabel from './RequiredLabel'
 
 interface AddressSuggestion {
   label: string
@@ -16,9 +17,11 @@ interface AddressAutocompleteProps {
   onSelect: (data: { address: string; zipcode: string; city: string; latitude: string; longitude: string }) => void
   label?: string
   required?: boolean
+  invalid?: boolean
+  feedbackInvalid?: string
 }
 
-const AddressAutocomplete = ({ value, onChange, onSelect, label = 'Adresse', required }: AddressAutocompleteProps) => {
+const AddressAutocomplete = ({ value, onChange, onSelect, label = 'Adresse', required, invalid, feedbackInvalid }: AddressAutocompleteProps) => {
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([])
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -92,11 +95,18 @@ const AddressAutocomplete = ({ value, onChange, onSelect, label = 'Adresse', req
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
-      {label && <CFormLabel>{label}{loading && <span className="ms-2 spinner-border spinner-border-sm text-secondary" role="status" />}</CFormLabel>}
+      {label && (
+        <CFormLabel>
+          <RequiredLabel text={label} required={required} />
+          {loading && <span className="ms-2 spinner-border spinner-border-sm text-secondary" role="status" />}
+        </CFormLabel>
+      )}
       <CFormInput
         type="text"
         value={value}
         required={required}
+        invalid={invalid}
+        feedbackInvalid={feedbackInvalid}
         autoComplete="off"
         onChange={(e) => { userActive.current = true; onChange(e.target.value) }}
         onFocus={() => suggestions.length > 0 && setOpen(true)}

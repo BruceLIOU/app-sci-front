@@ -21,6 +21,8 @@ import {
 import CIcon from '@coreui/icons-react'
 import { cilInfo, cilSend } from '@coreui/icons'
 import { DateUtils } from 'src/utils/date'
+import { leaseFormSchema } from '../../../validation/schemas'
+import { FormInputField, FormSelectField } from '../../../components/FormFields'
 
 const statusLabel: Record<string, string> = { active: 'Actif', expired: 'Expiré', terminated: 'Résilié' }
 const statusColor: Record<string, string> = { active: 'success', expired: 'warning', terminated: 'danger' }
@@ -47,11 +49,13 @@ const Leases = () => {
     modalVisible, setModalVisible,
     deleteModal, setDeleteModal,
     editing, toDelete, form,
+    formErrors,
     handleChange, openCreate, openEdit, openDelete,
     handleSubmit, handleDelete, fetchAll,
   } = useEntityCrud({
     service: LeaseDataService,
     emptyForm,
+    validationSchema: leaseFormSchema,
     toForm: (l) => ({ property_id: l.property_id || '', tenant_id: l.tenant_id || '', type: l.type || 'nu', start_date: l.start_date || '', end_date: l.end_date || '', rent_amount: l.rent_amount || '', charges_amount: l.charges_amount || '0', deposit_amount: l.deposit_amount || '0', notice_period: l.notice_period || '3', status: l.status || 'active', notes: l.notes || '' }),
   })
 
@@ -168,13 +172,13 @@ const Leases = () => {
         onSubmit={handleSubmit}
         submitLabel={editing ? 'Modifier' : 'Créer'}
       >
-        <CCol md={6}><CFormSelect label="Bien" name="property_id" value={form.property_id} onChange={handleChange} required><option value="">-- Sélectionner un bien --</option>{properties.map((p) => <option key={p.id} value={p.id}>{`${p.type} - ${p.address}, ${p.city}`}</option>)}</CFormSelect></CCol>
+        <CCol md={6}><FormSelectField label="Bien" name="property_id" value={form.property_id} required error={formErrors.property_id} onChange={handleChange}><option value="">-- Sélectionner un bien --</option>{properties.map((p) => <option key={p.id} value={p.id}>{`${p.type} - ${p.address}, ${p.city}`}</option>)}</FormSelectField></CCol>
         <CCol md={6}><CFormSelect label="Locataire" name="tenant_id" value={form.tenant_id} onChange={handleChange}><option value="">-- Sélectionner --</option>{tenants.map((t) => <option key={t.id} value={t.id}>{`${t.civility || ''} ${t.firstname} ${t.lastname}`}</option>)}</CFormSelect></CCol>
         <CCol md={4}><CFormSelect label="Type de bail" name="type" value={form.type} onChange={handleChange}><option value="nu">Location nue</option><option value="meublé">Meublé</option><option value="commercial">Commercial</option></CFormSelect></CCol>
-        <CCol md={4}><CFormInput type="number" name="rent_amount" label="Loyer hors charges (€)" value={form.rent_amount} onChange={handleChange} required /></CCol>
-        <CCol md={4}><CFormInput type="number" name="charges_amount" label="Charges (€)" value={form.charges_amount} onChange={handleChange} /></CCol>
-        <CCol md={4}><CFormInput type="number" name="deposit_amount" label="Dépôt de garantie (€)" value={form.deposit_amount} onChange={handleChange} /></CCol>
-        <CCol md={4}><CFormInput type="date" name="start_date" label="Date de début" value={DateUtils.formatShort(form.start_date)} onChange={handleChange} required /></CCol>
+        <CCol md={4}><FormInputField type="number" name="rent_amount" label="Loyer hors charges (€)" value={form.rent_amount} required error={formErrors.rent_amount} onChange={handleChange} /></CCol>
+        <CCol md={4}><FormInputField type="number" name="charges_amount" label="Charges (€)" value={form.charges_amount} error={formErrors.charges_amount} onChange={handleChange} /></CCol>
+        <CCol md={4}><FormInputField type="number" name="deposit_amount" label="Dépôt de garantie (€)" value={form.deposit_amount} error={formErrors.deposit_amount} onChange={handleChange} /></CCol>
+        <CCol md={4}><FormInputField type="date" name="start_date" label="Date de début" value={DateUtils.formatShort(form.start_date)} required error={formErrors.start_date} onChange={handleChange} /></CCol>
         <CCol md={4}><CFormInput type="date" name="end_date" label="Date de fin (optionnel)" value={DateUtils.formatShort(form.end_date)} onChange={handleChange} /></CCol>
         <CCol md={4}><CFormInput type="number" name="notice_period" label="Préavis (mois)" value={form.notice_period} onChange={handleChange} /></CCol>
         <CCol md={4}><CFormSelect label="Statut" name="status" value={form.status} onChange={handleChange}><option value="active">Actif</option><option value="expired">Expiré</option><option value="terminated">Résilié</option></CFormSelect></CCol>

@@ -17,6 +17,8 @@ import {
 import CIcon from '@coreui/icons-react'
 import { cilSync } from '@coreui/icons'
 import { DateUtils } from 'src/utils/date'
+import { chargeFormSchema } from '../../../validation/schemas'
+import { FormInputField, FormSelectField } from '../../../components/FormFields'
 
 const typeLabel: Record<string, string> = { assurance: 'Assurance', taxe_fonciere: 'Taxe foncière', entretien: 'Entretien', travaux: 'Travaux', charges_copro: 'Charges copro', frais_gestion: 'Frais gestion', autre: 'Autre' }
 const typeColor: Record<string, string> = { assurance: 'info', taxe_fonciere: 'warning', entretien: 'primary', travaux: 'danger', charges_copro: 'secondary', frais_gestion: 'dark', autre: 'light' }
@@ -40,11 +42,13 @@ const Charges = () => {
     modalVisible, setModalVisible,
     deleteModal, setDeleteModal,
     editing, toDelete, form,
+    formErrors,
     handleChange, openCreate, openEdit, openDelete,
     handleSubmit, handleDelete, fetchAll,
   } = useEntityCrud({
     service: ChargeDataService,
     emptyForm,
+    validationSchema: chargeFormSchema,
     toForm: (c) => ({ property_id: c.property_id || '', type: c.type, description: c.description || '', amount: c.amount, date: c.date, frequency: c.frequency }),
   })
 
@@ -223,9 +227,9 @@ const Charges = () => {
         <CCol md={6}><CFormSelect label="Type" name="type" value={form.type} onChange={handleChange}>{Object.entries(typeLabel).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</CFormSelect></CCol>
         <CCol md={6}><CFormSelect label="Bien (optionnel)" name="property_id" value={form.property_id} onChange={handleChange}><option value="">-- Général (SCI) --</option>{properties.map((p) => <option key={p.id} value={p.id}>{`${p.type} - ${p.address}, ${p.city}`}</option>)}</CFormSelect></CCol>
         <CCol md={12}><CFormInput type="text" name="description" label="Description" value={form.description} onChange={handleChange} /></CCol>
-        <CCol md={4}><CFormInput type="number" name="amount" label="Montant (€)" value={form.amount} onChange={handleChange} required /></CCol>
-        <CCol md={4}><CFormInput type="date" name="date" label="Date" value={form.date} onChange={handleChange} required /></CCol>
-        <CCol md={4}><CFormSelect label="Fréquence" name="frequency" value={form.frequency} onChange={handleChange}><option value="unique">Unique</option><option value="mensuel">Mensuel</option><option value="trimestriel">Trimestriel</option><option value="annuel">Annuel</option></CFormSelect></CCol>
+        <CCol md={4}><FormInputField type="number" name="amount" label="Montant (€)" value={form.amount} onChange={handleChange} required error={formErrors.amount} /></CCol>
+        <CCol md={4}><FormInputField type="date" name="date" label="Date" value={form.date} onChange={handleChange} required error={formErrors.date} /></CCol>
+        <CCol md={4}><FormSelectField label="Fréquence" name="frequency" value={form.frequency} onChange={handleChange}><option value="unique">Unique</option><option value="mensuel">Mensuel</option><option value="trimestriel">Trimestriel</option><option value="annuel">Annuel</option></FormSelectField></CCol>
       </CrudModal>
 
       <DeleteModal
