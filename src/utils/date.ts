@@ -95,6 +95,27 @@ static formatShort(date: Date | string): string {
     });
   }
 
+/**
+ * Format date en forme mm-AAAA (ex: 04/2026)
+ * date recoit 2025-01
+ */
+static formatMonthYear(date: Date | string): string {
+  try {
+    // Cas 1: date simple (YYYY-MM)
+    if (typeof date === "string" && /^\d{4}-\d{2}$/.test(date)) {
+      const [year, month] = date.split("-").map(Number);
+      return `${month.toString().padStart(2, "0")}/${year}`;
+    }
+
+    // Cas 2: date avec heure
+    const z = this.toInstant(date).toZonedDateTimeISO(this.DEFAULT_TIMEZONE);
+    return `${z.month.toString().padStart(2, "0")}/${z.year}`;
+  } catch {
+    return "Date invalide";
+  }
+
+}
+
   /**
    * Format ISO local (utile pour input HTML)
    * ex: 2026-04-11

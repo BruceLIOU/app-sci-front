@@ -5,6 +5,7 @@ import {
   CTableHead, CTableHeaderCell, CTableRow, CBadge, CProgress,
 } from '@coreui/react'
 import { CChartBar } from '@coreui/react-chartjs'
+import { DateUtils } from 'src/utils/date'
 
 const Comptability = () => {
   const [payments, setPayments] = useState<any[]>([])
@@ -19,15 +20,19 @@ const Comptability = () => {
   const totalExpected = totalPaid + totalPending + totalLate
   const recoveryRate = totalExpected > 0 ? ((totalPaid / totalExpected) * 100).toFixed(1) : 0
 
-  const byMonth = payments.reduce((acc: Record<string, any>, p) => {
+  const byMonth: Record<string, any> = {}
+  const monthSortKey: Record<string, string> = {}
+  payments.forEach((p) => {
     const key = p.month || 'Non défini'
-    if (!acc[key]) acc[key] = { paid: 0, pending: 0, late: 0 }
+    if (!byMonth[key]) byMonth[key] = { paid: 0, pending: 0, late: 0 }
     const amount = parseFloat(p.amount || 0)
-    acc[key][p.status] = (acc[key][p.status] || 0) + amount
-    return acc
-  }, {})
+    byMonth[key][p.status] = (byMonth[key][p.status] || 0) + amount
+    if (!monthSortKey[key] || (p.due_date && p.due_date < monthSortKey[key])) {
+      monthSortKey[key] = p.due_date || ''
+    }
+  })
 
-  const months = Object.keys(byMonth)
+  const months = Object.keys(byMonth).sort((a, b) => (monthSortKey[a] || '').localeCompare(monthSortKey[b] || ''))
   const paidByMonth = months.map((m) => byMonth[m].paid.toFixed(2))
   const pendingByMonth = months.map((m) => (byMonth[m].pending + byMonth[m].late).toFixed(2))
 
@@ -55,7 +60,7 @@ const Comptability = () => {
           <CCardBody>
             <CChartBar
               style={{ height: '280px' }}
-              data={{ labels: months, datasets: [{ label: 'Perçus (€)', backgroundColor: 'rgba(40,167,69,0.7)', data: paidByMonth }, { label: 'En attente / Retard (€)', backgroundColor: 'rgba(255,193,7,0.7)', data: pendingByMonth }] }}
+              data={{ labels: months.map((m) => DateUtils.formatMonthYear(m)), datasets: [{ label: 'Perçus (€)', backgroundColor: 'rgba(40,167,69,0.7)', data: paidByMonth }, { label: 'En attente / Retard (€)', backgroundColor: 'rgba(255,193,7,0.7)', data: pendingByMonth }] }}
               options={{ maintainAspectRatio: false, plugins: { legend: { display: true } } }}
             />
           </CCardBody>
@@ -91,7 +96,7 @@ const Comptability = () => {
                   {payments.length === 0 ? <CTableRow><CTableDataCell colSpan={4} className="text-center text-muted">Aucun paiement</CTableDataCell></CTableRow>
                   : payments.map((p) => (
                     <CTableRow key={p.id}>
-                      <CTableDataCell>{p.month || '-'}</CTableDataCell>
+                      <CTableDataCell>{DateUtils.formatMonthYear(p.month) || '-'}</CTableDataCell>
                       <CTableDataCell>{p.Tenant ? `${p.Tenant.firstname} ${p.Tenant.lastname}` : '-'}</CTableDataCell>
                       <CTableDataCell>{parseFloat(p.amount || 0).toFixed(2)} €</CTableDataCell>
                       <CTableDataCell>

@@ -46,13 +46,19 @@ const Dashboard = () => {
   const totalPending = pendingPayments.reduce((s, p) => s + parseFloat(p.amount || 0), 0)
 
   // Regrouper les paiements encaissés par mois
-  const byMonth = payments.reduce((acc: Record<string, number>, p) => {
+  const byMonth: Record<string, number> = {}
+  const monthSortKey: Record<string, string> = {}
+  payments.forEach((p) => {
     if (p.status === 'paid' && p.month) {
-      acc[p.month] = (acc[p.month] || 0) + parseFloat(p.amount || 0)
+      byMonth[p.month] = (byMonth[p.month] || 0) + parseFloat(p.amount || 0)
+      if (!monthSortKey[p.month] || (p.due_date && p.due_date < monthSortKey[p.month])) {
+        monthSortKey[p.month] = p.due_date || ''
+      }
     }
-    return acc
-  }, {})
-  const chartLabels = Object.keys(byMonth).slice(-6)
+  })
+  const chartLabels = Object.keys(byMonth)
+    .sort((a, b) => (monthSortKey[a] || '').localeCompare(monthSortKey[b] || ''))
+    .slice(-6)
   const chartData = chartLabels.map((m) => byMonth[m])
 
   if (loading) {
@@ -124,7 +130,7 @@ const Dashboard = () => {
               ) : (
                 <CChartBar
                   data={{
-                    labels: chartLabels,
+                    labels: chartLabels.map((m) => DateUtils.formatMonthYear(m)),
                     datasets: [{
                       label: 'Encaissé (€)',
                       backgroundColor: 'rgba(50, 153, 255, 0.6)',

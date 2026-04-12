@@ -14,6 +14,7 @@ import {
   CCol, CRow, CTable, CTableBody, CTableDataCell,
   CTableHead, CTableHeaderCell, CTableRow, CBadge, CFormInput, CFormSelect,
 } from '@coreui/react'
+import { DateUtils } from 'src/utils/date'
 
 const statusLabel: Record<string, string> = { paid: 'Payé', pending: 'En attente', late: 'En retard' }
 const statusColor: Record<string, string> = { paid: 'success', pending: 'warning', late: 'danger' }
@@ -24,7 +25,7 @@ const Payments = () => {
   const [tenants, setTenants] = useState<any[]>([])
   const [properties, setProperties] = useState<any[]>([])
   const [filterStatus, setFilterStatus] = useState('')
-  const [filterYear, setFilterYear] = useState(new Date().getFullYear().toString())
+  const [filterYear, setFilterYear] = useState('')
 
   const {
     items: payments,
@@ -71,8 +72,8 @@ const Payments = () => {
             { value: filterYear, onChange: setFilterYear, options: availableYears.map((y) => ({ value: y, label: y })), placeholder: 'Toutes les années', width: 140 },
             { value: filterStatus, onChange: setFilterStatus, options: Object.entries(statusLabel).map(([v, l]) => ({ value: v, label: l })), placeholder: 'Tous les statuts', width: 160 },
           ]}
-          hasActiveFilter={filterStatus !== '' || filterYear !== new Date().getFullYear().toString()}
-          onResetFilters={() => { setFilterStatus(''); setFilterYear(new Date().getFullYear().toString()) }}
+          hasActiveFilter={filterStatus !== '' || filterYear !== ''}
+          onResetFilters={() => { setFilterStatus(''); setFilterYear('') }}
           totalCount={payments.length}
           filteredCount={filteredPayments.length}
           itemLabel="paiement"
@@ -91,11 +92,11 @@ const Payments = () => {
               <TableEmptyRow colSpan={7} message="Aucun paiement enregistré" />
             ) : filteredPayments.map((payment) => (
               <CTableRow key={payment.id}>
-                <CTableDataCell>{payment.month || '-'}</CTableDataCell>
+                <CTableDataCell>{DateUtils.formatMonthYear(payment.month) || '-'}</CTableDataCell>
                 <CTableDataCell>{payment.Tenant ? `${payment.Tenant.civility || ''} ${payment.Tenant.firstname} ${payment.Tenant.lastname}` : '-'}</CTableDataCell>
                 <CTableDataCell>{payment.Property ? `${payment.Property.type} - ${payment.Property.city}` : '-'}</CTableDataCell>
                 <CTableDataCell>{parseFloat(payment.amount || 0).toFixed(2)} €</CTableDataCell>
-                <CTableDataCell>{payment.due_date || '-'}</CTableDataCell>
+                <CTableDataCell>{DateUtils.formatShort(payment.due_date) || '-'}</CTableDataCell>
                 <CTableDataCell><CBadge color={statusColor[payment.status] || 'secondary'}>{statusLabel[payment.status] || payment.status}</CBadge></CTableDataCell>
                 <CTableDataCell className="text-end">
                   <ActionButtons onEdit={() => openEdit(payment)} onDelete={() => openDelete(payment)} />

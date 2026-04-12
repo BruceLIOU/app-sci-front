@@ -13,6 +13,7 @@ import {
   CCol, CRow, CTable, CTableBody, CTableDataCell,
   CTableHead, CTableHeaderCell, CTableRow, CBadge, CFormInput, CFormSelect,
 } from '@coreui/react'
+import { DateUtils } from 'src/utils/date'
 
 const typeLabel: Record<string, string> = { assurance: 'Assurance', taxe_fonciere: 'Taxe foncière', entretien: 'Entretien', travaux: 'Travaux', charges_copro: 'Charges copro', frais_gestion: 'Frais gestion', autre: 'Autre' }
 const typeColor: Record<string, string> = { assurance: 'info', taxe_fonciere: 'warning', entretien: 'primary', travaux: 'danger', charges_copro: 'secondary', frais_gestion: 'dark', autre: 'light' }
@@ -94,7 +95,7 @@ const Charges = () => {
                 <CTableDataCell>{c.Property ? `${c.Property.type} - ${c.Property.city}` : 'Général'}</CTableDataCell>
                 <CTableDataCell>{parseFloat(c.amount || 0).toFixed(2)} €</CTableDataCell>
                 <CTableDataCell>{freqLabel[c.frequency] || c.frequency}</CTableDataCell>
-                <CTableDataCell>{c.date || '-'}</CTableDataCell>
+                <CTableDataCell>{DateUtils.formatShort(c.date) || '-'}</CTableDataCell>
                 <CTableDataCell className="text-end">
                   <ActionButtons onEdit={() => openEdit(c)} onDelete={() => openDelete(c)} />
                 </CTableDataCell>

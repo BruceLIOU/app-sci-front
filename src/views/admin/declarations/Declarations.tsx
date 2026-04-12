@@ -10,6 +10,7 @@ import {
 import CIcon from '@coreui/icons-react'
 import { cilCloudDownload } from '@coreui/icons'
 import http from '../../../utils/http-common'
+import { DateUtils } from 'src/utils/date'
 
 const currentYear = new Date().getFullYear()
 const years = Array.from({ length: 5 }, (_, i) => currentYear - i)
@@ -170,7 +171,7 @@ const Declarations = () => {
                   <CTableDataCell>{p.Tenant ? `${p.Tenant.firstname} ${p.Tenant.lastname}` : '-'}</CTableDataCell>
                   <CTableDataCell>{p.Property ? `${p.Property.type} - ${p.Property.city}` : '-'}</CTableDataCell>
                   <CTableDataCell>{p.month || '-'}</CTableDataCell>
-                  <CTableDataCell>{p.paid_date || '-'}</CTableDataCell>
+                  <CTableDataCell>{DateUtils.formatShort(p.paid_date) || '-'}</CTableDataCell>
                   <CTableDataCell>{parseFloat(p.amount || 0).toFixed(2)} €</CTableDataCell>
                 </CTableRow>
               ))}
