@@ -57,30 +57,17 @@ const Declarations = () => {
 
   const totalRevenues = yearPayments.reduce((s, p) => s + parseFloat(p.amount || 0), 0)
 
-  const totalCharges = charges.reduce((s, c) => {
-    const a = parseFloat(c.amount || 0)
-    const d = c.date || ''
-    if (d.startsWith(String(year))) return s + a
-    if (c.frequency === 'mensuel') return s + a * 12
-    if (c.frequency === 'trimestriel') return s + a * 4
-    if (c.frequency === 'annuel') return s + a
-    return s
-  }, 0)
+  const yearCharges = charges.filter((c) => (c.date || '').startsWith(String(year)))
+
+  const totalCharges = yearCharges.reduce((s, c) => s + parseFloat(c.amount || 0), 0)
 
   const netResult = totalRevenues - totalCharges
 
   const byProperty = properties.map((p) => {
     const rev = yearPayments.filter((pay) => pay.property_id === p.id).reduce((s, pay) => s + parseFloat(pay.amount || 0), 0)
-    const chg = charges.reduce((s, c) => {
-      if (c.property_id !== p.id) return s
-      const a = parseFloat(c.amount || 0)
-      const d = c.date || ''
-      if (d.startsWith(String(year))) return s + a
-      if (c.frequency === 'mensuel') return s + a * 12
-      if (c.frequency === 'trimestriel') return s + a * 4
-      if (c.frequency === 'annuel') return s + a
-      return s
-    }, 0)
+    const chg = yearCharges
+      .filter((c) => c.property_id === p.id)
+      .reduce((s, c) => s + parseFloat(c.amount || 0), 0)
     return { ...p, revenues: rev, charges: chg, net: rev - chg }
   })
 
@@ -186,17 +173,16 @@ const Declarations = () => {
           <CTable bordered small align="middle" hover>
             <CTableHead color="light"><CTableRow><CTableHeaderCell>Type</CTableHeaderCell><CTableHeaderCell>Description</CTableHeaderCell><CTableHeaderCell>Bien</CTableHeaderCell><CTableHeaderCell>Fréquence</CTableHeaderCell><CTableHeaderCell>Montant annualisé</CTableHeaderCell></CTableRow></CTableHead>
             <CTableBody>
-              {charges.length === 0 ? <CTableRow><CTableDataCell colSpan={5} className="text-center text-muted">Aucune charge</CTableDataCell></CTableRow>
-              : charges.map((c) => {
+              {yearCharges.length === 0 ? <CTableRow><CTableDataCell colSpan={5} className="text-center text-muted">Aucune charge déductible pour {year}</CTableDataCell></CTableRow>
+              : yearCharges.map((c) => {
                 const a = parseFloat(c.amount || 0)
-                const annual = c.frequency === 'mensuel' ? a * 12 : c.frequency === 'trimestriel' ? a * 4 : a
                 return (
                   <CTableRow key={c.id}>
                     <CTableDataCell>{c.type}</CTableDataCell>
                     <CTableDataCell>{c.description || '-'}</CTableDataCell>
                     <CTableDataCell>{c.Property ? `${c.Property.type} - ${c.Property.city}` : 'Général'}</CTableDataCell>
                     <CTableDataCell>{c.frequency}</CTableDataCell>
-                    <CTableDataCell>{annual.toFixed(2)} €</CTableDataCell>
+                    <CTableDataCell>{a.toFixed(2)} €</CTableDataCell>
                   </CTableRow>
                 )
               })}
