@@ -19,6 +19,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilDescription, cilExternalLink, cilCloudDownload, cilSend } from '@coreui/icons'
+import { DateUtils } from 'src/utils/date'
 
 const Quittances = () => {
   const [tenants, setTenants] = useState<any[]>([])
@@ -101,6 +102,7 @@ const Quittances = () => {
     try {
       const res = await PdfDataService.emailQuittance(id)
       setEmailResult({ type: 'success', message: res.data.message })
+      fetchAll()
     } catch (e: any) {
       setEmailResult({ type: 'danger', message: e?.response?.data?.message || 'Erreur lors de l\'envoi.' })
     } finally {
@@ -179,6 +181,7 @@ const Quittances = () => {
       const res = await QuittanceDataService.bulkEmail([...selectedIds])
       const { sent, errors } = res.data
       setSelectedIds(new Set())
+      fetchAll()
       setBulkAlert({ type: sent > 0 ? 'success' : 'danger', message: `${sent} email(s) envoyé(s)${errors > 0 ? `, ${errors} erreur(s)` : ''}.` })
     } catch (e: any) {
       setBulkAlert({ type: 'danger', message: e?.response?.data?.message || "Erreur lors de l'envoi des emails." })
@@ -269,8 +272,8 @@ const Quittances = () => {
                         </CButton>
                       </CTooltip>
                     )}
-                    <CTooltip content="Envoyer par email">
-                      <CButton color="light" size="sm" className="me-1" disabled={emailSendingId === q.id} onClick={() => handleEmailQuittance(q.id)}>
+                    <CTooltip content={q.email_sent_at ? `Envoyé le ${DateUtils.formatShort(q.email_sent_at)}` : 'Envoyer par email'}>
+                      <CButton color={q.email_sent_at ? 'success' : 'light'} size="sm" className="me-1" disabled={emailSendingId === q.id} onClick={() => handleEmailQuittance(q.id)}>
                         {emailSendingId === q.id ? <CSpinner size="sm" /> : <CIcon icon={cilSend} />}
                       </CButton>
                     </CTooltip>

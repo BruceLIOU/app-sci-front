@@ -48,7 +48,7 @@ const Leases = () => {
     deleteModal, setDeleteModal,
     editing, toDelete, form,
     handleChange, openCreate, openEdit, openDelete,
-    handleSubmit, handleDelete,
+    handleSubmit, handleDelete, fetchAll,
   } = useEntityCrud({
     service: LeaseDataService,
     emptyForm,
@@ -77,6 +77,7 @@ const Leases = () => {
     try {
       const res = await PdfDataService.emailBail(id)
       setEmailResult({ type: 'success', message: res.data.message })
+      fetchAll()
     } catch (e: any) {
       setEmailResult({ type: 'danger', message: e?.response?.data?.message || "Erreur lors de l'envoi." })
     } finally {
@@ -144,8 +145,8 @@ const Leases = () => {
                         <CIcon icon={cilInfo} />
                       </CButton>
                     </CTooltip>
-                    <CTooltip content="Envoyer bail par email">
-                      <CButton color="light" size="sm" className="me-1" disabled={emailSendingId === l.id} onClick={() => handleEmailBail(l.id)}>
+                    <CTooltip content={l.email_sent_at ? `Envoyé le ${DateUtils.formatShort(l.email_sent_at)}` : 'Envoyer bail par email'}>
+                      <CButton color={l.email_sent_at ? 'success' : 'light'} size="sm" className="me-1" disabled={emailSendingId === l.id} onClick={() => handleEmailBail(l.id)}>
                         {emailSendingId === l.id ? <CSpinner size="sm" /> : <CIcon icon={cilSend} />}
                       </CButton>
                     </CTooltip>

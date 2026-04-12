@@ -231,13 +231,21 @@ const Inspections = () => {
                 {emailResult.message}
               </CAlert>
             )}
-            <div className="d-flex justify-content-end gap-2">
+            <div className="d-flex justify-content-end align-items-center gap-2 flex-wrap">
+              {viewing.email_sent_at && (
+                <span className="text-success small">
+                  <CIcon icon={cilSend} size="sm" className="me-1" />
+                  Envoyé par mail le {DateUtils.formatShort(viewing.email_sent_at)}
+                </span>
+              )}
               <CButton color="info" variant="outline" disabled={emailSending} onClick={async () => {
                 setEmailSending(true)
                 setEmailResult(null)
                 try {
                   const res = await PdfDataService.emailEtatDesLieux(viewing.id)
                   setEmailResult({ type: 'success', message: res.data.message })
+                  setViewing((prev: any) => ({ ...prev, email_sent_at: res.data.email_sent_at }))
+                  fetchAll()
                 } catch (e: any) {
                   setEmailResult({ type: 'danger', message: e?.response?.data?.message || "Erreur lors de l'envoi." })
                 } finally {

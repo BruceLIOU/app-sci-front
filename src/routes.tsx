@@ -16,6 +16,7 @@ const Settings = React.lazy(() => import('./views/admin/settings/Settings'))
 const Visits = React.lazy(() => import('./views/admin/visits/Visits'))
 const Profile = React.lazy(() => import('./views/admin/profile/Profile'))
 const Users = React.lazy(() => import('./views/admin/users/Users'))
+const Notifications = React.lazy(() => import('./views/admin/notifications/Notifications'))
 
 interface Route {
   path: string
@@ -44,6 +45,7 @@ const routes: Route[] = [
   { path: '/admin/visits', name: 'Calendrier des visites', element: Visits },
   { path: '/admin/profile', name: 'Mon profil', element: Profile },
   { path: '/admin/users', name: 'Utilisateurs', element: Users, roles: ['admin'] },
+  { path: '/admin/notifications', name: 'Notifications', element: Notifications },
 ]
 
 export default routes
