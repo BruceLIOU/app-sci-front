@@ -12,7 +12,10 @@ import useEntityCrud from '../../../hooks/useEntityCrud'
 import {
   CCol, CRow, CTable, CTableBody, CTableDataCell,
   CTableHead, CTableHeaderCell, CTableRow, CBadge, CFormInput, CFormSelect,
+  CAlert, CButton, CSpinner,
 } from '@coreui/react'
+import CIcon from '@coreui/icons-react'
+import { cilSync } from '@coreui/icons'
 import { DateUtils } from 'src/utils/date'
 
 const typeLabel: Record<string, string> = { assurance: 'Assurance', taxe_fonciere: 'Taxe foncière', entretien: 'Entretien', travaux: 'Travaux', charges_copro: 'Charges copro', frais_gestion: 'Frais gestion', autre: 'Autre' }
@@ -25,6 +28,8 @@ const Charges = () => {
   const [properties, setProperties] = useState<any[]>([])
   const [filterType, setFilterType] = useState('')
   const [filterFrequency, setFilterFrequency] = useState('')
+  const [syncing, setSyncing] = useState(false)
+  const [syncAlert, setSyncAlert] = useState<{ type: 'success' | 'danger'; message: string } | null>(null)
 
   const {
     items: charges,
@@ -40,6 +45,28 @@ const Charges = () => {
   })
 
   useEffect(() => { PropertyDataService.getAll().then((r) => setProperties(r.data)) }, [])
+
+  const handleSyncMatera = async () => {
+    setSyncing(true)
+    setSyncAlert(null)
+    try {
+      const res = await ChargeDataService.syncMatera()
+      const { created, skipped, errors } = res.data
+      if (errors.length > 0) {
+        setSyncAlert({ type: 'danger', message: `Sync terminée avec erreurs — créées : ${created}, ignorées : ${skipped}. Erreur : ${errors[0]}` })
+      } else if (created === 0) {
+        setSyncAlert({ type: 'success', message: `Aucun nouvel email MATERA détecté (${skipped} déjà traité(s)).` })
+      } else {
+        setSyncAlert({ type: 'success', message: `${created} charge(s) créée(s) automatiquement depuis MATERA !` })
+        // Rafraîchir la liste des charges
+        window.location.reload()
+      }
+    } catch (e: any) {
+      setSyncAlert({ type: 'danger', message: e.response?.data?.message || 'Erreur lors de la synchronisation MATERA.' })
+    } finally {
+      setSyncing(false)
+    }
+  }
 
   const hasFilter = filterType !== '' || filterFrequency !== ''
   const filtered = charges.filter((c) => {
@@ -64,7 +91,19 @@ const Charges = () => {
         <StatCard value={`${totalAnnual.toFixed(2)} €`} label="Total annualisé" color="dark" />
       </CRow>
 
+      {syncAlert && (
+        <CAlert color={syncAlert.type} dismissible onClose={() => setSyncAlert(null)} className="mb-3">
+          {syncAlert.message}
+        </CAlert>
+      )}
+
       <EntityTableCard title="Charges &amp; dépenses" onAdd={openCreate}>
+        <div className="d-flex justify-content-end mb-2">
+          <CButton color="primary" variant="outline" size="sm" onClick={handleSyncMatera} disabled={syncing}>
+            {syncing ? <CSpinner size="sm" className="me-1" /> : <CIcon icon={cilSync} className="me-1" />}
+            {syncing ? 'Synchronisation…' : 'Sync MATERA'}
+          </CButton>
+        </div>
         <ViewControlBar
           filters={[
             { value: filterType, onChange: setFilterType, options: Object.entries(typeLabel).map(([v, l]) => ({ value: v, label: l })), placeholder: 'Tous les types', width: 180 },
