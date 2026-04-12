@@ -4,6 +4,7 @@ import { CContainer, CSpinner } from '@coreui/react'
 import { useSelector } from 'react-redux'
 import { RootState } from '../store'
 import routes from '../routes'
+import OwnerProfileGuard from './OwnerProfileGuard'
 
 const AppContent = () => {
   const userRole = useSelector((state: RootState) => state.auth.user?.role ?? 'viewer')
@@ -27,7 +28,7 @@ const AppContent = () => {
               <Route
                 key={idx}
                 path={route.path}
-                element={<route.element />}
+                element={route.sciOnly ? <OwnerProfileGuard requireSci><route.element /></OwnerProfileGuard> : <route.element />}
               />
             )
           })}

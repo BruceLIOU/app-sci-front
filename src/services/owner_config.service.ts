@@ -1,6 +1,6 @@
 import http from '../utils/http-common'
 
-export interface SciConfigData {
+export interface OwnerConfigData {
   id?: number
   owner_profile_type?: 'SCI' | 'PROFESSIONAL' | 'INDIVIDUAL'
   name?: string
@@ -38,9 +38,9 @@ export interface SciConfigData {
   charge_cron_enabled?: boolean
 }
 
-class SciConfigDataService {
-  get() { return http.get<SciConfigData>('/owner-config') }
-  update(data: FormData) { return http.put<SciConfigData>('/owner-config', data) }
+class OwnerConfigDataService {
+  get() { return http.get<OwnerConfigData>('/owner-config') }
+  update(data: FormData) { return http.put<OwnerConfigData>('/owner-config', data) }
 }
 
-export default new SciConfigDataService()
+export default new OwnerConfigDataService()

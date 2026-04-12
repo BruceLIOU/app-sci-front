@@ -24,6 +24,7 @@ interface Route {
   element?: React.ComponentType
   exact?: boolean
   roles?: ('admin' | 'viewer')[]
+  sciOnly?: boolean
 }
 
 const routes: Route[] = [
@@ -38,8 +39,8 @@ const routes: Route[] = [
   { path: '/admin/quittances', name: 'Quittances', element: Quittances, roles: ['admin'] },
   { path: '/admin/charges', name: 'Charges', element: Charges, roles: ['admin'] },
   { path: '/admin/comptability', name: 'Comptabilité', element: Comptability, roles: ['admin'] },
-  { path: '/admin/associates', name: 'Associés', element: Associates },
-  { path: '/admin/declarations', name: 'Déclaration 2072', element: Declarations, roles: ['admin'] },
+  { path: '/admin/associates', name: 'Co-bailleurs', element: Associates },
+  { path: '/admin/declarations', name: 'Déclaration 2072', element: Declarations, roles: ['admin'], sciOnly: true },
   { path: '/admin/documents', name: 'Documents', element: Documents },
   { path: '/admin/settings', name: 'Paramètres', element: Settings },
   { path: '/admin/visits', name: 'Calendrier des visites', element: Visits },

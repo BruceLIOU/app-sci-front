@@ -151,13 +151,13 @@ const Declarations = () => {
 
         <CCol md={6}>
           <CCard className="mb-4 app-panel-card app-table-card">
-            <CCardHeader><strong>Quote-part par associe — {year}</strong></CCardHeader>
+            <CCardHeader><strong>Quote-part par co-bailleur — {year}</strong></CCardHeader>
             <CCardBody>
               <CTable bordered align="middle" responsive hover>
-                <CTableHead color="light"><CTableRow><CTableHeaderCell>Associe</CTableHeaderCell><CTableHeaderCell>Role</CTableHeaderCell><CTableHeaderCell>Parts</CTableHeaderCell><CTableHeaderCell>Quote-part</CTableHeaderCell></CTableRow></CTableHead>
+                <CTableHead color="light"><CTableRow><CTableHeaderCell>Co-bailleur</CTableHeaderCell><CTableHeaderCell>Role</CTableHeaderCell><CTableHeaderCell>Parts</CTableHeaderCell><CTableHeaderCell>Quote-part</CTableHeaderCell></CTableRow></CTableHead>
                 <CTableBody>
                   {byAssociate.length === 0 ? (
-                    <TableEmptyRow colSpan={4} message="Aucun associe" />
+                    <TableEmptyRow colSpan={4} message="Aucun co-bailleur" />
                   ) : byAssociate.map((a) => (
                     <CTableRow key={a.id}>
                       <CTableDataCell>{a.civility || ''} {a.firstname} {a.lastname}</CTableDataCell>

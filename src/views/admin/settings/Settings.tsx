@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useDispatch } from 'react-redux'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   CCard,
@@ -24,11 +25,12 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilCheckCircle, cilXCircle, cilLockLocked, cilLockUnlocked } from '@coreui/icons'
-import SciConfigDataService, { SciConfigData } from '../../../services/sci_config.service'
+import OwnerConfigDataService, { OwnerConfigData } from '../../../services/owner_config.service'
 import AssociateDataService from '../../../services/associate.service'
 import VisitDataService from '../../../services/visit.service'
 import PropertyDataService from '../../../services/property.service'
 import http from '../../../utils/http-common'
+import { setOwnerProfileType } from '../../../store'
 
 interface Associate {
   id: number
@@ -56,8 +58,9 @@ interface Property {
 const Settings: React.FC = () => {
   const location = useLocation()
   const navigate = useNavigate()
+  const dispatch = useDispatch()
 
-  const [config, setConfig] = useState<SciConfigData>({})
+  const [config, setConfig] = useState<OwnerConfigData>({})
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -67,10 +70,13 @@ const Settings: React.FC = () => {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [googleCalendarsError, setGoogleCalendarsError] = useState(false)
   const [googleAlert, setGoogleAlert] = useState<{ type: 'success' | 'danger' | 'info'; message: string } | null>(null)
-  const [activeTab, setActiveTab] = useState<'sci' | 'google' | 'smtp' | 'imap' | 'cron'>('sci')
+  const [activeTab, setActiveTab] = useState<'owner' | 'google' | 'smtp' | 'imap' | 'cron'>('owner')
   const [showSmtpPass, setShowSmtpPass] = useState(false)
   const [showImapPass, setShowImapPass] = useState(false)
   const [properties, setProperties] = useState<Property[]>([])
+  const isSciProfile = (config.owner_profile_type || 'INDIVIDUAL') === 'SCI'
+  const isIndividual = (config.owner_profile_type || 'INDIVIDUAL') === 'INDIVIDUAL'
+  const isProfessional = (config.owner_profile_type || 'INDIVIDUAL') === 'PROFESSIONAL'
 
   const fetchGoogleCalendars = async () => {
     setGoogleCalendarsError(false)
@@ -86,14 +92,14 @@ const Settings: React.FC = () => {
   }
 
   useEffect(() => {
-    SciConfigDataService.get()
-      .then((r) => setConfig(r.data))
+    OwnerConfigDataService.get()
+      .then((r) => setConfig({ owner_profile_type: 'INDIVIDUAL', ...r.data }))
       .catch(() => {})
 
     AssociateDataService.getAll()
       .then((r) => {
         const all: Associate[] = r.data
-        setGerants(all.filter((a) => a.role === 'Gérant' || a.role === 'Gérant associé'))
+        setGerants(all.filter((a) => a.role === 'Gérant' || a.role === 'Gérant associé' || a.role === 'Bailleur principal'))
       })
       .catch(() => {})
 
@@ -211,8 +217,12 @@ const Settings: React.FC = () => {
       Object.entries(config).forEach(([k, v]) => {
         if (v != null && k !== 'id') fd.append(k, String(v))
       })
-      const r = await SciConfigDataService.update(fd)
+      const r = await OwnerConfigDataService.update(fd)
       setConfig(r.data)
+      // Mettre à jour le store Redux si le type de bailleur a changé
+      if (r.data.owner_profile_type) {
+        dispatch(setOwnerProfileType(r.data.owner_profile_type as 'SCI' | 'PROFESSIONAL' | 'INDIVIDUAL'))
+      }
       setSaved(true)
     } catch (e: any) {
       setError(e?.response?.data?.message || e.message || 'Erreur lors de la sauvegarde')
@@ -232,11 +242,11 @@ const Settings: React.FC = () => {
             <CNav variant="tabs" className="px-3 pt-3">
               <CNavItem>
                 <CNavLink
-                  active={activeTab === 'sci'}
-                  onClick={() => setActiveTab('sci')}
+                  active={activeTab === 'owner'}
+                  onClick={() => setActiveTab('owner')}
                   style={{ cursor: 'pointer' }}
                 >
-                  SCI
+                  Bailleurs
                 </CNavLink>
               </CNavItem>
               <CNavItem>
@@ -283,63 +293,90 @@ const Settings: React.FC = () => {
             </CNav>
 
             <CTabContent className="p-3">
-              <CTabPane visible={activeTab === 'sci'}>
-            {saved && activeTab === 'sci' && (
+              <CTabPane visible={activeTab === 'owner'}>
+            {saved && activeTab === 'owner' && (
               <CAlert color="success" dismissible onClose={() => setSaved(false)}>
                 Paramètres enregistrés avec succès.
               </CAlert>
             )}
-            {error && activeTab === 'sci' && <CAlert color="danger">{error}</CAlert>}
+            {error && activeTab === 'owner' && <CAlert color="danger">{error}</CAlert>}
 
-            <h6 className="fw-semibold text-uppercase text-muted mb-3 mt-2">Informations de la SCI</h6>
+            <h6 className="fw-semibold text-uppercase text-muted mb-3 mt-2">Profil bailleur</h6>
 
             <CRow className="mb-3">
-              <CCol md={3}>
-                <CFormLabel>Forme juridique</CFormLabel>
-                <CFormInput
-                  name="legal_form"
-                  value={config.legal_form || ''}
-                  onChange={handleChange}
-                  placeholder="SCI"
-                />
+              <CCol md={6}>
+                <CFormLabel>Type de bailleur</CFormLabel>
+                <CFormSelect
+                  name="owner_profile_type"
+                  value={config.owner_profile_type || 'INDIVIDUAL'}
+                  onChange={handleChange as React.ChangeEventHandler<HTMLSelectElement>}
+                >
+                  <option value="INDIVIDUAL">Bailleur particulier</option>
+                  <option value="PROFESSIONAL">Bailleur professionnel</option>
+                  <option value="SCI">SCI (Société Civile Immobilière)</option>
+                </CFormSelect>
               </CCol>
-              <CCol md={9}>
+              {(isSciProfile || isProfessional) && (
+                <CCol md={6}>
+                  <CFormLabel>Forme juridique</CFormLabel>
+                  <CFormInput
+                    name="legal_form"
+                    value={config.legal_form || ''}
+                    onChange={handleChange}
+                    placeholder={isSciProfile ? 'SCI' : 'SARL, EIRL, etc.'}
+                  />
+                </CCol>
+              )}
+            </CRow>
+
+            <CRow className="mb-3">
+              <CCol md={12}>
                 <CFormLabel>
-                  Raison sociale <span className="text-danger">*</span>
+                  {isSciProfile ? 'Raison sociale' : 'Nom du bailleur'} <span className="text-danger">*</span>
                 </CFormLabel>
                 <CFormInput
                   name="name"
                   value={config.name || ''}
                   onChange={handleChange}
-                  placeholder="Nom de la SCI (sans la forme juridique)"
+                  placeholder={
+                    isSciProfile
+                      ? 'Nom de la SCI (sans la forme juridique)'
+                      : isProfessional
+                        ? "Nom de l'entreprise ou de la personne"
+                        : 'Nom du bailleur affiché dans les documents'
+                  }
                 />
               </CCol>
             </CRow>
 
-            <CRow className="mb-3">
-              <CCol md={6}>
-                <CFormLabel>SIRET</CFormLabel>
-                <CFormInput
-                  name="siret"
-                  value={config.siret || ''}
-                  onChange={handleChange}
-                  placeholder="123 456 789 00010"
-                />
-              </CCol>
-              <CCol md={6}>
-                <CFormLabel>RCS</CFormLabel>
-                <CFormInput
-                  name="rcs"
-                  value={config.rcs || ''}
-                  onChange={handleChange}
-                  placeholder="RCS Paris 123 456 789"
-                />
-              </CCol>
-            </CRow>
+            {(isSciProfile || isProfessional) && (
+              <CRow className="mb-3">
+                <CCol md={6}>
+                  <CFormLabel>SIRET</CFormLabel>
+                  <CFormInput
+                    name="siret"
+                    value={config.siret || ''}
+                    onChange={handleChange}
+                    placeholder="123 456 789 00010"
+                  />
+                </CCol>
+                <CCol md={6}>
+                  <CFormLabel>RCS</CFormLabel>
+                  <CFormInput
+                    name="rcs"
+                    value={config.rcs || ''}
+                    onChange={handleChange}
+                    placeholder="RCS Paris 123 456 789"
+                  />
+                </CCol>
+              </CRow>
+            )}
 
             <CRow className="mb-3">
               <CCol md={12}>
-                <CFormLabel>Adresse du siège social</CFormLabel>
+                <CFormLabel>
+                  {isSciProfile ? 'Adresse du siège social' : 'Adresse'}
+                </CFormLabel>
                 <CFormInput
                   name="address"
                   value={config.address || ''}
@@ -382,82 +419,92 @@ const Settings: React.FC = () => {
               </CCol>
             </CRow>
 
-            <h6 className="fw-semibold text-uppercase text-muted mb-3">Gérant</h6>
+            {(isSciProfile || isProfessional) && (
+              <>
+                <h6 className="fw-semibold text-uppercase text-muted mb-3">
+                  {isSciProfile ? 'Gérant' : 'Responsable'}
+                </h6>
 
-            <CRow className="mb-3">
-              <CCol md={12}>
-                <CFormLabel>Sélectionner un gérant associé</CFormLabel>
-                <CFormSelect
-                  value={config.manager_associate_id ?? ''}
-                  onChange={handleGerantSelect}
-                  disabled={gerants.length === 0}
-                >
-                  <option value="">— Saisie manuelle —</option>
-                  {gerants.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.civility} {a.firstname} {a.lastname}
-                    </option>
-                  ))}
-                </CFormSelect>
-                <div className="form-text">
-                  {gerants.length === 0
-                    ? 'Aucun associé avec le rôle Gérant ou Gérant associé trouvé.'
-                    : 'Sélectionner un associé gérant auto-remplira les champs ci-dessous.'}
-                </div>
-              </CCol>
-            </CRow>
+                <CRow className="mb-3">
+                  <CCol md={12}>
+                    <CFormLabel>
+                      {isSciProfile ? 'Sélectionner un gérant associé' : 'Sélectionner un responsable'}
+                    </CFormLabel>
+                    <CFormSelect
+                      value={config.manager_associate_id ?? ''}
+                      onChange={handleGerantSelect}
+                      disabled={gerants.length === 0}
+                    >
+                      <option value="">— Saisie manuelle —</option>
+                      {gerants.map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.civility} {a.firstname} {a.lastname}
+                        </option>
+                      ))}
+                    </CFormSelect>
+                    <div className="form-text">
+                      {gerants.length === 0
+                        ? isSciProfile
+                          ? 'Aucun co-bailleur avec un rôle de gestion trouvé.'
+                          : 'Aucun responsable trouvé.'
+                        : 'La sélection remplit automatiquement les champs ci-dessous.'}
+                    </div>
+                  </CCol>
+                </CRow>
 
-            <CRow className="mb-3">
-              <CCol md={2}>
-                <CFormLabel>Civilité</CFormLabel>
-                <CFormSelect
-                  name="manager_civility"
-                  value={config.manager_civility || ''}
-                  onChange={handleChange as React.ChangeEventHandler<HTMLSelectElement>}
-                >
-                  <option value="">—</option>
-                  <option value="M.">M.</option>
-                  <option value="Mme">Mme</option>
-                </CFormSelect>
-              </CCol>
-              <CCol md={5}>
-                <CFormLabel>Prénom</CFormLabel>
-                <CFormInput
-                  name="manager_firstname"
-                  value={config.manager_firstname || ''}
-                  onChange={handleChange}
-                />
-              </CCol>
-              <CCol md={5}>
-                <CFormLabel>Nom</CFormLabel>
-                <CFormInput
-                  name="manager_lastname"
-                  value={config.manager_lastname || ''}
-                  onChange={handleChange}
-                />
-              </CCol>
-            </CRow>
+                <CRow className="mb-3">
+                  <CCol md={2}>
+                    <CFormLabel>Civilité</CFormLabel>
+                    <CFormSelect
+                      name="manager_civility"
+                      value={config.manager_civility || ''}
+                      onChange={handleChange as React.ChangeEventHandler<HTMLSelectElement>}
+                    >
+                      <option value="">—</option>
+                      <option value="M.">M.</option>
+                      <option value="Mme">Mme</option>
+                    </CFormSelect>
+                  </CCol>
+                  <CCol md={5}>
+                    <CFormLabel>Prénom</CFormLabel>
+                    <CFormInput
+                      name="manager_firstname"
+                      value={config.manager_firstname || ''}
+                      onChange={handleChange}
+                    />
+                  </CCol>
+                  <CCol md={5}>
+                    <CFormLabel>Nom</CFormLabel>
+                    <CFormInput
+                      name="manager_lastname"
+                      value={config.manager_lastname || ''}
+                      onChange={handleChange}
+                    />
+                  </CCol>
+                </CRow>
 
-            <CRow className="mb-4">
-              <CCol md={6}>
-                <CFormLabel>Email</CFormLabel>
-                <CFormInput
-                  type="email"
-                  name="manager_email"
-                  value={config.manager_email || ''}
-                  onChange={handleChange}
-                />
-              </CCol>
-              <CCol md={6}>
-                <CFormLabel>Téléphone</CFormLabel>
-                <CFormInput
-                  name="manager_phone"
-                  value={config.manager_phone || ''}
-                  onChange={handleChange}
-                  placeholder="06 00 00 00 00"
-                />
-              </CCol>
-            </CRow>
+                <CRow className="mb-4">
+                  <CCol md={6}>
+                    <CFormLabel>Email</CFormLabel>
+                    <CFormInput
+                      type="email"
+                      name="manager_email"
+                      value={config.manager_email || ''}
+                      onChange={handleChange}
+                    />
+                  </CCol>
+                  <CCol md={6}>
+                    <CFormLabel>Téléphone</CFormLabel>
+                    <CFormInput
+                      name="manager_phone"
+                      value={config.manager_phone || ''}
+                      onChange={handleChange}
+                      placeholder="06 00 00 00 00"
+                    />
+                  </CCol>
+                </CRow>
+              </>
+            )}
 
             <div className="d-flex justify-content-end">
               <CButton color="primary" onClick={handleSave} disabled={saving}>

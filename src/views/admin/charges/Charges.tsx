@@ -225,7 +225,7 @@ const Charges = () => {
         onSubmit={handleSubmit}
       >
         <CCol md={6}><CFormSelect label="Type" name="type" value={form.type} onChange={handleChange}>{Object.entries(typeLabel).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</CFormSelect></CCol>
-        <CCol md={6}><CFormSelect label="Bien (optionnel)" name="property_id" value={form.property_id} onChange={handleChange}><option value="">-- Général (SCI) --</option>{properties.map((p) => <option key={p.id} value={p.id}>{`${p.type} - ${p.address}, ${p.city}`}</option>)}</CFormSelect></CCol>
+        <CCol md={6}><CFormSelect label="Bien (optionnel)" name="property_id" value={form.property_id} onChange={handleChange}><option value="">-- Général (tous biens) --</option>{properties.map((p) => <option key={p.id} value={p.id}>{`${p.type} - ${p.address}, ${p.city}`}</option>)}</CFormSelect></CCol>
         <CCol md={12}><CFormInput type="text" name="description" label="Description" value={form.description} onChange={handleChange} /></CCol>
         <CCol md={4}><FormInputField type="number" name="amount" label="Montant (€)" value={form.amount} onChange={handleChange} required error={formErrors.amount} /></CCol>
         <CCol md={4}><FormInputField type="date" name="date" label="Date" value={form.date} onChange={handleChange} required error={formErrors.date} /></CCol>

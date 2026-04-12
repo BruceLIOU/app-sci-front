@@ -102,11 +102,11 @@ const _nav: NavItem[] = [
   },
   {
     component: CNavTitle,
-    name: 'SCI',
+    name: 'Bailleurs',
   },
   {
     component: CNavItem,
-    name: 'Associés',
+    name: 'Co-bailleurs',
     to: '/admin/associates',
     icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
   },

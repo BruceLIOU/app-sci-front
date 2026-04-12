@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import {
   CButton, CCard, CCardBody, CCol, CContainer, CRow, CSpinner, CAlert, CFormInput, CFormLabel,
@@ -7,41 +7,64 @@ import {
 import { RootState } from '../../../store'
 import AuthService from '../../../services/auth.service'
 
+const normalizeCode = (value: string) => value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6)
+
 const Login = () => {
   const navigate = useNavigate()
-  const location = useLocation()
   const user = useSelector((state: RootState) => state.auth.user)
 
   const [email, setEmail] = useState('')
+  const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
-  const [sent, setSent] = useState(false)
+  const [step, setStep] = useState<'request' | 'verify'>('request')
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
 
   useEffect(() => {
     if (user) navigate('/dashboard', { replace: true })
+  }, [user, navigate])
 
-    const params = new URLSearchParams(location.search)
-    const errorParam = params.get('error')
-    const infoParam = params.get('info')
-
-    if (errorParam === 'invalid_token') setError('Ce lien de connexion est invalide ou déjà utilisé.')
-    if (errorParam === 'expired_token') setError('Ce lien a expiré (valide 15 min). Demandez un nouveau lien.')
-    if (errorParam === 'auth_failed') setError("Échec de l'authentification. Réessayez.")
-    if (infoParam === 'account_activated') setInfo('Votre compte est activé ! Demandez un lien de connexion.')
-    if (infoParam === 'already_active') setInfo('Votre compte est déjà actif. Demandez un lien de connexion.')
-  }, [user, navigate, location.search])
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRequestCode = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email.trim()) return
     setLoading(true)
     setError(null)
     try {
       await AuthService.requestLogin(email.trim())
-      setSent(true)
+      setStep('verify')
+      setInfo('Si votre email est connu, un code de connexion à 6 caractères vient d’être envoyé.')
     } catch {
       setError('Impossible de contacter le serveur. Vérifiez que le backend est démarré.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!email.trim() || code.length !== 6) return
+    setLoading(true)
+    setError(null)
+    try {
+      await AuthService.verifyLogin(email.trim(), code)
+      navigate('/dashboard', { replace: true })
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Code invalide ou expiré.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleResend = async () => {
+    if (!email.trim()) return
+    setLoading(true)
+    setError(null)
+    try {
+      await AuthService.requestLogin(email.trim())
+      setCode('')
+      setInfo('Un nouveau code a été envoyé si votre email est connu.')
+    } catch {
+      setError('Impossible de renvoyer le code pour le moment.')
     } finally {
       setLoading(false)
     }
@@ -70,8 +93,8 @@ const Login = () => {
                   <div className="app-kpi-inline-label">acces a vos donnees et alertes</div>
                 </div>
                 <div className="app-kpi-inline-item">
-                  <div className="app-kpi-inline-value">0</div>
-                  <div className="app-kpi-inline-label">mot de passe a retenir avec le magic link</div>
+                  <div className="app-kpi-inline-value">6</div>
+                  <div className="app-kpi-inline-label">caracteres a saisir pour se connecter</div>
                 </div>
               </div>
             </div>
@@ -83,7 +106,7 @@ const Login = () => {
                 <div className="mb-4">
                   <h2 className="fw-bold mb-1">Connexion securisee</h2>
                   <p className="text-medium-emphasis small mb-0">
-                    Recevez un lien de connexion temporaire par email
+                    Recevez un code de connexion temporaire par email
                   </p>
                 </div>
 
@@ -99,13 +122,49 @@ const Login = () => {
                   </CAlert>
                 )}
 
-                {sent ? (
-                  <CAlert color="success" className="text-start">
-                    <strong>Lien envoyé !</strong><br />
-                    Vérifiez votre boîte email et cliquez sur le lien de connexion. Il est valable 15 minutes.
-                  </CAlert>
+                {step === 'verify' ? (
+                  <form onSubmit={handleVerifyCode} className="text-start">
+                    <div className="mb-3">
+                      <CFormLabel htmlFor="email-readonly" className="fw-semibold">Adresse email</CFormLabel>
+                      <CFormInput
+                        id="email-readonly"
+                        className="app-login-input"
+                        value={email}
+                        readOnly
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <CFormLabel htmlFor="code" className="fw-semibold">Code de connexion</CFormLabel>
+                      <CFormInput
+                        className="app-login-input text-center"
+                        id="code"
+                        type="text"
+                        inputMode="text"
+                        autoComplete="one-time-code"
+                        value={code}
+                        onChange={(e) => setCode(normalizeCode(e.target.value))}
+                        placeholder="ABC123"
+                        maxLength={6}
+                        required
+                        autoFocus
+                        style={{ letterSpacing: '0.35em', fontWeight: 700 }}
+                      />
+                    </div>
+                    <CButton type="submit" color="primary" className="w-100 py-2 app-login-button mb-3" disabled={loading || code.length !== 6}>
+                      {loading ? <CSpinner size="sm" className="me-2" /> : null}
+                      Se connecter avec le code
+                    </CButton>
+                    <div className="d-flex justify-content-between align-items-center gap-3">
+                      <CButton color="link" className="p-0 text-decoration-none" onClick={() => { setStep('request'); setCode(''); setInfo(null); setError(null) }}>
+                        Changer d’email
+                      </CButton>
+                      <CButton color="link" className="p-0 text-decoration-none" onClick={handleResend} disabled={loading}>
+                        Renvoyer un code
+                      </CButton>
+                    </div>
+                  </form>
                 ) : (
-                  <form onSubmit={handleSubmit} className="text-start">
+                  <form onSubmit={handleRequestCode} className="text-start">
                     <div className="mb-3">
                       <CFormLabel htmlFor="email" className="fw-semibold">Adresse email</CFormLabel>
                       <CFormInput
@@ -121,14 +180,14 @@ const Login = () => {
                     </div>
                     <CButton type="submit" color="primary" className="w-100 py-2 app-login-button" disabled={loading}>
                       {loading ? <CSpinner size="sm" className="me-2" /> : null}
-                      Recevoir un lien de connexion
+                      Recevoir un code de connexion
                     </CButton>
                   </form>
                 )}
 
-                {!sent && (
+                {step === 'request' && (
                   <p className="text-medium-emphasis mt-4 mb-0" style={{ fontSize: '0.75rem' }}>
-                    Aucun mot de passe requis — connexion sécurisée par lien email
+                    Aucun mot de passe requis — connexion sécurisée par code email à usage unique
                   </p>
                 )}
               </CCardBody>

@@ -44,7 +44,7 @@ const Activate = () => {
             <CCard className="p-4 shadow-sm">
               <CCardBody className="text-center">
                 <div className="mb-4">
-                  <h2 className="fw-bold mb-1">SCI Gestion</h2>
+                  <h2 className="fw-bold mb-1">Pilotage Immo</h2>
                   <p className="text-medium-emphasis small">Activation de votre compte</p>
                 </div>
 

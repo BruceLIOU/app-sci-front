@@ -56,17 +56,35 @@ const authSlice = createSlice({
   },
 })
 
+// ─── Owner Slice (Type de bailleur) ──────────────────────────────────────────
+
+interface OwnerState {
+  profileType: 'SCI' | 'PROFESSIONAL' | 'INDIVIDUAL'
+}
+
+const ownerSlice = createSlice({
+  name: 'owner',
+  initialState: { profileType: 'INDIVIDUAL' } as OwnerState,
+  reducers: {
+    setOwnerProfileType: (state, action: PayloadAction<'SCI' | 'PROFESSIONAL' | 'INDIVIDUAL'>) => {
+      state.profileType = action.payload
+    },
+  },
+})
+
 // ─── Store ────────────────────────────────────────────────────────────────────
 
 export const store = configureStore({
   reducer: {
     ui: uiSlice.reducer,
     auth: authSlice.reducer,
+    owner: ownerSlice.reducer,
   },
 })
 
 export const { set } = uiSlice.actions
 export const { setUser, setLoading, updatePreferences, updateProfile } = authSlice.actions
+export const { setOwnerProfileType } = ownerSlice.actions
 export type RootState = ReturnType<typeof store.getState>
 export type AppDispatch = typeof store.dispatch
 export default store

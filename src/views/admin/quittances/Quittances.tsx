@@ -325,7 +325,7 @@ const Quittances = () => {
             )}
             <div ref={printRef}>
               <div className="header"><h1>Quittance de loyer</h1><h2>N° {printing.number} — {printing.period}</h2></div>
-              <div className="section"><h3>Bailleur (SCI)</h3><div className="row"><span className="label">Société</span><span className="value">SCI</span></div></div>
+              <div className="section"><h3>Bailleur</h3><div className="row"><span className="label">Entité</span><span className="value">Voir document PDF généré</span></div></div>
               <div className="section">
                 <h3>Locataire</h3>
                 {printing.Tenant && (<>
