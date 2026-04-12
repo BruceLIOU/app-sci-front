@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import PaymentDataService from '../../../services/payment.service'
 import TenantDataService from '../../../services/tenant.service'
 import PropertyDataService from '../../../services/property.service'
@@ -24,6 +24,7 @@ const Payments = () => {
   const [tenants, setTenants] = useState<any[]>([])
   const [properties, setProperties] = useState<any[]>([])
   const [filterStatus, setFilterStatus] = useState('')
+  const [filterYear, setFilterYear] = useState(new Date().getFullYear().toString())
 
   const {
     items: payments,
@@ -47,7 +48,14 @@ const Payments = () => {
   const totalPaid = payments.filter((p) => p.status === 'paid').reduce((sum, p) => sum + parseFloat(p.amount || 0), 0)
   const totalPending = payments.filter((p) => p.status !== 'paid').reduce((sum, p) => sum + parseFloat(p.amount || 0), 0)
 
-  const filteredPayments = filterStatus ? payments.filter((p) => p.status === filterStatus) : payments
+  const availableYears = useMemo(() => {
+    const years = new Set(payments.map((p) => p.due_date?.slice(0, 4)).filter(Boolean))
+    return Array.from(years as Set<string>).sort().reverse()
+  }, [payments])
+
+  const filteredPayments = payments
+    .filter((p) => !filterStatus || p.status === filterStatus)
+    .filter((p) => !filterYear || p.due_date?.startsWith(filterYear))
 
   return (
     <>
@@ -60,10 +68,11 @@ const Payments = () => {
       <EntityTableCard title="Paiements" onAdd={openCreate}>
         <ViewControlBar
           filters={[
+            { value: filterYear, onChange: setFilterYear, options: availableYears.map((y) => ({ value: y, label: y })), placeholder: 'Toutes les années', width: 140 },
             { value: filterStatus, onChange: setFilterStatus, options: Object.entries(statusLabel).map(([v, l]) => ({ value: v, label: l })), placeholder: 'Tous les statuts', width: 160 },
           ]}
-          hasActiveFilter={filterStatus !== ''}
-          onResetFilters={() => setFilterStatus('')}
+          hasActiveFilter={filterStatus !== '' || filterYear !== new Date().getFullYear().toString()}
+          onResetFilters={() => { setFilterStatus(''); setFilterYear(new Date().getFullYear().toString()) }}
           totalCount={payments.length}
           filteredCount={filteredPayments.length}
           itemLabel="paiement"

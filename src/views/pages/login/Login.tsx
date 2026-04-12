@@ -14,13 +14,18 @@ const Login = () => {
   const user = useSelector((state: RootState) => state.auth.user)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [info, setInfo] = useState<string | null>(null)
 
   useEffect(() => {
     if (user) navigate('/dashboard', { replace: true })
     const params = new URLSearchParams(location.search)
-    if (params.get('error') === 'auth_failed') {
-      setError("Échec de l'authentification Google. Réessayez.")
-    }
+    const errorParam = params.get('error')
+    const infoParam = params.get('info')
+    if (errorParam === 'auth_failed') setError("Échec de l'authentification Google. Réessayez.")
+    if (errorParam === 'not_invited') setError("Votre compte n'est pas autorisé. Contactez un administrateur.")
+    if (errorParam === 'account_not_activated') setError("Votre compte n'est pas encore activé. Vérifiez votre email d'invitation.")
+    if (infoParam === 'account_activated') setInfo('Votre compte est activé ! Connectez-vous avec Google.')
+    if (infoParam === 'already_active') setInfo('Votre compte est déjà actif. Connectez-vous.')
   }, [user, navigate, location.search])
 
   const handleGoogleLogin = async () => {
@@ -53,6 +58,12 @@ const Login = () => {
                 {error && (
                   <CAlert color="danger" dismissible onClose={() => setError(null)} className="text-start mb-3">
                     {error}
+                  </CAlert>
+                )}
+
+                {info && (
+                  <CAlert color="success" dismissible onClose={() => setInfo(null)} className="text-start mb-3">
+                    {info}
                   </CAlert>
                 )}
 

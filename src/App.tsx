@@ -14,6 +14,7 @@ const loading = (
 
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
 const Login = React.lazy(() => import('./views/pages/login/Login'))
+const Activate = React.lazy(() => import('./views/pages/activate/Activate'))
 const Page404 = React.lazy(() => import('./views/pages/page404/Page404'))
 const Page500 = React.lazy(() => import('./views/pages/page500/Page500'))
 
@@ -38,6 +39,7 @@ const AppInner: React.FC = () => {
     <Suspense fallback={loading}>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/activate" element={<Activate />} />
         <Route path="/404" element={<Page404 />} />
         <Route path="/500" element={<Page500 />} />
         <Route
