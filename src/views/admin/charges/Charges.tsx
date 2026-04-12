@@ -30,6 +30,10 @@ const Charges = () => {
   const [filterFrequency, setFilterFrequency] = useState('')
   const [syncing, setSyncing] = useState(false)
   const [syncAlert, setSyncAlert] = useState<{ type: 'success' | 'danger'; message: string } | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [bulkDeleteModal, setBulkDeleteModal] = useState(false)
+  const [bulkLoading, setBulkLoading] = useState(false)
+  const [bulkAlert, setBulkAlert] = useState<{ type: 'success' | 'danger'; message: string } | null>(null)
 
   const {
     items: charges,
@@ -37,7 +41,7 @@ const Charges = () => {
     deleteModal, setDeleteModal,
     editing, toDelete, form,
     handleChange, openCreate, openEdit, openDelete,
-    handleSubmit, handleDelete,
+    handleSubmit, handleDelete, fetchAll,
   } = useEntityCrud({
     service: ChargeDataService,
     emptyForm,
@@ -82,6 +86,41 @@ const Charges = () => {
     return s + a
   }, 0)
 
+  const isAllSelected = filtered.length > 0 && filtered.every((c) => selectedIds.has(c.id))
+
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filtered.map((c) => c.id)))
+    }
+  }
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const handleBulkDelete = async () => {
+    setBulkLoading(true)
+    try {
+      await ChargeDataService.bulkDelete([...selectedIds])
+      const count = selectedIds.size
+      setSelectedIds(new Set())
+      fetchAll()
+      setBulkAlert({ type: 'success', message: `${count} charge(s) supprimée(s).` })
+    } catch {
+      setBulkAlert({ type: 'danger', message: 'Erreur lors de la suppression.' })
+    } finally {
+      setBulkLoading(false)
+      setBulkDeleteModal(false)
+    }
+  }
+
   return (
     <>
       <CRow className="mb-4 text-center">
@@ -96,6 +135,11 @@ const Charges = () => {
           {syncAlert.message}
         </CAlert>
       )}
+      {bulkAlert && (
+        <CAlert color={bulkAlert.type} dismissible onClose={() => setBulkAlert(null)} className="mb-3">
+          {bulkAlert.message}
+        </CAlert>
+      )}
 
       <EntityTableCard title="Charges &amp; dépenses" onAdd={openCreate}>
         <div className="d-flex justify-content-end mb-2">
@@ -104,6 +148,17 @@ const Charges = () => {
             {syncing ? 'Synchronisation…' : 'Sync MATERA'}
           </CButton>
         </div>
+        {selectedIds.size > 0 && (
+          <div className="d-flex align-items-center gap-2 p-2 mb-2 bg-light border rounded">
+            <span className="fw-semibold text-body">{selectedIds.size} sélectionné(s)</span>
+            <CButton size="sm" color="danger" variant="outline" onClick={() => setBulkDeleteModal(true)} disabled={bulkLoading}>
+              Supprimer la sélection
+            </CButton>
+            <CButton size="sm" color="secondary" variant="ghost" onClick={() => setSelectedIds(new Set())} disabled={bulkLoading}>
+              Annuler
+            </CButton>
+          </div>
+        )}
         <ViewControlBar
           filters={[
             { value: filterType, onChange: setFilterType, options: Object.entries(typeLabel).map(([v, l]) => ({ value: v, label: l })), placeholder: 'Tous les types', width: 180 },
@@ -118,6 +173,9 @@ const Charges = () => {
         <CTable align="middle" hover responsive bordered>
           <CTableHead color="light">
             <CTableRow>
+              <CTableHeaderCell style={{ width: '40px' }}>
+                <input type="checkbox" className="form-check-input" checked={isAllSelected} onChange={toggleSelectAll} />
+              </CTableHeaderCell>
               <CTableHeaderCell>Type</CTableHeaderCell><CTableHeaderCell>Description</CTableHeaderCell>
               <CTableHeaderCell>Bien</CTableHeaderCell><CTableHeaderCell>Montant</CTableHeaderCell>
               <CTableHeaderCell>Fréquence</CTableHeaderCell><CTableHeaderCell>Date</CTableHeaderCell>
@@ -126,9 +184,12 @@ const Charges = () => {
           </CTableHead>
           <CTableBody>
             {filtered.length === 0 ? (
-              <TableEmptyRow colSpan={7} message="Aucune charge enregistrée" />
+              <TableEmptyRow colSpan={8} message="Aucune charge enregistrée" />
             ) : filtered.map((c) => (
               <CTableRow key={c.id}>
+                <CTableDataCell>
+                  <input type="checkbox" className="form-check-input" checked={selectedIds.has(c.id)} onChange={() => toggleSelect(c.id)} />
+                </CTableDataCell>
                 <CTableDataCell><CBadge color={typeColor[c.type] || 'secondary'}>{typeLabel[c.type] || c.type}</CBadge></CTableDataCell>
                 <CTableDataCell>{c.description || '-'}</CTableDataCell>
                 <CTableDataCell>{c.Property ? `${c.Property.type} - ${c.Property.city}` : 'Général'}</CTableDataCell>
@@ -142,7 +203,7 @@ const Charges = () => {
             ))}
             {filtered.length > 0 && (
               <CTableRow className="fw-bold">
-                <CTableDataCell colSpan={3} className="text-end">Total affiché :</CTableDataCell>
+                <CTableDataCell colSpan={4} className="text-end">Total affiché :</CTableDataCell>
                 <CTableDataCell>{total.toFixed(2)} €</CTableDataCell>
                 <CTableDataCell colSpan={3}></CTableDataCell>
               </CTableRow>
@@ -172,6 +233,12 @@ const Charges = () => {
         itemLabel={toDelete?.description || typeLabel[toDelete?.type]}
         onClose={() => setDeleteModal(false)}
         onConfirm={handleDelete}
+      />
+      <DeleteModal
+        visible={bulkDeleteModal}
+        itemLabel={`${selectedIds.size} charge(s)`}
+        onClose={() => setBulkDeleteModal(false)}
+        onConfirm={handleBulkDelete}
       />
     </>
   )

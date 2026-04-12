@@ -32,6 +32,12 @@ const Quittances = () => {
   const [quittanceDocs, setQuittanceDocs] = useState<Record<number, any>>({})
   const [emailSendingId, setEmailSendingId] = useState<number | null>(null)
   const [emailResult, setEmailResult] = useState<{ type: 'success' | 'danger'; message: string } | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [bulkDeleteModal, setBulkDeleteModal] = useState(false)
+  const [bulkLoading, setBulkLoading] = useState(false)
+  const [bulkGenerating, setBulkGenerating] = useState(false)
+  const [bulkEmailing, setBulkEmailing] = useState(false)
+  const [bulkAlert, setBulkAlert] = useState<{ type: 'success' | 'danger'; message: string } | null>(null)
 
   const emptyForm = { tenant_id: '', property_id: '', lease_id: '', payment_id: '', period: '', rent_amount: '', charges_amount: '0', total_amount: '', issue_date: new Date().toISOString().split('T')[0] }
 
@@ -114,6 +120,73 @@ const Quittances = () => {
     finally { setPdfGenerating(false) }
   }
 
+  const isAllSelected = quittances.length > 0 && quittances.every((q) => selectedIds.has(q.id))
+
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(quittances.map((q) => q.id)))
+    }
+  }
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const handleBulkDelete = async () => {
+    setBulkLoading(true)
+    try {
+      await QuittanceDataService.bulkDelete([...selectedIds])
+      const count = selectedIds.size
+      setSelectedIds(new Set())
+      fetchAll()
+      fetchDocs()
+      setBulkAlert({ type: 'success', message: `${count} quittance(s) supprimée(s).` })
+    } catch {
+      setBulkAlert({ type: 'danger', message: 'Erreur lors de la suppression.' })
+    } finally {
+      setBulkLoading(false)
+      setBulkDeleteModal(false)
+    }
+  }
+
+  const handleBulkGeneratePdf = async () => {
+    setBulkGenerating(true)
+    setBulkAlert(null)
+    try {
+      const res = await QuittanceDataService.bulkGeneratePdf([...selectedIds])
+      const { succeeded, failed } = res.data
+      setSelectedIds(new Set())
+      fetchDocs()
+      setBulkAlert({ type: succeeded > 0 ? 'success' : 'danger', message: `${succeeded} PDF généré(s)${failed > 0 ? `, ${failed} erreur(s)` : ''}.` })
+    } catch {
+      setBulkAlert({ type: 'danger', message: 'Erreur lors de la génération des PDFs.' })
+    } finally {
+      setBulkGenerating(false)
+    }
+  }
+
+  const handleBulkEmail = async () => {
+    setBulkEmailing(true)
+    setBulkAlert(null)
+    try {
+      const res = await QuittanceDataService.bulkEmail([...selectedIds])
+      const { sent, errors } = res.data
+      setSelectedIds(new Set())
+      setBulkAlert({ type: sent > 0 ? 'success' : 'danger', message: `${sent} email(s) envoyé(s)${errors > 0 ? `, ${errors} erreur(s)` : ''}.` })
+    } catch (e: any) {
+      setBulkAlert({ type: 'danger', message: e?.response?.data?.message || "Erreur lors de l'envoi des emails." })
+    } finally {
+      setBulkEmailing(false)
+    }
+  }
+
   return (
     <>
       {emailResult && (
@@ -121,16 +194,43 @@ const Quittances = () => {
           {emailResult.message}
         </CAlert>
       )}
+      {bulkAlert && (
+        <CAlert color={bulkAlert.type} dismissible onClose={() => setBulkAlert(null)} className="mb-3">
+          {bulkAlert.message}
+        </CAlert>
+      )}
       <CRow className="mb-4 text-center">
-        <StatCard value={quittances.length} label="Quittances émises" color="primary" />
+        <StatCard value={quittances.length} label={quittances.length > 1 ? 'Quittances émises' : 'Quittance émise'} color="primary" />
         <StatCard value={`${quittances.reduce((s, q) => s + parseFloat(q.total_amount || 0), 0).toFixed(2)} €`} label="Montant total" color="success" />
-        <StatCard value={new Set(quittances.map((q) => q.tenant_id)).size} label="Locataires concernés" color="info" />
+        <StatCard value={new Set(quittances.map((q) => q.tenant_id)).size} label={new Set(quittances.map((q) => q.tenant_id)).size > 1 ? 'Locataires concernés' : 'Locataire concerné'} color="info" />
       </CRow>
 
       <EntityTableCard title="Quittances de loyer" addLabel="Nouvelle quittance" onAdd={openCreate}>
+        {selectedIds.size > 0 && (
+          <div className="d-flex align-items-center gap-2 p-2 mb-2 bg-light border rounded">
+            <span className="fw-semibold text-body">{selectedIds.size} sélectionné(s)</span>
+            <CButton size="sm" color="primary" variant="outline" onClick={handleBulkGeneratePdf} disabled={bulkGenerating || bulkLoading || bulkEmailing}>
+              {bulkGenerating ? <CSpinner size="sm" className="me-1" /> : <CIcon icon={cilDescription} className="me-1" />}
+              Générer PDFs
+            </CButton>
+            <CButton size="sm" color="info" variant="outline" onClick={handleBulkEmail} disabled={bulkEmailing || bulkLoading || bulkGenerating}>
+              {bulkEmailing ? <CSpinner size="sm" className="me-1" /> : <CIcon icon={cilSend} className="me-1" />}
+              Envoyer par email
+            </CButton>
+            <CButton size="sm" color="danger" variant="outline" onClick={() => setBulkDeleteModal(true)} disabled={bulkLoading || bulkGenerating || bulkEmailing}>
+              Supprimer la sélection
+            </CButton>
+            <CButton size="sm" color="secondary" variant="ghost" onClick={() => setSelectedIds(new Set())} disabled={bulkLoading || bulkGenerating || bulkEmailing}>
+              Annuler
+            </CButton>
+          </div>
+        )}
         <CTable align="middle" hover responsive bordered>
           <CTableHead color="light">
             <CTableRow>
+              <CTableHeaderCell style={{ width: '40px' }}>
+                <input type="checkbox" className="form-check-input" checked={isAllSelected} onChange={toggleSelectAll} />
+              </CTableHeaderCell>
               <CTableHeaderCell>N°</CTableHeaderCell><CTableHeaderCell>Période</CTableHeaderCell>
               <CTableHeaderCell>Locataire</CTableHeaderCell><CTableHeaderCell>Bien</CTableHeaderCell>
               <CTableHeaderCell>Loyer HC</CTableHeaderCell><CTableHeaderCell>Charges</CTableHeaderCell>
@@ -140,9 +240,12 @@ const Quittances = () => {
           </CTableHead>
           <CTableBody>
             {quittances.length === 0 ? (
-              <TableEmptyRow colSpan={9} message="Aucune quittance émise" />
+              <TableEmptyRow colSpan={10} message="Aucune quittance émise" />
             ) : quittances.map((q) => (
               <CTableRow key={q.id}>
+                <CTableDataCell>
+                  <input type="checkbox" className="form-check-input" checked={selectedIds.has(q.id)} onChange={() => toggleSelect(q.id)} />
+                </CTableDataCell>
                 <CTableDataCell><strong>{q.number}</strong></CTableDataCell>
                 <CTableDataCell>{q.period}</CTableDataCell>
                 <CTableDataCell>{q.Tenant ? `${q.Tenant.civility || ''} ${q.Tenant.lastname}` : '-'}</CTableDataCell>
@@ -262,6 +365,12 @@ const Quittances = () => {
         itemLabel={toDelete ? `la quittance ${toDelete.number || ''}` : undefined}
         onClose={() => setDeleteModal(false)}
         onConfirm={handleDelete}
+      />
+      <DeleteModal
+        visible={bulkDeleteModal}
+        itemLabel={`${selectedIds.size} quittance(s)`}
+        onClose={() => setBulkDeleteModal(false)}
+        onConfirm={handleBulkDelete}
       />
     </>
   )

@@ -11,7 +11,7 @@ import StatCard from '../../../components/StatCard'
 import TableEmptyRow from '../../../components/TableEmptyRow'
 import useEntityCrud from '../../../hooks/useEntityCrud'
 import {
-  CCol, CRow, CTable, CTableBody, CTableDataCell,
+  CAlert, CButton, CCol, CRow, CTable, CTableBody, CTableDataCell,
   CTableHead, CTableHeaderCell, CTableRow, CBadge, CFormInput, CFormSelect,
 } from '@coreui/react'
 import { DateUtils } from 'src/utils/date'
@@ -26,6 +26,10 @@ const Payments = () => {
   const [properties, setProperties] = useState<any[]>([])
   const [filterStatus, setFilterStatus] = useState('')
   const [filterYear, setFilterYear] = useState('')
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [bulkDeleteModal, setBulkDeleteModal] = useState(false)
+  const [bulkLoading, setBulkLoading] = useState(false)
+  const [bulkAlert, setBulkAlert] = useState<{ type: 'success' | 'danger'; message: string } | null>(null)
 
   const {
     items: payments,
@@ -34,7 +38,7 @@ const Payments = () => {
     editing, toDelete,
     form: formData,
     handleChange, openCreate, openEdit, openDelete,
-    handleSubmit, handleDelete,
+    handleSubmit, handleDelete, fetchAll,
   } = useEntityCrud({
     service: PaymentDataService,
     emptyForm,
@@ -58,6 +62,41 @@ const Payments = () => {
     .filter((p) => !filterStatus || p.status === filterStatus)
     .filter((p) => !filterYear || p.due_date?.startsWith(filterYear))
 
+  const isAllSelected = filteredPayments.length > 0 && filteredPayments.every((p) => selectedIds.has(p.id))
+
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filteredPayments.map((p) => p.id)))
+    }
+  }
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const handleBulkDelete = async () => {
+    setBulkLoading(true)
+    try {
+      await PaymentDataService.bulkDelete([...selectedIds])
+      const count = selectedIds.size
+      setSelectedIds(new Set())
+      fetchAll()
+      setBulkAlert({ type: 'success', message: `${count} paiement(s) supprimé(s).` })
+    } catch {
+      setBulkAlert({ type: 'danger', message: 'Erreur lors de la suppression.' })
+    } finally {
+      setBulkLoading(false)
+      setBulkDeleteModal(false)
+    }
+  }
+
   return (
     <>
       <CRow className="mb-4 text-center">
@@ -65,8 +104,24 @@ const Payments = () => {
         <StatCard value={`${totalPending.toFixed(2)} €`} label="En attente / En retard" color="warning" />
         <StatCard value={payments.length} label="Total des paiements" color="info" />
       </CRow>
+      {bulkAlert && (
+        <CAlert color={bulkAlert.type} dismissible onClose={() => setBulkAlert(null)} className="mb-3">
+          {bulkAlert.message}
+        </CAlert>
+      )}
 
       <EntityTableCard title="Paiements" onAdd={openCreate}>
+        {selectedIds.size > 0 && (
+          <div className="d-flex align-items-center gap-2 p-2 mb-2 bg-light border rounded">
+            <span className="fw-semibold text-body">{selectedIds.size} sélectionné(s)</span>
+            <CButton size="sm" color="danger" variant="outline" onClick={() => setBulkDeleteModal(true)} disabled={bulkLoading}>
+              Supprimer la sélection
+            </CButton>
+            <CButton size="sm" color="secondary" variant="ghost" onClick={() => setSelectedIds(new Set())} disabled={bulkLoading}>
+              Annuler
+            </CButton>
+          </div>
+        )}
         <ViewControlBar
           filters={[
             { value: filterYear, onChange: setFilterYear, options: availableYears.map((y) => ({ value: y, label: y })), placeholder: 'Toutes les années', width: 140 },
@@ -81,6 +136,9 @@ const Payments = () => {
         <CTable align="middle" hover responsive bordered>
           <CTableHead color="light">
             <CTableRow>
+              <CTableHeaderCell style={{ width: '40px' }}>
+                <input type="checkbox" className="form-check-input" checked={isAllSelected} onChange={toggleSelectAll} />
+              </CTableHeaderCell>
               <CTableHeaderCell>Mois</CTableHeaderCell><CTableHeaderCell>Locataire</CTableHeaderCell>
               <CTableHeaderCell>Bien</CTableHeaderCell><CTableHeaderCell>Montant</CTableHeaderCell>
               <CTableHeaderCell>Échéance</CTableHeaderCell><CTableHeaderCell>Statut</CTableHeaderCell>
@@ -89,9 +147,12 @@ const Payments = () => {
           </CTableHead>
           <CTableBody>
             {filteredPayments.length === 0 ? (
-              <TableEmptyRow colSpan={7} message="Aucun paiement enregistré" />
+              <TableEmptyRow colSpan={8} message="Aucun paiement enregistré" />
             ) : filteredPayments.map((payment) => (
               <CTableRow key={payment.id}>
+                <CTableDataCell>
+                  <input type="checkbox" className="form-check-input" checked={selectedIds.has(payment.id)} onChange={() => toggleSelect(payment.id)} />
+                </CTableDataCell>
                 <CTableDataCell>{DateUtils.formatMonthYear(payment.month) || '-'}</CTableDataCell>
                 <CTableDataCell>{payment.Tenant ? `${payment.Tenant.civility || ''} ${payment.Tenant.firstname} ${payment.Tenant.lastname}` : '-'}</CTableDataCell>
                 <CTableDataCell>{payment.Property ? `${payment.Property.type} - ${payment.Property.city}` : '-'}</CTableDataCell>
@@ -129,6 +190,12 @@ const Payments = () => {
         itemLabel={toDelete?.month}
         onClose={() => setDeleteModal(false)}
         onConfirm={handleDelete}
+      />
+      <DeleteModal
+        visible={bulkDeleteModal}
+        itemLabel={`${selectedIds.size} paiement(s)`}
+        onClose={() => setBulkDeleteModal(false)}
+        onConfirm={handleBulkDelete}
       />
     </>
   )

@@ -7,6 +7,11 @@ class ChargeDataService {
   update(id: number, data: FormData) { return http.put(`/charges/${id}`, data) }
   delete(id: number) { return http.delete(`/charges/${id}`) }
   syncMatera() { return http.post('/charges/sync-matera') }
+  bulkDelete(ids: number[]) {
+    const fd = new FormData()
+    fd.append('ids', JSON.stringify(ids))
+    return http.post('/charges/bulk-delete', fd)
+  }
 }
 
 export default new ChargeDataService()
