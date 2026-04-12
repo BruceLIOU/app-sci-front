@@ -17,6 +17,24 @@ export interface SciConfigData {
   manager_email?: string
   manager_phone?: string
   google_calendar_id?: string | null
+  // SMTP
+  smtp_host?: string
+  smtp_port?: number | string
+  smtp_secure?: boolean
+  smtp_user?: string
+  smtp_pass?: string
+  smtp_from?: string
+  // IMAP
+  imap_host?: string
+  imap_port?: number | string
+  imap_tls?: boolean
+  imap_user?: string
+  imap_pass?: string
+  matera_sender_email?: string
+  matera_property_id?: number | string | null
+  // Cron
+  charge_cron_schedule?: string
+  charge_cron_enabled?: boolean
 }
 
 class SciConfigDataService {

@@ -9,6 +9,7 @@ import {
   CFormInput,
   CFormLabel,
   CFormSelect,
+  CFormCheck,
   CButton,
   CAlert,
   CSpinner,
@@ -18,9 +19,11 @@ import {
   CNavLink,
   CTabContent,
   CTabPane,
+  CInputGroup,
+  CInputGroupText,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilCheckCircle, cilXCircle } from '@coreui/icons'
+import { cilCheckCircle, cilXCircle, cilLockLocked, cilLockUnlocked } from '@coreui/icons'
 import SciConfigDataService, { SciConfigData } from '../../../services/sci_config.service'
 import AssociateDataService from '../../../services/associate.service'
 import VisitDataService from '../../../services/visit.service'
@@ -56,7 +59,9 @@ const Settings: React.FC = () => {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [googleCalendarsError, setGoogleCalendarsError] = useState(false)
   const [googleAlert, setGoogleAlert] = useState<{ type: 'success' | 'danger' | 'info'; message: string } | null>(null)
-  const [activeTab, setActiveTab] = useState<'sci' | 'google'>('sci')
+  const [activeTab, setActiveTab] = useState<'sci' | 'google' | 'smtp' | 'imap' | 'cron'>('sci')
+  const [showSmtpPass, setShowSmtpPass] = useState(false)
+  const [showImapPass, setShowImapPass] = useState(false)
 
   const fetchGoogleCalendars = async () => {
     setGoogleCalendarsError(false)
@@ -235,16 +240,43 @@ const Settings: React.FC = () => {
                   )}
                 </CNavLink>
               </CNavItem>
+              <CNavItem>
+                <CNavLink
+                  active={activeTab === 'smtp'}
+                  onClick={() => setActiveTab('smtp')}
+                  style={{ cursor: 'pointer' }}
+                >
+                  Envoi de mail
+                </CNavLink>
+              </CNavItem>
+              <CNavItem>
+                <CNavLink
+                  active={activeTab === 'imap'}
+                  onClick={() => setActiveTab('imap')}
+                  style={{ cursor: 'pointer' }}
+                >
+                  Récup. mail Matera
+                </CNavLink>
+              </CNavItem>
+              <CNavItem>
+                <CNavLink
+                  active={activeTab === 'cron'}
+                  onClick={() => setActiveTab('cron')}
+                  style={{ cursor: 'pointer' }}
+                >
+                  Cron
+                </CNavLink>
+              </CNavItem>
             </CNav>
 
             <CTabContent className="p-3">
               <CTabPane visible={activeTab === 'sci'}>
-            {saved && (
+            {saved && activeTab === 'sci' && (
               <CAlert color="success" dismissible onClose={() => setSaved(false)}>
                 Paramètres enregistrés avec succès.
               </CAlert>
             )}
-            {error && <CAlert color="danger">{error}</CAlert>}
+            {error && activeTab === 'sci' && <CAlert color="danger">{error}</CAlert>}
 
             <h6 className="fw-semibold text-uppercase text-muted mb-3 mt-2">Informations de la SCI</h6>
 
@@ -519,6 +551,266 @@ const Settings: React.FC = () => {
                 </CButton>
               </div>
             )}
+              </CTabPane>
+
+              {/* ── SMTP ── */}
+              <CTabPane visible={activeTab === 'smtp'}>
+                {saved && activeTab === 'smtp' && (
+                  <CAlert color="success" dismissible onClose={() => setSaved(false)}>
+                    Paramètres enregistrés avec succès.
+                  </CAlert>
+                )}
+                {error && activeTab === 'smtp' && <CAlert color="danger">{error}</CAlert>}
+
+                <h6 className="fw-semibold text-uppercase text-muted mb-3 mt-2">Configuration SMTP (envoi de mails)</h6>
+
+                <CRow className="mb-3">
+                  <CCol md={8}>
+                    <CFormLabel>Serveur SMTP</CFormLabel>
+                    <CFormInput
+                      name="smtp_host"
+                      value={config.smtp_host || ''}
+                      onChange={handleChange}
+                      placeholder="smtp.gmail.com"
+                    />
+                  </CCol>
+                  <CCol md={4}>
+                    <CFormLabel>Port</CFormLabel>
+                    <CFormInput
+                      type="number"
+                      name="smtp_port"
+                      value={config.smtp_port ?? ''}
+                      onChange={handleChange}
+                      placeholder="587"
+                    />
+                  </CCol>
+                </CRow>
+
+                <CRow className="mb-3">
+                  <CCol md={12}>
+                    <CFormCheck
+                      id="smtp_secure"
+                      name="smtp_secure"
+                      label="Connexion sécurisée (SSL/TLS — port 465)"
+                      checked={!!config.smtp_secure}
+                      onChange={(e) => {
+                        setSaved(false)
+                        setConfig((prev) => ({ ...prev, smtp_secure: e.target.checked }))
+                      }}
+                    />
+                  </CCol>
+                </CRow>
+
+                <CRow className="mb-3">
+                  <CCol md={6}>
+                    <CFormLabel>Utilisateur (login)</CFormLabel>
+                    <CFormInput
+                      name="smtp_user"
+                      value={config.smtp_user || ''}
+                      onChange={handleChange}
+                      placeholder="user@example.com"
+                      autoComplete="off"
+                    />
+                  </CCol>
+                  <CCol md={6}>
+                    <CFormLabel>Mot de passe</CFormLabel>
+                    <CInputGroup>
+                      <CFormInput
+                        type={showSmtpPass ? 'text' : 'password'}
+                        name="smtp_pass"
+                        value={config.smtp_pass || ''}
+                        onChange={handleChange}
+                        autoComplete="new-password"
+                      />
+                      <CInputGroupText
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => setShowSmtpPass((v) => !v)}
+                      >
+                        <CIcon icon={showSmtpPass ? cilLockUnlocked : cilLockLocked} />
+                      </CInputGroupText>
+                    </CInputGroup>
+                  </CCol>
+                </CRow>
+
+                <CRow className="mb-4">
+                  <CCol md={12}>
+                    <CFormLabel>Adresse expéditeur (From)</CFormLabel>
+                    <CFormInput
+                      name="smtp_from"
+                      value={config.smtp_from || ''}
+                      onChange={handleChange}
+                      placeholder="no-reply@example.com"
+                    />
+                    <div className="form-text">Si vide, l&apos;adresse utilisateur sera utilisée.</div>
+                  </CCol>
+                </CRow>
+
+                <div className="d-flex justify-content-end">
+                  <CButton color="primary" onClick={handleSave} disabled={saving}>
+                    {saving ? <><CSpinner size="sm" className="me-2" />Enregistrement…</> : 'Enregistrer'}
+                  </CButton>
+                </div>
+              </CTabPane>
+
+              {/* ── IMAP / Matera ── */}
+              <CTabPane visible={activeTab === 'imap'}>
+                {saved && activeTab === 'imap' && (
+                  <CAlert color="success" dismissible onClose={() => setSaved(false)}>
+                    Paramètres enregistrés avec succès.
+                  </CAlert>
+                )}
+                {error && activeTab === 'imap' && <CAlert color="danger">{error}</CAlert>}
+
+                <h6 className="fw-semibold text-uppercase text-muted mb-3 mt-2">Configuration IMAP (récupération emails Matera)</h6>
+
+                <CRow className="mb-3">
+                  <CCol md={8}>
+                    <CFormLabel>Serveur IMAP</CFormLabel>
+                    <CFormInput
+                      name="imap_host"
+                      value={config.imap_host || ''}
+                      onChange={handleChange}
+                      placeholder="imap.free.fr"
+                    />
+                  </CCol>
+                  <CCol md={4}>
+                    <CFormLabel>Port</CFormLabel>
+                    <CFormInput
+                      type="number"
+                      name="imap_port"
+                      value={config.imap_port ?? ''}
+                      onChange={handleChange}
+                      placeholder="993"
+                    />
+                  </CCol>
+                </CRow>
+
+                <CRow className="mb-3">
+                  <CCol md={12}>
+                    <CFormCheck
+                      id="imap_tls"
+                      name="imap_tls"
+                      label="Utiliser TLS"
+                      checked={config.imap_tls !== false}
+                      onChange={(e) => {
+                        setSaved(false)
+                        setConfig((prev) => ({ ...prev, imap_tls: e.target.checked }))
+                      }}
+                    />
+                  </CCol>
+                </CRow>
+
+                <CRow className="mb-3">
+                  <CCol md={6}>
+                    <CFormLabel>Utilisateur (login)</CFormLabel>
+                    <CFormInput
+                      name="imap_user"
+                      value={config.imap_user || ''}
+                      onChange={handleChange}
+                      placeholder="user@free.fr"
+                      autoComplete="off"
+                    />
+                  </CCol>
+                  <CCol md={6}>
+                    <CFormLabel>Mot de passe</CFormLabel>
+                    <CInputGroup>
+                      <CFormInput
+                        type={showImapPass ? 'text' : 'password'}
+                        name="imap_pass"
+                        value={config.imap_pass || ''}
+                        onChange={handleChange}
+                        autoComplete="new-password"
+                      />
+                      <CInputGroupText
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => setShowImapPass((v) => !v)}
+                      >
+                        <CIcon icon={showImapPass ? cilLockUnlocked : cilLockLocked} />
+                      </CInputGroupText>
+                    </CInputGroup>
+                  </CCol>
+                </CRow>
+
+                <h6 className="fw-semibold text-uppercase text-muted mb-3 mt-4">Paramètres Matera</h6>
+
+                <CRow className="mb-3">
+                  <CCol md={8}>
+                    <CFormLabel>Email expéditeur Matera</CFormLabel>
+                    <CFormInput
+                      name="matera_sender_email"
+                      value={config.matera_sender_email || ''}
+                      onChange={handleChange}
+                      placeholder="notif@matera.eu"
+                    />
+                    <div className="form-text">Les emails reçus de cet expéditeur seront traités.</div>
+                  </CCol>
+                  <CCol md={4}>
+                    <CFormLabel>ID du bien associé</CFormLabel>
+                    <CFormInput
+                      type="number"
+                      name="matera_property_id"
+                      value={config.matera_property_id ?? ''}
+                      onChange={handleChange}
+                      placeholder="1"
+                    />
+                    <div className="form-text">Les charges seront liées à ce bien.</div>
+                  </CCol>
+                </CRow>
+
+                <div className="d-flex justify-content-end">
+                  <CButton color="primary" onClick={handleSave} disabled={saving}>
+                    {saving ? <><CSpinner size="sm" className="me-2" />Enregistrement…</> : 'Enregistrer'}
+                  </CButton>
+                </div>
+              </CTabPane>
+
+              {/* ── Cron ── */}
+              <CTabPane visible={activeTab === 'cron'}>
+                {saved && activeTab === 'cron' && (
+                  <CAlert color="success" dismissible onClose={() => setSaved(false)}>
+                    Paramètres enregistrés. Le cron sera rechargé immédiatement.
+                  </CAlert>
+                )}
+                {error && activeTab === 'cron' && <CAlert color="danger">{error}</CAlert>}
+
+                <h6 className="fw-semibold text-uppercase text-muted mb-3 mt-2">Planification automatique (Cron)</h6>
+
+                <CRow className="mb-3">
+                  <CCol md={12}>
+                    <CFormCheck
+                      id="charge_cron_enabled"
+                      name="charge_cron_enabled"
+                      label="Activer la récupération automatique des emails Matera"
+                      checked={config.charge_cron_enabled !== false}
+                      onChange={(e) => {
+                        setSaved(false)
+                        setConfig((prev) => ({ ...prev, charge_cron_enabled: e.target.checked }))
+                      }}
+                    />
+                  </CCol>
+                </CRow>
+
+                <CRow className="mb-3">
+                  <CCol md={8}>
+                    <CFormLabel>Schedule (syntaxe cron)</CFormLabel>
+                    <CFormInput
+                      name="charge_cron_schedule"
+                      value={config.charge_cron_schedule || '0 8 * * *'}
+                      onChange={handleChange}
+                      placeholder="0 8 * * *"
+                      disabled={config.charge_cron_enabled === false}
+                    />
+                    <div className="form-text">
+                      Exemples : <code>0 8 * * *</code> (chaque jour à 8h00) — <code>0 */6 * * *</code> (toutes les 6h) — <code>*/30 * * * *</code> (toutes les 30 min)
+                    </div>
+                  </CCol>
+                </CRow>
+
+                <div className="d-flex justify-content-end">
+                  <CButton color="primary" onClick={handleSave} disabled={saving}>
+                    {saving ? <><CSpinner size="sm" className="me-2" />Enregistrement…</> : 'Enregistrer'}
+                  </CButton>
+                </div>
               </CTabPane>
             </CTabContent>
           </CCardBody>
