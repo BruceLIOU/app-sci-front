@@ -1,41 +1,48 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useDispatch, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 import {
-  CButton, CCard, CCardBody, CCol, CContainer, CRow, CSpinner, CAlert,
+  CButton, CCard, CCardBody, CCol, CContainer, CRow, CSpinner, CAlert, CFormInput, CFormLabel,
 } from '@coreui/react'
 import { RootState } from '../../../store'
 import AuthService from '../../../services/auth.service'
 
 const Login = () => {
-  const dispatch = useDispatch()
   const navigate = useNavigate()
   const location = useLocation()
   const user = useSelector((state: RootState) => state.auth.user)
+
+  const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
+  const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
 
   useEffect(() => {
     if (user) navigate('/dashboard', { replace: true })
+
     const params = new URLSearchParams(location.search)
     const errorParam = params.get('error')
     const infoParam = params.get('info')
-    if (errorParam === 'auth_failed') setError("Échec de l'authentification Google. Réessayez.")
-    if (errorParam === 'not_invited') setError("Votre compte n'est pas autorisé. Contactez un administrateur.")
-    if (errorParam === 'account_not_activated') setError("Votre compte n'est pas encore activé. Vérifiez votre email d'invitation.")
-    if (infoParam === 'account_activated') setInfo('Votre compte est activé ! Connectez-vous avec Google.')
-    if (infoParam === 'already_active') setInfo('Votre compte est déjà actif. Connectez-vous.')
+
+    if (errorParam === 'invalid_token') setError('Ce lien de connexion est invalide ou déjà utilisé.')
+    if (errorParam === 'expired_token') setError('Ce lien a expiré (valide 15 min). Demandez un nouveau lien.')
+    if (errorParam === 'auth_failed') setError("Échec de l'authentification. Réessayez.")
+    if (infoParam === 'account_activated') setInfo('Votre compte est activé ! Demandez un lien de connexion.')
+    if (infoParam === 'already_active') setInfo('Votre compte est déjà actif. Demandez un lien de connexion.')
   }, [user, navigate, location.search])
 
-  const handleGoogleLogin = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!email.trim()) return
     setLoading(true)
     setError(null)
     try {
-      const { data } = await AuthService.getGoogleUrl()
-      window.location.href = data.url
+      await AuthService.requestLogin(email.trim())
+      setSent(true)
     } catch {
-      setError("Impossible de contacter le serveur. Vérifiez que le backend est démarré.")
+      setError('Impossible de contacter le serveur. Vérifiez que le backend est démarré.')
+    } finally {
       setLoading(false)
     }
   }
@@ -47,7 +54,6 @@ const Login = () => {
           <CCol md={5} lg={4}>
             <CCard className="p-4 shadow-sm">
               <CCardBody className="text-center">
-                {/* Logo / titre */}
                 <div className="mb-4">
                   <h2 className="fw-bold mb-1">SCI Gestion</h2>
                   <p className="text-medium-emphasis small">
@@ -67,25 +73,37 @@ const Login = () => {
                   </CAlert>
                 )}
 
-                <CButton
-                  color="light"
-                  className="w-100 d-flex align-items-center justify-content-center gap-2 border py-2"
-                  onClick={handleGoogleLogin}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <CSpinner size="sm" />
-                  ) : (
-                    <svg width="20" height="20" viewBox="0 0 488 512">
-                      <path fill="#4285F4" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"/>
-                    </svg>
-                  )}
-                  <span>Se connecter avec Google</span>
-                </CButton>
+                {sent ? (
+                  <CAlert color="success" className="text-start">
+                    <strong>Lien envoyé !</strong><br />
+                    Vérifiez votre boîte email et cliquez sur le lien de connexion. Il est valable 15 minutes.
+                  </CAlert>
+                ) : (
+                  <form onSubmit={handleSubmit} className="text-start">
+                    <div className="mb-3">
+                      <CFormLabel htmlFor="email">Adresse email</CFormLabel>
+                      <CFormInput
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="votre@email.com"
+                        required
+                        autoFocus
+                      />
+                    </div>
+                    <CButton type="submit" color="primary" className="w-100 py-2" disabled={loading}>
+                      {loading ? <CSpinner size="sm" className="me-2" /> : null}
+                      Recevoir un lien de connexion
+                    </CButton>
+                  </form>
+                )}
 
-                <p className="text-medium-emphasis mt-4 mb-0" style={{ fontSize: '0.75rem' }}>
-                  Aucun mot de passe requis — connexion sécurisée via Google OAuth 2.0
-                </p>
+                {!sent && (
+                  <p className="text-medium-emphasis mt-4 mb-0" style={{ fontSize: '0.75rem' }}>
+                    Aucun mot de passe requis — connexion sécurisée par lien email
+                  </p>
+                )}
               </CCardBody>
             </CCard>
           </CCol>

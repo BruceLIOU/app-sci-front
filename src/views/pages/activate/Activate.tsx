@@ -4,7 +4,6 @@ import {
   CButton, CCard, CCardBody, CCol, CContainer, CRow, CSpinner, CAlert,
 } from '@coreui/react'
 import UserDataService from '../../../services/user.service'
-import AuthService from '../../../services/auth.service'
 
 type Status = 'loading' | 'success' | 'error'
 
@@ -14,7 +13,6 @@ const Activate = () => {
   const [status, setStatus] = useState<Status>('loading')
   const [message, setMessage] = useState('')
   const [email, setEmail] = useState('')
-  const [loginLoading, setLoginLoading] = useState(false)
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
@@ -37,16 +35,6 @@ const Activate = () => {
         setMessage(err.response?.data?.message || "Une erreur s'est produite.")
       })
   }, [location.search])
-
-  const handleGoogleLogin = async () => {
-    setLoginLoading(true)
-    try {
-      const { data } = await AuthService.getGoogleUrl()
-      window.location.href = data.url
-    } catch {
-      setLoginLoading(false)
-    }
-  }
 
   return (
     <div className="bg-light min-vh-100 d-flex flex-row align-items-center">
@@ -74,22 +62,10 @@ const Activate = () => {
                       {email && <div className="mt-1 small">Email : <strong>{email}</strong></div>}
                     </CAlert>
                     <p className="text-muted small mb-4">
-                      Connectez-vous maintenant avec le compte Google associé à cet email.
+                      Connectez-vous en demandant un lien de connexion sur la page de login.
                     </p>
-                    <CButton
-                      color="light"
-                      className="w-100 d-flex align-items-center justify-content-center gap-2 border py-2"
-                      onClick={handleGoogleLogin}
-                      disabled={loginLoading}
-                    >
-                      {loginLoading ? (
-                        <CSpinner size="sm" />
-                      ) : (
-                        <svg width="20" height="20" viewBox="0 0 488 512">
-                          <path fill="#4285F4" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"/>
-                        </svg>
-                      )}
-                      <span>Se connecter avec Google</span>
+                    <CButton color="primary" className="w-100" onClick={() => navigate('/login')}>
+                      Aller à la page de connexion
                     </CButton>
                   </>
                 )}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import {
   CRow, CCol, CCard, CCardBody, CCardHeader,
@@ -14,7 +14,10 @@ const Profile: React.FC = () => {
 
   const [name, setName] = useState(user?.name || '')
   const [saving, setSaving] = useState(false)
+  const [avatarUploading, setAvatarUploading] = useState(false)
   const [alert, setAlert] = useState<{ type: 'success' | 'danger'; message: string } | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleProfileSave = async () => {
     setSaving(true)
@@ -32,13 +35,38 @@ const Profile: React.FC = () => {
     }
   }
 
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setAvatarPreview(URL.createObjectURL(file))
+  }
+
+  const handleAvatarUpload = async () => {
+    const file = fileInputRef.current?.files?.[0]
+    if (!file) return
+    setAvatarUploading(true)
+    setAlert(null)
+    try {
+      const fd = new FormData()
+      fd.append('avatar', file)
+      const { data } = await AuthService.uploadAvatar(fd)
+      dispatch(updateProfile({ avatar: data.avatar }))
+      setAvatarPreview(null)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      setAlert({ type: 'success', message: 'Avatar mis à jour.' })
+    } catch {
+      setAlert({ type: 'danger', message: "Erreur lors de l'upload de l'avatar." })
+    } finally {
+      setAvatarUploading(false)
+    }
+  }
+
   const handleDarkMode = async (checked: boolean) => {
     try {
       const fd = new FormData()
       fd.append('darkMode', String(checked))
       const { data } = await AuthService.updatePreferences(fd)
       dispatch(updatePreferences(data.preferences))
-      // Appliquer le thème sur le document
       document.documentElement.setAttribute('data-coreui-theme', checked ? 'dark' : 'light')
     } catch { /* ignore */ }
   }
@@ -51,6 +79,8 @@ const Profile: React.FC = () => {
     .join('')
     .toUpperCase()
     .slice(0, 2)
+
+  const currentAvatar = avatarPreview || user.avatar
 
   return (
     <>
@@ -68,9 +98,10 @@ const Profile: React.FC = () => {
               <strong>Mon profil</strong>
             </CCardHeader>
             <CCardBody>
+              {/* Avatar */}
               <div className="d-flex align-items-center gap-3 mb-4">
-                {user.avatar ? (
-                  <CAvatar src={user.avatar} size="xl" />
+                {currentAvatar ? (
+                  <CAvatar src={currentAvatar} size="xl" />
                 ) : (
                   <CAvatar color="primary" size="xl">{initials}</CAvatar>
                 )}
@@ -80,6 +111,29 @@ const Profile: React.FC = () => {
                   <span className={`badge bg-${user.role === 'admin' ? 'primary' : 'secondary'} mt-1`}>
                     {user.role === 'admin' ? 'Administrateur' : 'Lecteur'}
                   </span>
+                </div>
+              </div>
+
+              {/* Upload avatar */}
+              <div className="mb-4 p-3 border rounded">
+                <CFormLabel className="fw-semibold mb-2">Changer l&apos;avatar</CFormLabel>
+                <div className="d-flex align-items-center gap-2">
+                  <CFormInput
+                    type="file"
+                    accept="image/*"
+                    ref={fileInputRef}
+                    onChange={handleAvatarChange}
+                    size="sm"
+                  />
+                  <CButton
+                    color="secondary"
+                    size="sm"
+                    onClick={handleAvatarUpload}
+                    disabled={!avatarPreview || avatarUploading}
+                  >
+                    {avatarUploading ? <CSpinner size="sm" className="me-1" /> : null}
+                    Enregistrer
+                  </CButton>
                 </div>
               </div>
 
@@ -93,7 +147,7 @@ const Profile: React.FC = () => {
                   />
                 </div>
                 <div className="mb-3">
-                  <CFormLabel>Email (Google)</CFormLabel>
+                  <CFormLabel>Email</CFormLabel>
                   <CFormInput value={user.email} disabled />
                 </div>
               </CForm>
