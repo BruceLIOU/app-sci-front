@@ -32,7 +32,7 @@ const Dashboard = () => {
       PaymentDataService.getAll(),
     ]).then(([p, t, l, pay]) => {
       setProperties(p.data)
-      setTenants(t.data)
+      setTenants(t.data.filter((tenant: any) => tenant.is_active !== false))
       setLeases(l.data)
       setPayments(pay.data)
     }).catch(console.error).finally(() => setLoading(false))
@@ -89,7 +89,7 @@ const Dashboard = () => {
             <CCardBody className="d-flex justify-content-between align-items-center">
               <div>
                 <div className="fs-2 fw-bold">{tenants.length}</div>
-                <div className="small">Locataire{tenants.length > 1 ? 's' : ''}</div>
+                <div className="small">Locataire{tenants.length > 1 ? 's' : ''} Actif{tenants.length > 1 ? 's' : ''}</div>
               </div>
               <CIcon icon={cilContact} size="3xl" className="opacity-50" />
             </CCardBody>
@@ -184,7 +184,7 @@ const Dashboard = () => {
         {/* Paiements non réglés */}
         <CCol md={6}>
           <CCard className="mb-4">
-            <CCardHeader className="d-flex justify-content-between" style={{ cursor: 'pointer' }} onClick={() => navigate('/admin/payments')}>
+            <CCardHeader className="d-flex justify-content-between align-items-center" style={{ cursor: 'pointer' }} onClick={() => navigate('/admin/payments')}>
               <strong>Paiements en attente / retard</strong>
               <CBadge color="danger">{pendingPayments.length}</CBadge>
             </CCardHeader>
@@ -218,7 +218,7 @@ const Dashboard = () => {
         {/* Liste des baux actifs */}
         <CCol md={6}>
           <CCard className="mb-4">
-            <CCardHeader className="d-flex justify-content-between" style={{ cursor: 'pointer' }} onClick={() => navigate('/admin/leases')}>
+            <CCardHeader className="d-flex justify-content-between align-items-center" style={{ cursor: 'pointer' }} onClick={() => navigate('/admin/leases')}>
               <strong>Baux actifs</strong>
               <CBadge color="success">{activeLeases.length}</CBadge>
             </CCardHeader>

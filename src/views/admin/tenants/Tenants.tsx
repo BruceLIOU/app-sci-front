@@ -4,10 +4,10 @@ import Modal from '../modals/Modals'
 import ViewControlBar from '../../../components/ViewControlBar'
 import type { ViewMode } from '../../../components/ViewControlBar'
 import CIcon from '@coreui/icons-react'
-import { cilContact, cilPen, cilTrash, cilUser, cilUserFemale, cilPlus } from '@coreui/icons'
+import { cilContact, cilPen, cilTrash, cilUser, cilUserFemale, cilPlus, cilToggleOn, cilToggleOff } from '@coreui/icons'
 import {
   CRow, CCol, CCard, CCardBody, CCardTitle, CCardText, CCardFooter,
-  CButton, CTooltip, CContainer,
+  CButton, CTooltip, CContainer, CBadge,
 } from '@coreui/react'
 import { DateUtils } from 'src/utils/date'
 import useIsAdmin from '../../../hooks/useIsAdmin'
@@ -20,25 +20,35 @@ const Tenants = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('vignette')
   const [filterCivility, setFilterCivility] = useState('')
   const [filterCity, setFilterCity] = useState('')
+  const [filterActive, setFilterActive] = useState<'all' | 'active' | 'inactive'>('all')
 
   const civilityOptions = [...new Set(data.map((d) => d.civility).filter(Boolean))]
   const cityOptions = [...new Set(data.map((d) => d.Property?.city).filter(Boolean))]
 
-  const hasFilter = filterCivility !== '' || filterCity !== ''
+  const hasFilter = filterCivility !== '' || filterCity !== '' || filterActive !== 'all'
 
   const filteredData = data.filter((item) => {
     if (filterCivility && item.civility !== filterCivility) return false
     if (filterCity && item.Property?.city !== filterCity) return false
+    if (filterActive === 'active' && !item.is_active) return false
+    if (filterActive === 'inactive' && item.is_active) return false
     return true
   })
 
-  const resetFilters = () => { setFilterCivility(''); setFilterCity('') }
+  const resetFilters = () => { setFilterCivility(''); setFilterCity(''); setFilterActive('all') }
   const isAdmin = useIsAdmin()
 
   const handleViewTenant = (id: number) => { setTenantId(id); setModalType('view'); setModalVisible(true) }
   const handleEditTenant = (id: number) => { setTenantId(id); setModalType('edit'); setModalVisible(true) }
   const handleDeleteTenant = (id: number) => { setTenantId(id); setModalType('delete'); setModalVisible(true) }
   const handleCreateTenant = () => { setModalType('create'); setModalVisible(true) }
+  const handleToggleActive = async (id: number) => {
+    try {
+      await TenantDataService.toggleActive(id)
+      const response = await TenantDataService.getAll()
+      setData(response.data)
+    } catch (error: any) { console.error(error.message) }
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -66,6 +76,16 @@ const Tenants = () => {
           onViewModeChange={setViewMode}
           supportedModes={['vignette', 'list']}
           filters={[
+            {
+              value: filterActive,
+              onChange: (v: string) => setFilterActive(v as 'all' | 'active' | 'inactive'),
+              options: [
+                { value: 'active', label: 'Actifs' },
+                { value: 'inactive', label: 'Inactifs' },
+              ],
+              placeholder: 'Tous',
+              width: 120,
+            },
             {
               value: filterCivility,
               onChange: setFilterCivility,
@@ -104,7 +124,10 @@ const Tenants = () => {
                     )}
                   </div>
                   <CCardBody>
-                    <CCardTitle className="text-center">{`${item.civility || ''} ${item.firstname} ${item.lastname}`}</CCardTitle>
+                    <CCardTitle className="text-center">
+                      {`${item.civility || ''} ${item.firstname} ${item.lastname}`}
+                      {!item.is_active && <CBadge color="secondary" className="ms-2">Inactif</CBadge>}
+                    </CCardTitle>
                     <CCardText>
                       {item.Property ? `Locataire de : ${item.Property.type} à ${item.Property.city}` : 'Aucun bien associé'}<br />
                       {item.email && <><a href={`mailto:${item.email}`} className="text-decoration-none">{item.email}</a><br /></>}
@@ -112,6 +135,7 @@ const Tenants = () => {
                     </CCardText>
                     <div className="d-grid gap-2 d-md-flex justify-content-md-end">
                       <CTooltip content="Voir"><CButton color="light" onClick={() => handleViewTenant(item.id)}><CIcon icon={cilContact} /></CButton></CTooltip>
+                      {isAdmin && <CTooltip content={item.is_active ? 'Désactiver' : 'Activer'}><CButton color="light" onClick={() => handleToggleActive(item.id)}><CIcon icon={item.is_active ? cilToggleOn : cilToggleOff} className={item.is_active ? 'text-success' : 'text-secondary'} /></CButton></CTooltip>}
                       {isAdmin && <CTooltip content="Modifier"><CButton color="light" onClick={() => handleEditTenant(item.id)}><CIcon icon={cilPen} /></CButton></CTooltip>}
                       {isAdmin && <CTooltip content="Supprimer"><CButton color="light" onClick={() => handleDeleteTenant(item.id)}><CIcon icon={cilTrash} /></CButton></CTooltip>}
                     </div>
@@ -137,7 +161,10 @@ const Tenants = () => {
                     )}
                   </div>
                   <CCardBody className="d-flex align-items-center flex-grow-1 py-2 gap-4">
-                    <strong style={{ minWidth: 200 }}>{`${item.civility || ''} ${item.firstname} ${item.lastname}`}</strong>
+                    <strong style={{ minWidth: 200 }}>
+                      {`${item.civility || ''} ${item.firstname} ${item.lastname}`}
+                      {!item.is_active && <CBadge color="secondary" className="ms-2">Inactif</CBadge>}
+                    </strong>
                     <span className="text-medium-emphasis">
                       {item.Property ? `${item.Property.type} à ${item.Property.city}` : 'Aucun bien'}
                     </span>
@@ -151,6 +178,7 @@ const Tenants = () => {
                   </CCardBody>
                   <div className="d-flex gap-1 me-3" style={{ flexShrink: 0 }}>
                     <CTooltip content="Voir"><CButton color="light" size="sm" onClick={() => handleViewTenant(item.id)}><CIcon icon={cilContact} /></CButton></CTooltip>
+                    {isAdmin && <CTooltip content={item.is_active ? 'Désactiver' : 'Activer'}><CButton color="light" size="sm" onClick={() => handleToggleActive(item.id)}><CIcon icon={item.is_active ? cilToggleOn : cilToggleOff} className={item.is_active ? 'text-success' : 'text-secondary'} /></CButton></CTooltip>}
                     {isAdmin && <CTooltip content="Modifier"><CButton color="light" size="sm" onClick={() => handleEditTenant(item.id)}><CIcon icon={cilPen} /></CButton></CTooltip>}
                     {isAdmin && <CTooltip content="Supprimer"><CButton color="light" size="sm" onClick={() => handleDeleteTenant(item.id)}><CIcon icon={cilTrash} /></CButton></CTooltip>}
                   </div>
