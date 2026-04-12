@@ -72,7 +72,7 @@ const Dashboard = () => {
             <CCardBody className="d-flex justify-content-between align-items-center">
               <div>
                 <div className="fs-2 fw-bold">{properties.length}</div>
-                <div className="small">Biens immobiliers</div>
+                <div className="small">Bien{properties.length > 1 ? 's' : ''} immobilier{properties.length > 1 ? 's' : ''}</div>
               </div>
               <CIcon icon={cilHome} size="3xl" className="opacity-50" />
             </CCardBody>
@@ -83,7 +83,7 @@ const Dashboard = () => {
             <CCardBody className="d-flex justify-content-between align-items-center">
               <div>
                 <div className="fs-2 fw-bold">{tenants.length}</div>
-                <div className="small">Locataires</div>
+                <div className="small">Locataire{tenants.length > 1 ? 's' : ''}</div>
               </div>
               <CIcon icon={cilContact} size="3xl" className="opacity-50" />
             </CCardBody>
@@ -94,7 +94,7 @@ const Dashboard = () => {
             <CCardBody className="d-flex justify-content-between align-items-center">
               <div>
                 <div className="fs-2 fw-bold">{activeLeases.length}</div>
-                <div className="small">Baux actifs</div>
+                <div className="small">{activeLeases.length > 1 ? 'Baux actifs' : 'Bail actif'}</div>
               </div>
               <CIcon icon={cilDescription} size="3xl" className="opacity-50" />
             </CCardBody>
@@ -105,7 +105,7 @@ const Dashboard = () => {
             <CCardBody className="d-flex justify-content-between align-items-center">
               <div>
                 <div className="fs-2 fw-bold">{monthlyRevenue.toFixed(0)} €</div>
-                <div className="small">Loyers mensuels CC</div>
+                <div className="small">Loyer{activeLeases.length > 1 ? 's' : ''} mensuel{activeLeases.length > 1 ? 's' : ''} CC</div>
               </div>
               <CIcon icon={cilEuro} size="3xl" className="opacity-50" />
             </CCardBody>

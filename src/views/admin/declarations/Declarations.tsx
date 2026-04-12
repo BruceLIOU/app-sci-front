@@ -8,7 +8,8 @@ import {
   CTableHead, CTableHeaderCell, CTableRow, CButton, CFormSelect, CBadge,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilPrint } from '@coreui/icons'
+import { cilCloudDownload } from '@coreui/icons'
+import http from '../../../utils/http-common'
 
 const currentYear = new Date().getFullYear()
 const years = Array.from({ length: 5 }, (_, i) => currentYear - i)
@@ -19,6 +20,26 @@ const Declarations = () => {
   const [charges, setCharges] = useState<any[]>([])
   const [associates, setAssociates] = useState<any[]>([])
   const [properties, setProperties] = useState<any[]>([])
+  const [generating, setGenerating] = useState(false)
+
+  const handleGeneratePdf = async () => {
+    setGenerating(true)
+    try {
+      const response = await http.get(`/pdf/declaration-2072?year=${year}`, { responseType: 'blob' })
+      const url = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `declaration_2072_S_${year}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch {
+      alert('Erreur lors de la génération du PDF.')
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   useEffect(() => {
     PaymentDataService.getAll().then((r) => setPayments(r.data))
@@ -73,7 +94,10 @@ const Declarations = () => {
             {years.map((y) => <option key={y} value={y}>{y}</option>)}
           </CFormSelect>
         </div>
-        <CButton color="primary" size="sm" onClick={() => window.print()}><CIcon icon={cilPrint} className="me-1" />Imprimer</CButton>
+        <CButton color="primary" size="sm" onClick={handleGeneratePdf} disabled={generating}>
+          <CIcon icon={cilCloudDownload} className="me-1" />
+          {generating ? 'Génération…' : 'Générer le PDF 2072-S'}
+        </CButton>
       </div>
 
       <CRow className="mb-4 text-center">
