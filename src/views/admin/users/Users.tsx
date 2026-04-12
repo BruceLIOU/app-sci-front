@@ -32,6 +32,7 @@ const Users = () => {
   const [loading, setLoading] = useState(true)
   const [inviteModal, setInviteModal] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteName, setInviteName] = useState('')
   const [inviteRole, setInviteRole] = useState('viewer')
   const [inviteLoading, setInviteLoading] = useState(false)
   const [inviteError, setInviteError] = useState<string | null>(null)
@@ -58,11 +59,13 @@ const Users = () => {
     setInviteSuccess(null)
     const fd = new FormData()
     fd.append('email', inviteEmail)
+    fd.append('name', inviteName)
     fd.append('role', inviteRole)
     try {
       await UserDataService.invite(fd)
       setInviteSuccess(`Invitation envoyée à ${inviteEmail}.`)
       setInviteEmail('')
+      setInviteName('')
       setInviteRole('viewer')
       fetchUsers()
     } catch (err: any) {
@@ -245,6 +248,16 @@ const Users = () => {
             {inviteSuccess && (
               <CAlert color="success">{inviteSuccess}</CAlert>
             )}
+            <div className="mb-3">
+              <label className="form-label">Nom</label>
+              <CFormInput
+                type="text"
+                value={inviteName}
+                onChange={(e) => setInviteName(e.target.value)}
+                placeholder="Prénom Nom"
+                disabled={inviteLoading}
+              />
+            </div>
             <div className="mb-3">
               <label className="form-label">Adresse email <span className="text-danger">*</span></label>
               <CFormInput
