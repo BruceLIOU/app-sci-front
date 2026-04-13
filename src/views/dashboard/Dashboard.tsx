@@ -8,7 +8,7 @@ import {
 import { CChartBar, CChartDoughnut } from '@coreui/react-chartjs'
 import CIcon from '@coreui/icons-react'
 import { cilCalendar, cilChartPie, cilContact, cilDescription, cilEuro, cilHome, cilWarning } from '@coreui/icons'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import PropertyDataService from '../../services/property.service'
 import TenantDataService from '../../services/tenant.service'
 import LeaseDataService from '../../services/lease.service'
@@ -18,7 +18,8 @@ import VisitDataService from '../../services/visit.service'
 import { DateUtils } from 'src/utils/date'
 import OwnerConfigDataService, { OwnerConfigData } from '../../services/owner_config.service'
 import SettingsOnboarding from '../admin/settings/SettingsOnboarding'
-import { setOwnerProfileType } from '../../store'
+import AuthService from '../../services/auth.service'
+import { RootState, setOwnerProfileType, updatePreferences } from '../../store'
 
 const statusLabel: Record<string, string> = { paid: 'Payé', pending: 'En attente', late: 'En retard' }
 const statusColor: Record<string, string> = { paid: 'success', pending: 'warning', late: 'danger' }
@@ -118,6 +119,7 @@ const MetricCard = ({
 
 const Dashboard = () => {
   const dispatch = useDispatch()
+  const user = useSelector((state: RootState) => state.auth.user)
   const [properties, setProperties] = useState<any[]>([])
   const [tenants, setTenants] = useState<any[]>([])
   const [leases, setLeases] = useState<any[]>([])
@@ -216,6 +218,24 @@ const Dashboard = () => {
     }
   }
 
+  const handleReopenOnboarding = () => {
+    setOnboardingDismissed(false)
+    window.localStorage.removeItem('dashboard_onboarding_dismissed_v1')
+    setShowOnboardingModal(true)
+  }
+
+  const persistOnboardingTestStatus = async (status: { google: boolean; email: boolean }) => {
+    try {
+      const fd = new FormData()
+      fd.append('onboardingGoogleConnectionVerified', String(status.google))
+      fd.append('onboardingEmailConnectionVerified', String(status.email))
+      const { data } = await AuthService.updatePreferences(fd)
+      if (data?.preferences) dispatch(updatePreferences(data.preferences))
+    } catch (_) {
+      // fallback localStorage deja gere dans SettingsOnboarding
+    }
+  }
+
   const yearOptions = Array.from(new Set([
     ...payments.map((payment) => toPaymentYear(payment)).filter(Boolean),
     ...charges.map((charge) => toChargeYear(charge)).filter(Boolean),
@@ -295,10 +315,15 @@ const Dashboard = () => {
                 Suivez votre parc, votre tresorerie et vos prochaines actions depuis une interface plus lisible,
                 plus dense en information utile et plus agreable a parcourir.
               </p>
-              <div className="d-flex flex-wrap gap-2">
-                <span className="app-filter-chip">{pluralize(properties.length,'bien','biens')}</span>
-                <span className="app-filter-chip">{pluralize(activeLeases.length, 'bail actif', 'baux actifs')}</span>
-                <span className="app-filter-chip">{pluralize(totalLatePayments, 'retard', 'retards')}</span>
+              <div className="mt-2 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div className="d-flex flex-wrap gap-2">
+                  <span className="app-filter-chip">{pluralize(properties.length,'bien','biens')}</span>
+                  <span className="app-filter-chip">{pluralize(activeLeases.length, 'bail actif', 'baux actifs')}</span>
+                  <span className="app-filter-chip">{pluralize(totalLatePayments, 'retard', 'retards')}</span>
+                </div>
+                <CButton color="secondary" variant="outline" onClick={handleReopenOnboarding}>
+                  Revenir en mode onboarding
+                </CButton>
               </div>
               {shouldShowOnboardingPrompt && (
                 <div className="app-onboarding-cta mt-4">
@@ -655,6 +680,11 @@ const Dashboard = () => {
             onGoogleConnect={handleGoogleConnectFromModal}
             properties={properties}
             openTab={() => navigate('/admin/settings')}
+            initialTestStatus={{
+              google: !!user?.preferences?.onboardingGoogleConnectionVerified,
+              email: !!user?.preferences?.onboardingEmailConnectionVerified,
+            }}
+            onPersistTestStatus={persistOnboardingTestStatus}
           />
         </CModalBody>
       </CModal>

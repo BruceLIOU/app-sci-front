@@ -35,9 +35,12 @@ interface Props {
   properties: Property[]
   openTab?: (tab: 'owner' | 'google' | 'smtp' | 'imap' | 'cron') => void
   mode?: 'card' | 'modal'
+  initialTestStatus?: { google?: boolean; email?: boolean }
+  onPersistTestStatus?: (status: { google: boolean; email: boolean }) => void | Promise<void>
 }
 
 const ONBOARDING_DISMISSED_KEY = 'settings_onboarding_hidden_v1'
+const ONBOARDING_TEST_STATUS_KEY = 'settings_onboarding_tests_v1'
 
 const scheduleToFrequency = (schedule?: string) => {
   if (schedule === '*/30 * * * *') return '30min'
@@ -66,6 +69,8 @@ const SettingsOnboarding: React.FC<Props> = ({
   properties,
   openTab,
   mode = 'card',
+  initialTestStatus,
+  onPersistTestStatus,
 }) => {
   const [currentStep, setCurrentStep] = useState(0)
   const [hidden, setHidden] = useState(false)
@@ -75,9 +80,11 @@ const SettingsOnboarding: React.FC<Props> = ({
   const [googleTestLoading, setGoogleTestLoading] = useState(false)
   const [googleTestMessage, setGoogleTestMessage] = useState<string | null>(null)
   const [googleTestError, setGoogleTestError] = useState<string | null>(null)
+  const [googleConnectionVerified, setGoogleConnectionVerified] = useState(false)
   const [emailTestLoading, setEmailTestLoading] = useState(false)
   const [emailTestMessage, setEmailTestMessage] = useState<string | null>(null)
   const [emailTestError, setEmailTestError] = useState<string | null>(null)
+  const [emailConnectionVerified, setEmailConnectionVerified] = useState(false)
 
   const [useMatera, setUseMatera] = useState(false)
   const [wantsGoogleSync, setWantsGoogleSync] = useState(false)
@@ -93,10 +100,46 @@ const SettingsOnboarding: React.FC<Props> = ({
   }, [mode])
 
   useEffect(() => {
+    try {
+      const hasProvidedStatus = initialTestStatus?.google !== undefined || initialTestStatus?.email !== undefined
+      if (hasProvidedStatus) {
+        setGoogleConnectionVerified(!!initialTestStatus?.google)
+        setEmailConnectionVerified(!!initialTestStatus?.email)
+        return
+      }
+
+      const raw = window.localStorage.getItem(ONBOARDING_TEST_STATUS_KEY)
+      if (!raw) return
+      const parsed = JSON.parse(raw)
+      setGoogleConnectionVerified(!!parsed?.google)
+      setEmailConnectionVerified(!!parsed?.email)
+    } catch (_) {}
+  }, [initialTestStatus?.google, initialTestStatus?.email])
+
+  const persistTestStatus = (nextGoogle: boolean, nextEmail: boolean) => {
+    window.localStorage.setItem(ONBOARDING_TEST_STATUS_KEY, JSON.stringify({ google: nextGoogle, email: nextEmail }))
+    onPersistTestStatus?.({ google: nextGoogle, email: nextEmail })
+  }
+
+  useEffect(() => {
     setUseMatera(Boolean(config.matera_sender_email || config.imap_user || config.imap_host))
     setWantsGoogleSync(Boolean(googleConnected || config.google_calendar_id))
     setMateraFrequency(scheduleToFrequency(config.charge_cron_schedule))
   }, [config.matera_sender_email, config.imap_user, config.imap_host, config.charge_cron_schedule, googleConnected, config.google_calendar_id])
+
+  useEffect(() => {
+    if (!googleConnected && googleConnectionVerified) {
+      setGoogleConnectionVerified(false)
+      persistTestStatus(false, emailConnectionVerified)
+    }
+  }, [googleConnected, googleConnectionVerified, emailConnectionVerified])
+
+  useEffect(() => {
+    if (emailConnectionVerified) {
+      setEmailConnectionVerified(false)
+      persistTestStatus(googleConnectionVerified, false)
+    }
+  }, [config.smtp_host, config.smtp_user])
 
   const profileDone = useMemo(() => {
     const profileType = config.owner_profile_type || 'INDIVIDUAL'
@@ -129,8 +172,12 @@ const SettingsOnboarding: React.FC<Props> = ({
     try {
       const { data } = await VisitDataService.testGoogleConnection()
       setGoogleTestMessage(data.message || 'Connexion Google validee.')
+      setGoogleConnectionVerified(true)
+      persistTestStatus(true, emailConnectionVerified)
     } catch (e: any) {
       setGoogleTestError(e?.response?.data?.message || 'Echec du test Google Calendar.')
+      setGoogleConnectionVerified(false)
+      persistTestStatus(false, emailConnectionVerified)
     } finally {
       setGoogleTestLoading(false)
     }
@@ -141,11 +188,21 @@ const SettingsOnboarding: React.FC<Props> = ({
     setEmailTestMessage(null)
     setEmailTestLoading(true)
     try {
-      await onSave()
+      // Persiste la config courante sans passer par le handler parent qui peut fermer la modale.
+      const fd = new FormData()
+      Object.entries(config).forEach(([k, v]) => {
+        if (v != null && k !== 'id') fd.append(k, String(v))
+      })
+      const saveResponse = await OwnerConfigDataService.update(fd)
+      setConfig((prev) => ({ ...prev, ...saveResponse.data }))
       const { data } = await OwnerConfigDataService.testEmailConnection()
       setEmailTestMessage(data.message || 'Email de test envoye avec succes.')
+      setEmailConnectionVerified(true)
+      persistTestStatus(googleConnectionVerified, true)
     } catch (e: any) {
       setEmailTestError(e?.response?.data?.message || 'Echec du test email.')
+      setEmailConnectionVerified(false)
+      persistTestStatus(googleConnectionVerified, false)
     } finally {
       setEmailTestLoading(false)
     }
@@ -166,11 +223,13 @@ const SettingsOnboarding: React.FC<Props> = ({
       title: 'Google Calendar',
       subtitle: 'Synchronisation des visites',
       done: googleDone,
+      connectionVerified: googleConnectionVerified,
     },
     {
       title: 'Envoi des mails',
       subtitle: 'Configuration SMTP',
       done: mailDone,
+      connectionVerified: emailConnectionVerified,
     },
   ]
 
@@ -522,6 +581,11 @@ const SettingsOnboarding: React.FC<Props> = ({
               <span className="app-onboarding-step-content">
                 <strong>{step.title}</strong>
                 <small>{step.subtitle}</small>
+                {step.connectionVerified !== undefined && (
+                  <CBadge color={step.connectionVerified ? 'success' : 'secondary'} className="app-onboarding-step-badge mt-1">
+                    {step.connectionVerified ? 'Liaison OK' : 'A tester'}
+                  </CBadge>
+                )}
               </span>
             </button>
           ))}
@@ -598,6 +662,11 @@ const SettingsOnboarding: React.FC<Props> = ({
               <span className="app-onboarding-step-content">
                 <strong>{step.title}</strong>
                 <small>{step.subtitle}</small>
+                {step.connectionVerified !== undefined && (
+                  <CBadge color={step.connectionVerified ? 'success' : 'secondary'} className="app-onboarding-step-badge mt-1">
+                    {step.connectionVerified ? 'Liaison OK' : 'A tester'}
+                  </CBadge>
+                )}
               </span>
             </button>
           ))}

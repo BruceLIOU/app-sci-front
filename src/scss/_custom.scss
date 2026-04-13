@@ -721,6 +721,13 @@ a {
   line-height: 1.2;
 }
 
+.app-onboarding-step-badge {
+  width: fit-content;
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .app-onboarding-panel {
   border: 1px solid rgba(18, 32, 47, 0.09);
   border-radius: 1rem;
@@ -812,6 +819,10 @@ a {
 
 [data-coreui-theme='dark'] .app-onboarding-step-content small {
   color: #9fb3ca;
+}
+
+[data-coreui-theme='dark'] .app-onboarding-step-badge.bg-secondary {
+  background-color: rgba(100, 116, 139, 0.72) !important;
 }
 
 @keyframes appOnboardingFadeUp {
