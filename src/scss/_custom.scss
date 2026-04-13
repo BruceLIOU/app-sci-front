@@ -15,6 +15,11 @@
   --app-accent: #0f766e;
   --app-accent-soft: rgba(15, 118, 110, 0.12);
   --app-sidebar-border: rgba(255, 248, 240, 0.08);
+  --app-motion-fast: 140ms;
+  --app-motion-base: 200ms;
+  --app-motion-slow: 280ms;
+  --app-ease-standard: cubic-bezier(0.2, 0, 0.2, 1);
+  --app-ease-emphasis: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 body {
@@ -229,12 +234,13 @@ a {
   border-radius: 1rem;
   margin-bottom: 0.3rem;
   font-weight: 600;
-  transition: background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  transition: background-color var(--app-motion-fast) var(--app-ease-standard), color var(--app-motion-fast) var(--app-ease-standard), transform var(--app-motion-fast) var(--app-ease-standard);
+  will-change: transform;
 }
 
 .app-sidebar .nav-link .nav-icon {
   color: rgba(173, 230, 216, 0.88) !important;
-  transition: color 0.18s ease;
+  transition: color var(--app-motion-fast) var(--app-ease-standard);
 }
 
 .app-sidebar .nav-link:hover,
@@ -358,7 +364,8 @@ a {
   border: 1px solid color-mix(in srgb, var(--metric-accent) 18%, rgba(18, 32, 47, 0.08)) !important;
   box-shadow: var(--app-shadow-soft);
   overflow: hidden;
-  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  transition: transform var(--app-motion-base) var(--app-ease-standard), box-shadow var(--app-motion-base) var(--app-ease-standard);
+  will-change: transform;
 }
 
 .app-metric-card-solid {
@@ -395,8 +402,8 @@ a {
 .app-metric-card:hover,
 .app-entity-card:hover,
 .app-panel-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 22px 44px rgba(18, 32, 47, 0.11);
+  transform: translate3d(0, -2px, 0);
+  box-shadow: 0 18px 34px rgba(18, 32, 47, 0.1);
 }
 
 .app-metric-card-solid {
@@ -610,7 +617,7 @@ a {
 }
 
 .app-table-card .table > tbody > tr {
-  transition: background-color 0.18s ease, transform 0.18s ease;
+  transition: background-color var(--app-motion-fast) var(--app-ease-standard);
 }
 
 .app-table-card .table > tbody > tr:hover {
@@ -665,12 +672,12 @@ a {
   align-items: center;
   gap: 0.62rem;
   text-align: left;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  transition: transform var(--app-motion-fast) var(--app-ease-standard), border-color var(--app-motion-fast) var(--app-ease-standard), background-color var(--app-motion-fast) var(--app-ease-standard);
+  will-change: transform;
 }
 
 .app-onboarding-step:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(18, 32, 47, 0.08);
+  transform: translate3d(0, -1px, 0);
 }
 
 .app-onboarding-step.is-active {
@@ -744,7 +751,7 @@ a {
   border-radius: 1rem;
   border: 1px solid rgba(15, 118, 110, 0.26);
   background: linear-gradient(135deg, rgba(240, 253, 250, 0.92), rgba(255, 251, 235, 0.9));
-  animation: appOnboardingFadeUp 340ms ease-out;
+  animation: appOnboardingFadeUp var(--app-motion-slow) var(--app-ease-standard);
 }
 
 .app-onboarding-cta-title {
@@ -762,7 +769,9 @@ a {
   border-radius: 1.2rem;
   overflow: hidden;
   box-shadow: 0 28px 68px rgba(2, 6, 23, 0.2);
-  animation: appOnboardingModalIn 260ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  animation: appOnboardingModalIn var(--app-motion-slow) var(--app-ease-emphasis);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
 }
 
 .app-onboarding-modal .modal-header {
@@ -848,6 +857,18 @@ a {
 }
 
 @media (max-width: 992px) {
+  .app-header,
+  .app-page-hero,
+  .app-surface-card,
+  .app-entity-card,
+  .app-panel-card,
+  .app-login-panel,
+  .app-login-showcase,
+  .app-metric-card,
+  .app-footer {
+    backdrop-filter: none;
+  }
+
   .app-onboarding-steps {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -861,6 +882,17 @@ a {
 @media (max-width: 576px) {
   .app-onboarding-steps {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
