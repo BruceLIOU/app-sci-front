@@ -4,8 +4,8 @@ import { useEffect } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
-// Fix icônes Leaflet avec les bundlers
-(L.Icon.Default.prototype as any)._getIconUrl = undefined;
+// biome-ignore lint/performance/noDelete: Leaflet's _getIconUrl must be deleted (not set to undefined) — setting it to undefined causes Leaflet to call undefined() when rendering markers
+delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
 	iconRetinaUrl:
 		"https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -58,10 +58,10 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
 	if (geolocated.length === 0) {
 		return (
 			<div
-				className="d-flex align-items-center justify-content-center bg-light rounded border"
+				className="flex items-center justify-center bg-muted/30 rounded border"
 				style={{ height: 300 }}
 			>
-				<span className="text-medium-emphasis">
+				<span className="text-muted-foreground text-sm">
 					Aucun bien géolocalisé — renseignez des adresses pour afficher la
 					carte
 				</span>

@@ -145,7 +145,7 @@ const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
 								</div>
 							) : (
 								<div
-									className="flex items-center justify-content-center bg-muted/30 rounded border mb-3"
+									className="flex items-center justify-center bg-muted/30 rounded border mb-3"
 									style={{ height: 280 }}
 								>
 									<span className="text-muted-foreground">
