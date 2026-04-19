@@ -1,323 +1,548 @@
-import React, { useState, useEffect } from 'react'
-import DocumentDataService from '../../../services/document.service'
-import TenantDataService from '../../../services/tenant.service'
-import PropertyDataService from '../../../services/property.service'
-import LeaseDataService from '../../../services/lease.service'
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
-  CCard, CCardBody, CCardHeader, CCol, CRow, CButton, CTable, CTableBody, CTableDataCell,
-  CTableHead, CTableHeaderCell, CTableRow, CBadge, CModal, CModalHeader, CModalTitle,
-  CModalBody, CForm, CFormInput, CFormSelect, CFormLabel, CFormTextarea, CSpinner,
-} from '@coreui/react'
-import CIcon from '@coreui/icons-react'
-import { cilPlus, cilTrash, cilCloudDownload, cilFolder, cilFile, cilDescription, cilNotes } from '@coreui/icons'
-import useIsAdmin from '../../../hooks/useIsAdmin'
-import StatCard from '../../../components/StatCard'
-import TableEmptyRow from '../../../components/TableEmptyRow'
+	Dialog,
+	DialogContent,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
+import { Download, File, Plus, Trash2 } from "lucide-react";
+import type React from "react";
+import { useCallback, useEffect, useState } from "react";
+import StatCard from "../../../components/StatCard";
+import TableEmptyRow from "../../../components/TableEmptyRow";
+import useIsAdmin from "../../../hooks/useIsAdmin";
+import DocumentDataService from "../../../services/document.service";
+import LeaseDataService from "../../../services/lease.service";
+import PropertyDataService from "../../../services/property.service";
+import TenantDataService from "../../../services/tenant.service";
 
 const CATEGORIES = [
-  { value: 'identite', label: "Carte d'identité / Passeport", color: 'warning' },
-  { value: 'bail', label: 'Bail', color: 'primary' },
-  { value: 'etat-des-lieux', label: 'État des lieux', color: 'info' },
-  { value: 'quittance', label: 'Quittance', color: 'success' },
-  { value: 'assurance', label: 'Assurance', color: 'danger' },
-  { value: 'justificatif', label: 'Justificatif de domicile', color: 'secondary' },
-  { value: 'revenu', label: 'Justificatif de revenus', color: 'secondary' },
-  { value: 'diagnostic', label: 'Diagnostic immobilier', color: 'dark' },
-  { value: 'autre', label: 'Autre', color: 'light' },
-]
+	{
+		value: "identite",
+		label: "Carte d'identité / Passeport",
+		color: "warning",
+	},
+	{ value: "bail", label: "Bail", color: "primary" },
+	{ value: "etat-des-lieux", label: "État des lieux", color: "info" },
+	{ value: "quittance", label: "Quittance", color: "success" },
+	{ value: "assurance", label: "Assurance", color: "danger" },
+	{
+		value: "justificatif",
+		label: "Justificatif de domicile",
+		color: "secondary",
+	},
+	{ value: "revenu", label: "Justificatif de revenus", color: "secondary" },
+	{ value: "diagnostic", label: "Diagnostic immobilier", color: "dark" },
+	{ value: "autre", label: "Autre", color: "light" },
+];
 
 const ENTITY_TYPES = [
-  { value: 'tenant', label: 'Locataire' },
-  { value: 'property', label: 'Bien immobilier' },
-  { value: 'lease', label: 'Bail' },
-]
+	{ value: "tenant", label: "Locataire" },
+	{ value: "property", label: "Bien immobilier" },
+	{ value: "lease", label: "Bail" },
+];
 
-const catInfo = (value: string) => CATEGORIES.find((c) => c.value === value) ?? { label: value, color: 'secondary' }
+const catInfo = (value: string) =>
+	CATEGORIES.find((c) => c.value === value) ?? {
+		label: value,
+		color: "secondary",
+	};
 
 const formatSize = (bytes: number | null) => {
-  if (!bytes) return '—'
-  if (bytes < 1024) return `${bytes} o`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`
-}
+	if (!bytes) return "—";
+	if (bytes < 1024) return `${bytes} o`;
+	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`;
+	return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+};
 
 const Documents = () => {
-  const [docs, setDocs] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [tenants, setTenants] = useState<any[]>([])
-  const [properties, setProperties] = useState<any[]>([])
-  const [leases, setLeases] = useState<any[]>([])
+	const [docs, setDocs] = useState<any[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [tenants, setTenants] = useState<any[]>([]);
+	const [properties, setProperties] = useState<any[]>([]);
+	const [leases, setLeases] = useState<any[]>([]);
 
-  const [filterEntityType, setFilterEntityType] = useState('')
-  const [filterCategory, setFilterCategory] = useState('')
+	const [filterEntityType, setFilterEntityType] = useState("");
+	const [filterCategory, setFilterCategory] = useState("");
 
-  const [addModal, setAddModal] = useState(false)
-  const [deleteModal, setDeleteModal] = useState(false)
-  const [toDelete, setToDelete] = useState<any>(null)
-  const [uploading, setUploading] = useState(false)
+	const [addModal, setAddModal] = useState(false);
+	const [deleteModal, setDeleteModal] = useState(false);
+	const [toDelete, setToDelete] = useState<any>(null);
+	const [uploading, setUploading] = useState(false);
 
-  const [form, setForm] = useState<{
-    title: string; category: string; entity_type: string; entity_id: string; notes: string; file: File | null
-  }>({ title: '', category: 'identite', entity_type: 'tenant', entity_id: '', notes: '', file: null })
+	const [form, setForm] = useState<{
+		title: string;
+		category: string;
+		entity_type: string;
+		entity_id: string;
+		notes: string;
+		file: File | null;
+	}>({
+		title: "",
+		category: "identite",
+		entity_type: "tenant",
+		entity_id: "",
+		notes: "",
+		file: null,
+	});
 
-  const fetchDocs = async () => {
-    setLoading(true)
-    try {
-      const res = await DocumentDataService.getAll()
-      setDocs(res.data)
-    } catch { /* silently */ }
-    finally { setLoading(false) }
-  }
+	const fetchDocs = useCallback(async () => {
+		setLoading(true);
+		try {
+			const res = await DocumentDataService.getAll();
+			setDocs(res.data);
+		} catch {
+			/* silently */
+		} finally {
+			setLoading(false);
+		}
+	}, []);
 
-  const isAdmin = useIsAdmin()
+	const isAdmin = useIsAdmin();
 
-  useEffect(() => {
-    fetchDocs()
-    TenantDataService.getAll().then((r) => setTenants(r.data)).catch(() => {})
-    PropertyDataService.getAll().then((r) => setProperties(r.data)).catch(() => {})
-    LeaseDataService.getAll().then((r) => setLeases(r.data)).catch(() => {})
-  }, [])
+	useEffect(() => {
+		fetchDocs();
+		TenantDataService.getAll()
+			.then((r) => setTenants(r.data))
+			.catch(() => {});
+		PropertyDataService.getAll()
+			.then((r) => setProperties(r.data))
+			.catch(() => {});
+		LeaseDataService.getAll()
+			.then((r) => setLeases(r.data))
+			.catch(() => {});
+	}, [fetchDocs]);
 
-  const entityOptions = () => {
-    if (form.entity_type === 'tenant') return tenants.map((t) => ({ value: t.id, label: `${t.civility || ''} ${t.firstname} ${t.lastname}` }))
-    if (form.entity_type === 'property') return properties.map((p) => ({ value: p.id, label: `${p.type} – ${p.city}` }))
-    if (form.entity_type === 'lease') return leases.map((l) => ({ value: l.id, label: `Bail #${l.id}${l.Property ? ` (${l.Property.city})` : ''}` }))
-    return []
-  }
+	const entityOptions = () => {
+		if (form.entity_type === "tenant")
+			return tenants.map((t) => ({
+				value: t.id,
+				label: `${t.civility || ""} ${t.firstname} ${t.lastname}`,
+			}));
+		if (form.entity_type === "property")
+			return properties.map((p) => ({
+				value: p.id,
+				label: `${p.type} – ${p.city}`,
+			}));
+		if (form.entity_type === "lease")
+			return leases.map((l) => ({
+				value: l.id,
+				label: `Bail #${l.id}${l.Property ? ` (${l.Property.city})` : ""}`,
+			}));
+		return [];
+	};
 
-  const filteredDocs = docs.filter((d) => {
-    if (filterEntityType && d.entity_type !== filterEntityType) return false
-    if (filterCategory && d.category !== filterCategory) return false
-    return true
-  })
+	const filteredDocs = docs.filter((d) => {
+		if (filterEntityType && d.entity_type !== filterEntityType) return false;
+		if (filterCategory && d.category !== filterCategory) return false;
+		return true;
+	});
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!form.file || !form.title || !form.entity_id) return
-    setUploading(true)
-    try {
-      const fd = new FormData()
-      fd.append('title', form.title)
-      fd.append('category', form.category)
-      fd.append('entity_type', form.entity_type)
-      fd.append('entity_id', form.entity_id)
-      fd.append('notes', form.notes)
-      fd.append('file', form.file)
-      await DocumentDataService.create(fd)
-      setAddModal(false)
-      setForm({ title: '', category: 'identite', entity_type: 'tenant', entity_id: '', notes: '', file: null })
-      fetchDocs()
-    } catch { /* error */ }
-    finally { setUploading(false) }
-  }
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!form.file || !form.title || !form.entity_id) return;
+		setUploading(true);
+		try {
+			const fd = new FormData();
+			fd.append("title", form.title);
+			fd.append("category", form.category);
+			fd.append("entity_type", form.entity_type);
+			fd.append("entity_id", form.entity_id);
+			fd.append("notes", form.notes);
+			fd.append("file", form.file);
+			await DocumentDataService.create(fd);
+			setAddModal(false);
+			setForm({
+				title: "",
+				category: "identite",
+				entity_type: "tenant",
+				entity_id: "",
+				notes: "",
+				file: null,
+			});
+			fetchDocs();
+		} catch {
+			/* error */
+		} finally {
+			setUploading(false);
+		}
+	};
 
-  const handleDelete = async () => {
-    if (!toDelete) return
-    try {
-      await DocumentDataService.delete(toDelete.id)
-      setDeleteModal(false)
-      fetchDocs()
-    } catch { /* error */ }
-  }
+	const handleDelete = async () => {
+		if (!toDelete) return;
+		try {
+			await DocumentDataService.delete(toDelete.id);
+			setDeleteModal(false);
+			fetchDocs();
+		} catch {
+			/* error */
+		}
+	};
 
-  const entityLabel = (doc: any) => {
-    if (doc.entity_type === 'tenant') {
-      const t = tenants.find((x) => x.id === doc.entity_id)
-      return t ? `${t.civility || ''} ${t.firstname} ${t.lastname}`.trim() : `Locataire #${doc.entity_id}`
-    }
-    if (doc.entity_type === 'property') {
-      const p = properties.find((x) => x.id === doc.entity_id)
-      return p ? `${p.type} – ${p.city}` : `Bien #${doc.entity_id}`
-    }
-    if (doc.entity_type === 'lease') return `Bail #${doc.entity_id}`
-    return `#${doc.entity_id}`
-  }
+	const entityLabel = (doc: any) => {
+		if (doc.entity_type === "tenant") {
+			const t = tenants.find((x) => x.id === doc.entity_id);
+			return t
+				? `${t.civility || ""} ${t.firstname} ${t.lastname}`.trim()
+				: `Locataire #${doc.entity_id}`;
+		}
+		if (doc.entity_type === "property") {
+			const p = properties.find((x) => x.id === doc.entity_id);
+			return p ? `${p.type} – ${p.city}` : `Bien #${doc.entity_id}`;
+		}
+		if (doc.entity_type === "lease") return `Bail #${doc.entity_id}`;
+		return `#${doc.entity_id}`;
+	};
 
-  return (
-    <>
-      <CRow className="mb-4">
-        <CCol>
-          <CCard className="app-page-hero border-0">
-            <CCardBody className="p-0 position-relative">
-              <div className="app-page-kicker mb-3">Gestion documentaire</div>
-              <h2 className="mb-2 app-display-title">Centralisez tous les documents de gestion</h2>
-              <p className="app-page-description mb-4">
-                Classez, filtrez et retrouvez rapidement les pieces liees aux locataires, biens et baux.
-              </p>
-              <div className="d-flex flex-wrap gap-2">
-                <span className="app-filter-chip">{docs.length} documents</span>
-                <span className="app-filter-chip">{filteredDocs.length} affiches</span>
-                <span className="app-filter-chip">{CATEGORIES.length} categories</span>
-              </div>
-            </CCardBody>
-          </CCard>
-        </CCol>
-      </CRow>
+	return (
+		<>
+			<div className="mb-4">
+				<Card className="app-page-hero border-0">
+					<CardContent className="p-0 relative">
+						<div className="app-page-kicker mb-3">Gestion documentaire</div>
+						<h2 className="mb-2 app-display-title">
+							Centralisez tous les documents de gestion
+						</h2>
+						<p className="app-page-description mb-4">
+							Classez, filtrez et retrouvez rapidement les pieces liees aux
+							locataires, biens et baux.
+						</p>
+						<div className="flex flex-wrap gap-2">
+							<span className="app-filter-chip">{docs.length} documents</span>
+							<span className="app-filter-chip">
+								{filteredDocs.length} affiches
+							</span>
+							<span className="app-filter-chip">
+								{CATEGORIES.length} categories
+							</span>
+						</div>
+					</CardContent>
+				</Card>
+			</div>
 
-      {/* Stats */}
-      <CRow className="mb-4 text-center">
-        <StatCard value={docs.length} label="Documents" color="primary" sm={4} />
-        <StatCard value={docs.filter((d) => d.entity_type === 'tenant').length} label="Locataires" color="warning" sm={4} />
-        <StatCard value={docs.filter((d) => d.entity_type === 'property').length} label="Biens" color="info" sm={4} />
-      </CRow>
+			<div className="grid grid-cols-3 gap-3 mb-4 text-center">
+				<StatCard value={docs.length} label="Documents" color="primary" />
+				<StatCard
+					value={docs.filter((d) => d.entity_type === "tenant").length}
+					label="Locataires"
+					color="warning"
+				/>
+				<StatCard
+					value={docs.filter((d) => d.entity_type === "property").length}
+					label="Biens"
+					color="info"
+				/>
+			</div>
 
-      <CCard className="app-panel-card app-table-card">
-        <CCardHeader className="d-flex justify-content-between align-items-center flex-wrap gap-2">
-          <strong>Mes documents</strong>
-          <div className="d-flex gap-2 flex-wrap align-items-center">
-            <CFormSelect className="app-view-filter" size="sm" style={{ width: 180 }} value={filterEntityType} onChange={(e) => setFilterEntityType(e.target.value)}>
-              <option value="">Toutes les entités</option>
-              {ENTITY_TYPES.map((et) => <option key={et.value} value={et.value}>{et.label}</option>)}
-            </CFormSelect>
-            <CFormSelect className="app-view-filter" size="sm" style={{ width: 220 }} value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
-              <option value="">Toutes les catégories</option>
-              {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-            </CFormSelect>
-            {isAdmin && (
-              <CButton color="primary" size="sm" className="app-ghost-button" onClick={() => setAddModal(true)}>
-                <CIcon icon={cilPlus} className="me-1" />Ajouter
-              </CButton>
-            )}
-          </div>
-        </CCardHeader>
-        <CCardBody>
-          {loading ? (
-            <div className="text-center py-5"><CSpinner color="primary" /></div>
-          ) : (
-            <CTable align="middle" hover responsive bordered>
-              <CTableHead color="light">
-                <CTableRow>
-                  <CTableHeaderCell>Document</CTableHeaderCell>
-                  <CTableHeaderCell>Catégorie</CTableHeaderCell>
-                  <CTableHeaderCell>Entité</CTableHeaderCell>
-                  <CTableHeaderCell>Fichier</CTableHeaderCell>
-                  <CTableHeaderCell>Taille</CTableHeaderCell>
-                  <CTableHeaderCell>Date</CTableHeaderCell>
-                  <CTableHeaderCell className="text-end">Actions</CTableHeaderCell>
-                </CTableRow>
-              </CTableHead>
-              <CTableBody>
-                {filteredDocs.length === 0 ? (
-                  <TableEmptyRow colSpan={7} message="Aucun document" />
-                ) : filteredDocs.map((doc) => {
-                  const cat = catInfo(doc.category)
-                  return (
-                    <CTableRow key={doc.id}>
-                      <CTableDataCell>
-                        <CIcon icon={cilFile} className="me-2 text-muted" />
-                        <strong>{doc.title}</strong>
-                        {doc.notes && <div className="text-muted small">{doc.notes}</div>}
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <CBadge color={cat.color as any}>{cat.label}</CBadge>
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <CBadge color="light" textColor="dark" className="me-1">
-                          {ENTITY_TYPES.find((et) => et.value === doc.entity_type)?.label ?? doc.entity_type}
-                        </CBadge>
-                        {entityLabel(doc)}
-                      </CTableDataCell>
-                      <CTableDataCell className="text-muted small">{doc.file_name || '—'}</CTableDataCell>
-                      <CTableDataCell className="text-muted small">{formatSize(doc.file_size)}</CTableDataCell>
-                      <CTableDataCell className="text-muted small">
-                        {doc.createdAt ? new Date(doc.createdAt).toLocaleDateString('fr-FR') : '—'}
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div className="d-flex gap-1 justify-content-end flex-nowrap">
-                          <CButton
-                            color="light" size="sm"
-                            href={DocumentDataService.downloadUrl(doc.id)} target="_blank" rel="noreferrer"
-                            title="Télécharger / Ouvrir"
-                          >
-                            <CIcon icon={cilCloudDownload} />
-                          </CButton>
-                          {isAdmin && (
-                            <CButton color="light" size="sm" onClick={() => { setToDelete(doc); setDeleteModal(true) }}>
-                              <CIcon icon={cilTrash} />
-                            </CButton>
-                          )}
-                        </div>
-                      </CTableDataCell>
-                    </CTableRow>
-                  )
-                })}
-              </CTableBody>
-            </CTable>
-          )}
-        </CCardBody>
-      </CCard>
+			<Card className="app-panel-card app-table-card">
+				<CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2 border-b py-3 px-4 space-y-0">
+					<strong>Mes documents</strong>
+					<div className="flex gap-2 flex-wrap items-center">
+						<select
+							className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+							style={{ width: 180 }}
+							value={filterEntityType}
+							onChange={(e) => setFilterEntityType(e.target.value)}
+						>
+							<option value="">Toutes les entités</option>
+							{ENTITY_TYPES.map((et) => (
+								<option key={et.value} value={et.value}>
+									{et.label}
+								</option>
+							))}
+						</select>
+						<select
+							className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+							style={{ width: 220 }}
+							value={filterCategory}
+							onChange={(e) => setFilterCategory(e.target.value)}
+						>
+							<option value="">Toutes les catégories</option>
+							{CATEGORIES.map((c) => (
+								<option key={c.value} value={c.value}>
+									{c.label}
+								</option>
+							))}
+						</select>
+						{isAdmin && (
+							<Button
+								size="sm"
+								className="app-ghost-button"
+								onClick={() => setAddModal(true)}
+							>
+								<Plus className="mr-1 h-4 w-4" />
+								Ajouter
+							</Button>
+						)}
+					</div>
+				</CardHeader>
+				<CardContent className="p-0">
+					{loading ? (
+						<div className="text-center py-5">
+							<Spinner size="lg" />
+						</div>
+					) : (
+						<div className="overflow-x-auto">
+							<Table>
+								<TableHeader>
+									<TableRow>
+										<TableHead>Document</TableHead>
+										<TableHead>Catégorie</TableHead>
+										<TableHead>Entité</TableHead>
+										<TableHead>Fichier</TableHead>
+										<TableHead>Taille</TableHead>
+										<TableHead>Date</TableHead>
+										<TableHead className="text-right">Actions</TableHead>
+									</TableRow>
+								</TableHeader>
+								<TableBody>
+									{filteredDocs.length === 0 ? (
+										<TableEmptyRow colSpan={7} message="Aucun document" />
+									) : (
+										filteredDocs.map((doc) => {
+											const cat = catInfo(doc.category);
+											return (
+												<TableRow key={doc.id}>
+													<TableCell>
+														<File className="inline h-4 w-4 mr-2 text-muted-foreground" />
+														<strong>{doc.title}</strong>
+														{doc.notes && (
+															<div className="text-muted-foreground text-sm">
+																{doc.notes}
+															</div>
+														)}
+													</TableCell>
+													<TableCell>
+														<Badge variant="secondary">{cat.label}</Badge>
+													</TableCell>
+													<TableCell>
+														<Badge variant="outline" className="mr-1">
+															{ENTITY_TYPES.find(
+																(et) => et.value === doc.entity_type,
+															)?.label ?? doc.entity_type}
+														</Badge>
+														{entityLabel(doc)}
+													</TableCell>
+													<TableCell className="text-muted-foreground text-sm">
+														{doc.file_name || "—"}
+													</TableCell>
+													<TableCell className="text-muted-foreground text-sm">
+														{formatSize(doc.file_size)}
+													</TableCell>
+													<TableCell className="text-muted-foreground text-sm">
+														{doc.createdAt
+															? new Date(doc.createdAt).toLocaleDateString(
+																	"fr-FR",
+																)
+															: "—"}
+													</TableCell>
+													<TableCell>
+														<div className="flex gap-1 justify-end flex-nowrap">
+															<Button
+																variant="outline"
+																size="sm"
+																asChild
+																title="Télécharger / Ouvrir"
+															>
+																<a
+																	href={DocumentDataService.downloadUrl(doc.id)}
+																	target="_blank"
+																	rel="noreferrer"
+																>
+																	<Download className="h-4 w-4" />
+																</a>
+															</Button>
+															{isAdmin && (
+																<Button
+																	variant="outline"
+																	size="sm"
+																	onClick={() => {
+																		setToDelete(doc);
+																		setDeleteModal(true);
+																	}}
+																>
+																	<Trash2 className="h-4 w-4" />
+																</Button>
+															)}
+														</div>
+													</TableCell>
+												</TableRow>
+											);
+										})
+									)}
+								</TableBody>
+							</Table>
+						</div>
+					)}
+				</CardContent>
+			</Card>
 
-      {/* Modale ajout */}
-      <CModal size="lg" alignment="center" visible={addModal} onClose={() => setAddModal(false)}>
-        <CModalHeader><CModalTitle>Ajouter un document</CModalTitle></CModalHeader>
-        <CModalBody>
-          <CForm className="row g-3" onSubmit={handleSubmit}>
-            <CCol md={12}>
-              <CFormLabel>Titre du document <span className="text-danger">*</span></CFormLabel>
-              <CFormInput required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex : Bail signé 2025, Carte identité M. Dupont..." />
-            </CCol>
-            <CCol md={6}>
-              <CFormLabel>Catégorie <span className="text-danger">*</span></CFormLabel>
-              <CFormSelect value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-                {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-              </CFormSelect>
-            </CCol>
-            <CCol md={6}>
-              <CFormLabel>Lié à <span className="text-danger">*</span></CFormLabel>
-              <CFormSelect value={form.entity_type} onChange={(e) => setForm({ ...form, entity_type: e.target.value, entity_id: '' })}>
-                {ENTITY_TYPES.map((et) => <option key={et.value} value={et.value}>{et.label}</option>)}
-              </CFormSelect>
-            </CCol>
-            <CCol md={12}>
-              <CFormLabel>
-                {ENTITY_TYPES.find((et) => et.value === form.entity_type)?.label ?? 'Entité'} <span className="text-danger">*</span>
-              </CFormLabel>
-              <CFormSelect required value={form.entity_id} onChange={(e) => setForm({ ...form, entity_id: e.target.value })}>
-                <option value="">-- Sélectionner --</option>
-                {entityOptions().map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </CFormSelect>
-            </CCol>
-            <CCol md={12}>
-              <CFormLabel>Fichier <span className="text-danger">*</span></CFormLabel>
-              <CFormInput
-                required type="file"
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,.xls,.xlsx"
-                onChange={(e) => {
-                  const file = e.target.files?.[0] ?? null
-                  setForm({ ...form, file, title: form.title || (file?.name.replace(/\.[^.]+$/, '') ?? '') })
-                }}
-              />
-              <div className="text-muted small mt-1">PDF, Word, images, Excel acceptés</div>
-            </CCol>
-            <CCol md={12}>
-              <CFormLabel>Notes</CFormLabel>
-              <CFormTextarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Précisions optionnelles..." />
-            </CCol>
-            <hr />
-            <CCol md={12} className="d-flex gap-2 justify-content-end">
-              <CButton color="secondary" onClick={() => setAddModal(false)}>Annuler</CButton>
-              <CButton color="primary" type="submit" disabled={uploading}>
-                {uploading ? <CSpinner size="sm" className="me-1" /> : null}
-                Enregistrer
-              </CButton>
-            </CCol>
-          </CForm>
-        </CModalBody>
-      </CModal>
+			{/* Modal ajout */}
+			<Dialog open={addModal} onOpenChange={(o) => !o && setAddModal(false)}>
+				<DialogContent className="max-w-2xl">
+					<DialogHeader>
+						<DialogTitle>Ajouter un document</DialogTitle>
+					</DialogHeader>
+					<form className="grid grid-cols-12 gap-3" onSubmit={handleSubmit}>
+						<div className="col-span-12 space-y-1.5">
+							<Label>
+								Titre du document <span className="text-destructive">*</span>
+							</Label>
+							<Input
+								required
+								value={form.title}
+								onChange={(e) => setForm({ ...form, title: e.target.value })}
+								placeholder="Ex : Bail signé 2025, Carte identité M. Dupont..."
+							/>
+						</div>
+						<div className="col-span-6 space-y-1.5">
+							<Label>
+								Catégorie <span className="text-destructive">*</span>
+							</Label>
+							<select
+								value={form.category}
+								onChange={(e) => setForm({ ...form, category: e.target.value })}
+								className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+							>
+								{CATEGORIES.map((c) => (
+									<option key={c.value} value={c.value}>
+										{c.label}
+									</option>
+								))}
+							</select>
+						</div>
+						<div className="col-span-6 space-y-1.5">
+							<Label>
+								Lié à <span className="text-destructive">*</span>
+							</Label>
+							<select
+								value={form.entity_type}
+								onChange={(e) =>
+									setForm({
+										...form,
+										entity_type: e.target.value,
+										entity_id: "",
+									})
+								}
+								className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+							>
+								{ENTITY_TYPES.map((et) => (
+									<option key={et.value} value={et.value}>
+										{et.label}
+									</option>
+								))}
+							</select>
+						</div>
+						<div className="col-span-12 space-y-1.5">
+							<Label>
+								{ENTITY_TYPES.find((et) => et.value === form.entity_type)
+									?.label ?? "Entité"}{" "}
+								<span className="text-destructive">*</span>
+							</Label>
+							<select
+								required
+								value={form.entity_id}
+								onChange={(e) =>
+									setForm({ ...form, entity_id: e.target.value })
+								}
+								className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+							>
+								<option value="">-- Sélectionner --</option>
+								{entityOptions().map((o) => (
+									<option key={o.value} value={o.value}>
+										{o.label}
+									</option>
+								))}
+							</select>
+						</div>
+						<div className="col-span-12 space-y-1.5">
+							<Label>
+								Fichier <span className="text-destructive">*</span>
+							</Label>
+							<Input
+								required
+								type="file"
+								accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,.xls,.xlsx"
+								onChange={(e) => {
+									const file = e.target.files?.[0] ?? null;
+									setForm({
+										...form,
+										file,
+										title:
+											form.title || (file?.name.replace(/\.[^.]+$/, "") ?? ""),
+									});
+								}}
+							/>
+							<p className="text-muted-foreground text-sm">
+								PDF, Word, images, Excel acceptés
+							</p>
+						</div>
+						<div className="col-span-12 space-y-1.5">
+							<Label>Notes</Label>
+							<textarea
+								rows={2}
+								value={form.notes}
+								onChange={(e) => setForm({ ...form, notes: e.target.value })}
+								placeholder="Précisions optionnelles..."
+								className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm"
+							/>
+						</div>
+						<div className="col-span-12 flex gap-2 justify-end pt-2">
+							<Button
+								type="button"
+								variant="outline"
+								onClick={() => setAddModal(false)}
+							>
+								Annuler
+							</Button>
+							<Button type="submit" disabled={uploading}>
+								{uploading ? <Spinner size="sm" className="mr-1" /> : null}
+								Enregistrer
+							</Button>
+						</div>
+					</form>
+				</DialogContent>
+			</Dialog>
 
-      {/* Modale suppression */}
-      <CModal alignment="center" visible={deleteModal} onClose={() => setDeleteModal(false)}>
-        <CModalHeader><CModalTitle>Suppression</CModalTitle></CModalHeader>
-        <CModalBody>
-          <p>Supprimer le document <strong>{toDelete?.title}</strong> ? Cette action est irréversible.</p>
-          <div className="d-flex gap-2 justify-content-end">
-            <CButton color="secondary" onClick={() => setDeleteModal(false)}>Annuler</CButton>
-            <CButton color="danger" onClick={handleDelete}>Supprimer</CButton>
-          </div>
-        </CModalBody>
-      </CModal>
-    </>
-  )
-}
+			{/* Modal suppression */}
+			<Dialog
+				open={deleteModal}
+				onOpenChange={(o) => !o && setDeleteModal(false)}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Suppression</DialogTitle>
+					</DialogHeader>
+					<p>
+						Supprimer le document <strong>{toDelete?.title}</strong> ? Cette
+						action est irréversible.
+					</p>
+					<DialogFooter>
+						<Button variant="outline" onClick={() => setDeleteModal(false)}>
+							Annuler
+						</Button>
+						<Button variant="destructive" onClick={handleDelete}>
+							Supprimer
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+		</>
+	);
+};
 
-export default Documents
+export default Documents;

@@ -1,49 +1,50 @@
-import React from 'react'
-import {
-  CButton, CCard, CCardBody, CCol, CContainer, CForm, CFormInput,
-  CInputGroup, CInputGroupText, CRow,
-} from '@coreui/react'
-import CIcon from '@coreui/icons-react'
-import { cilLockLocked, cilUser } from '@coreui/icons'
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import React from "react";
 
 const Register = () => {
-  return (
-    <div className="bg-light min-vh-100 d-flex flex-row align-items-center">
-      <CContainer>
-        <CRow className="justify-content-center">
-          <CCol md={9} lg={7} xl={6}>
-            <CCard className="mx-4">
-              <CCardBody className="p-4">
-                <CForm>
-                  <h1>Register</h1>
-                  <p className="text-medium-emphasis">Create your account</p>
-                  <CInputGroup className="mb-3">
-                    <CInputGroupText><CIcon icon={cilUser} /></CInputGroupText>
-                    <CFormInput placeholder="Username" autoComplete="username" />
-                  </CInputGroup>
-                  <CInputGroup className="mb-3">
-                    <CInputGroupText>@</CInputGroupText>
-                    <CFormInput placeholder="Email" autoComplete="email" />
-                  </CInputGroup>
-                  <CInputGroup className="mb-3">
-                    <CInputGroupText><CIcon icon={cilLockLocked} /></CInputGroupText>
-                    <CFormInput type="password" placeholder="Password" autoComplete="new-password" />
-                  </CInputGroup>
-                  <CInputGroup className="mb-4">
-                    <CInputGroupText><CIcon icon={cilLockLocked} /></CInputGroupText>
-                    <CFormInput type="password" placeholder="Repeat password" autoComplete="new-password" />
-                  </CInputGroup>
-                  <div className="d-grid">
-                    <CButton color="success">Create Account</CButton>
-                  </div>
-                </CForm>
-              </CCardBody>
-            </CCard>
-          </CCol>
-        </CRow>
-      </CContainer>
-    </div>
-  )
-}
+	return (
+		<div className="bg-muted min-h-screen flex flex-row items-center">
+			<div className="container mx-auto">
+				<div className="flex justify-center">
+					<div className="w-full max-w-md mx-4">
+						<Card>
+							<CardContent className="p-4">
+								<form>
+									<h1 className="text-2xl font-bold mb-1">Register</h1>
+									<p className="text-muted-foreground mb-4">
+										Create your account
+									</p>
+									<div className="mb-3">
+										<Input placeholder="Username" autoComplete="username" />
+									</div>
+									<div className="mb-3">
+										<Input placeholder="Email" autoComplete="email" />
+									</div>
+									<div className="mb-3">
+										<Input
+											type="password"
+											placeholder="Password"
+											autoComplete="new-password"
+										/>
+									</div>
+									<div className="mb-4">
+										<Input
+											type="password"
+											placeholder="Repeat password"
+											autoComplete="new-password"
+										/>
+									</div>
+									<Button className="w-full">Create Account</Button>
+								</form>
+							</CardContent>
+						</Card>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+};
 
-export default Register
+export default Register;

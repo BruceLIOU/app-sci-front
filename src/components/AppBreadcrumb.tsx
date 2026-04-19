@@ -1,48 +1,66 @@
-import React from 'react'
-import { useLocation } from 'react-router-dom'
-import routes from '../routes'
-import { CBreadcrumb, CBreadcrumbItem } from '@coreui/react'
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
+import routes from "../routes";
 
 const AppBreadcrumb = () => {
-  const currentLocation = useLocation().pathname
+	const currentLocation = useLocation().pathname;
 
-  const getRouteName = (pathname: string, routeList: any[]) => {
-    const currentRoute = routeList.find((route) => route.path === pathname)
-    return currentRoute ? currentRoute.name : false
-  }
+	// biome-ignore lint/suspicious/noExplicitAny: type des routes non exporté
+	const getRouteName = (pathname: string, routeList: any[]) => {
+		const currentRoute = routeList.find((route) => route.path === pathname);
+		return currentRoute ? currentRoute.name : false;
+	};
 
-  const getBreadcrumbs = (location: string) => {
-    const breadcrumbs: { pathname: string; name: string; active: boolean }[] = []
-    location.split('/').reduce((prev, curr, index, array) => {
-      const currentPathname = `${prev}/${curr}`
-      const routeName = getRouteName(currentPathname, routes)
-      if (routeName) {
-        breadcrumbs.push({
-          pathname: currentPathname,
-          name: routeName,
-          active: index + 1 === array.length,
-        })
-      }
-      return currentPathname
-    })
-    return breadcrumbs
-  }
+	const getBreadcrumbs = (location: string) => {
+		const breadcrumbs: { pathname: string; name: string; active: boolean }[] =
+			[];
+		location.split("/").reduce((prev, curr, index, array) => {
+			const currentPathname = `${prev}/${curr}`;
+			const routeName = getRouteName(currentPathname, routes);
+			if (routeName) {
+				breadcrumbs.push({
+					pathname: currentPathname,
+					name: routeName,
+					active: index + 1 === array.length,
+				});
+			}
+			return currentPathname;
+		});
+		return breadcrumbs;
+	};
 
-  const breadcrumbs = getBreadcrumbs(currentLocation)
+	const breadcrumbs = getBreadcrumbs(currentLocation);
 
-  return (
-    <CBreadcrumb className="m-0 ms-2 app-breadcrumb">
-      <CBreadcrumbItem href="/">Accueil</CBreadcrumbItem>
-      {breadcrumbs.map((breadcrumb, index) => (
-        <CBreadcrumbItem
-          {...(breadcrumb.active ? { active: true } : { href: breadcrumb.pathname })}
-          key={index}
-        >
-          {breadcrumb.name}
-        </CBreadcrumbItem>
-      ))}
-    </CBreadcrumb>
-  )
-}
+	return (
+		<nav aria-label="breadcrumb" className="m-0 ms-2">
+			<ol className="flex items-center gap-1 text-sm text-muted-foreground">
+				<li>
+					<Link to="/" className="hover:text-foreground transition-colors">
+						Accueil
+					</Link>
+				</li>
+				{breadcrumbs.map((breadcrumb) => (
+					<React.Fragment key={breadcrumb.pathname}>
+						<li className="select-none">/</li>
+						<li>
+							{breadcrumb.active ? (
+								<span className="text-foreground font-medium">
+									{breadcrumb.name}
+								</span>
+							) : (
+								<Link
+									to={breadcrumb.pathname}
+									className="hover:text-foreground transition-colors"
+								>
+									{breadcrumb.name}
+								</Link>
+							)}
+						</li>
+					</React.Fragment>
+				))}
+			</ol>
+		</nav>
+	);
+};
 
-export default React.memo(AppBreadcrumb)
+export default React.memo(AppBreadcrumb);

@@ -1,387 +1,713 @@
-import React, { useState, useEffect, useRef } from 'react'
-import QuittanceDataService from '../../../services/quittance.service'
-import TenantDataService from '../../../services/tenant.service'
-import PropertyDataService from '../../../services/property.service'
-import LeaseDataService from '../../../services/lease.service'
-import PdfDataService from '../../../services/pdf.service'
-import DocumentDataService from '../../../services/document.service'
-import ActionButtons from '../../../components/ActionButtons'
-import CrudModal from '../../../components/CrudModal'
-import DeleteModal from '../../../components/DeleteModal'
-import EntityTableCard from '../../../components/EntityTableCard'
-import StatCard from '../../../components/StatCard'
-import TableEmptyRow from '../../../components/TableEmptyRow'
-import useEntityCrud from '../../../hooks/useEntityCrud'
+import { AppAlert } from "@/components/ui/app-alert";
+import { Button } from "@/components/ui/button";
 import {
-  CCol, CRow, CTable, CTableBody, CTableDataCell,
-  CTableHead, CTableHeaderCell, CTableRow, CButton, CModal, CModalHeader,
-  CModalTitle, CModalBody, CFormInput, CFormSelect, CTooltip, CSpinner, CAlert,
-} from '@coreui/react'
-import CIcon from '@coreui/icons-react'
-import { cilDescription, cilExternalLink, cilCloudDownload, cilSend } from '@coreui/icons'
-import { DateUtils } from 'src/utils/date'
-import { quittanceFormSchema } from '../../../validation/schemas'
-import { FormInputField } from '../../../components/FormFields'
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import { Spinner } from "@/components/ui/spinner";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Download, ExternalLink, FileText, Send } from "lucide-react";
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
+import { DateUtils } from "src/utils/date";
+import ActionButtons from "../../../components/ActionButtons";
+import CrudModal from "../../../components/CrudModal";
+import DeleteModal from "../../../components/DeleteModal";
+import EntityTableCard from "../../../components/EntityTableCard";
+import {
+	FormInputField,
+	FormSelectField,
+} from "../../../components/FormFields";
+import StatCard from "../../../components/StatCard";
+import TableEmptyRow from "../../../components/TableEmptyRow";
+import useEntityCrud from "../../../hooks/useEntityCrud";
+import DocumentDataService from "../../../services/document.service";
+import LeaseDataService from "../../../services/lease.service";
+import PdfDataService from "../../../services/pdf.service";
+import PropertyDataService from "../../../services/property.service";
+import QuittanceDataService from "../../../services/quittance.service";
+import TenantDataService from "../../../services/tenant.service";
+import { quittanceFormSchema } from "../../../validation/schemas";
 
 const Quittances = () => {
-  const [tenants, setTenants] = useState<any[]>([])
-  const [properties, setProperties] = useState<any[]>([])
-  const [leases, setLeases] = useState<any[]>([])
-  const [printModal, setPrintModal] = useState(false)
-  const [printing, setPrinting] = useState<any>(null)
-  const printRef = useRef<HTMLDivElement>(null)
-  const [pdfGenerating, setPdfGenerating] = useState(false)
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null)
-  const [quittanceDocs, setQuittanceDocs] = useState<Record<number, any>>({})
-  const [emailSendingId, setEmailSendingId] = useState<number | null>(null)
-  const [emailResult, setEmailResult] = useState<{ type: 'success' | 'danger'; message: string } | null>(null)
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
-  const [bulkDeleteModal, setBulkDeleteModal] = useState(false)
-  const [bulkLoading, setBulkLoading] = useState(false)
-  const [bulkGenerating, setBulkGenerating] = useState(false)
-  const [bulkEmailing, setBulkEmailing] = useState(false)
-  const [bulkAlert, setBulkAlert] = useState<{ type: 'success' | 'danger'; message: string } | null>(null)
+	const [tenants, setTenants] = useState<any[]>([]);
+	const [properties, setProperties] = useState<any[]>([]);
+	const [leases, setLeases] = useState<any[]>([]);
+	const [printModal, setPrintModal] = useState(false);
+	const [printing, setPrinting] = useState<any>(null);
+	const printRef = useRef<HTMLDivElement>(null);
+	const [pdfGenerating, setPdfGenerating] = useState(false);
+	const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+	const [quittanceDocs, setQuittanceDocs] = useState<Record<number, any>>({});
+	const [emailSendingId, setEmailSendingId] = useState<number | null>(null);
+	const [emailResult, setEmailResult] = useState<{
+		type: "success" | "danger";
+		message: string;
+	} | null>(null);
+	const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+	const [bulkDeleteModal, setBulkDeleteModal] = useState(false);
+	const [bulkLoading, setBulkLoading] = useState(false);
+	const [bulkGenerating, setBulkGenerating] = useState(false);
+	const [bulkEmailing, setBulkEmailing] = useState(false);
+	const [bulkAlert, setBulkAlert] = useState<{
+		type: "success" | "danger";
+		message: string;
+	} | null>(null);
 
-  const emptyForm = { tenant_id: '', property_id: '', lease_id: '', payment_id: '', period: '', rent_amount: '', charges_amount: '0', total_amount: '', issue_date: new Date().toISOString().split('T')[0] }
+	const emptyForm = {
+		tenant_id: "",
+		property_id: "",
+		lease_id: "",
+		payment_id: "",
+		period: "",
+		rent_amount: "",
+		charges_amount: "0",
+		total_amount: "",
+		issue_date: new Date().toISOString().split("T")[0],
+	};
 
-  const {
-    items: quittances,
-    modalVisible, setModalVisible,
-    deleteModal, setDeleteModal,
-    editing, toDelete, form, formErrors,
-    setFieldValue, validateForm,
-    handleChange, openCreate, openEdit, openDelete,
-    handleDelete, fetchAll,
-  } = useEntityCrud({
-    service: QuittanceDataService,
-    emptyForm,
-    validationSchema: quittanceFormSchema,
-    toForm: (q) => ({ tenant_id: q.tenant_id || '', property_id: q.property_id || '', lease_id: q.lease_id || '', payment_id: q.payment_id || '', period: q.period || '', rent_amount: q.rent_amount || '', charges_amount: q.charges_amount || '0', total_amount: q.total_amount || '', issue_date: q.issue_date || '' }),
-  })
+	const {
+		items: quittances,
+		modalVisible,
+		setModalVisible,
+		deleteModal,
+		setDeleteModal,
+		editing,
+		toDelete,
+		form,
+		formErrors,
+		setFieldValue,
+		validateForm,
+		handleChange,
+		openCreate,
+		openEdit,
+		openDelete,
+		handleDelete,
+		fetchAll,
+	} = useEntityCrud({
+		service: QuittanceDataService,
+		emptyForm,
+		validationSchema: quittanceFormSchema,
+		toForm: (q) => ({
+			tenant_id: q.tenant_id || "",
+			property_id: q.property_id || "",
+			lease_id: q.lease_id || "",
+			payment_id: q.payment_id || "",
+			period: q.period || "",
+			rent_amount: q.rent_amount || "",
+			charges_amount: q.charges_amount || "0",
+			total_amount: q.total_amount || "",
+			issue_date: q.issue_date || "",
+		}),
+	});
 
-  const rent = parseFloat(form.rent_amount || '0')
-  const charges = parseFloat(form.charges_amount || '0')
+	const rent = Number.parseFloat(form.rent_amount || "0");
+	const charges = Number.parseFloat(form.charges_amount || "0");
 
-  const fetchDocs = () =>
-    DocumentDataService.getAll({ entity_type: 'quittance' })
-      .then((r) => {
-        const map: Record<number, any> = {}
-        r.data.forEach((d: any) => { map[d.entity_id] = d })
-        setQuittanceDocs(map)
-      })
-      .catch(console.error)
+	const fetchDocs = () =>
+		DocumentDataService.getAll({ entity_type: "quittance" })
+			.then((r) => {
+				const map: Record<number, any> = {};
+				r.data.forEach((d: any) => {
+					map[d.entity_id] = d;
+				});
+				setQuittanceDocs(map);
+			})
+			.catch(console.error);
 
-  useEffect(() => {
-    fetchDocs()
-    TenantDataService.getAll().then((r) => setTenants(r.data))
-    PropertyDataService.getAll().then((r) => setProperties(r.data))
-    LeaseDataService.getAll().then((r) => setLeases(r.data))
-  }, [])
+	useEffect(() => {
+		fetchDocs();
+		TenantDataService.getAll().then((r) => setTenants(r.data));
+		PropertyDataService.getAll().then((r) => setProperties(r.data));
+		LeaseDataService.getAll().then((r) => setLeases(r.data));
+	}, []);
 
-  const handleQuittanceChange = (e: React.ChangeEvent<any>) => {
-    const updated = { ...form, [e.target.name]: e.target.value }
-    if (e.target.name === 'rent_amount' || e.target.name === 'charges_amount') {
-      const r = parseFloat(e.target.name === 'rent_amount' ? e.target.value : form.rent_amount) || 0
-      const c = parseFloat(e.target.name === 'charges_amount' ? e.target.value : form.charges_amount) || 0
-      updated.total_amount = (r + c).toFixed(2)
-    }
-    Object.entries(updated).forEach(([key, value]) => setFieldValue(key, value))
-  }
+	const handleQuittanceChange = (e: React.ChangeEvent<any>) => {
+		const updated = { ...form, [e.target.name]: e.target.value };
+		if (e.target.name === "rent_amount" || e.target.name === "charges_amount") {
+			const r =
+				Number.parseFloat(
+					e.target.name === "rent_amount" ? e.target.value : form.rent_amount,
+				) || 0;
+			const c =
+				Number.parseFloat(
+					e.target.name === "charges_amount"
+						? e.target.value
+						: form.charges_amount,
+				) || 0;
+			updated.total_amount = (r + c).toFixed(2);
+		}
+		Object.entries(updated).forEach(([key, value]) =>
+			setFieldValue(key, value),
+		);
+	};
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const total = (parseFloat(form.rent_amount || '0') + parseFloat(form.charges_amount || '0')).toFixed(2)
-    if (!validateForm({ total_amount: total })) return
-    const fd = new FormData()
-    Object.entries({ ...form, total_amount: total }).forEach(([k, v]) => fd.append(k, v as string))
-    try {
-      if (editing) await QuittanceDataService.update(editing.id, fd)
-      else await QuittanceDataService.create(fd)
-      setModalVisible(false); fetchAll()
-    } catch (err) { console.error(err) }
-  }
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		const total = (
+			Number.parseFloat(form.rent_amount || "0") +
+			Number.parseFloat(form.charges_amount || "0")
+		).toFixed(2);
+		if (!validateForm({ total_amount: total })) return;
+		const fd = new FormData();
+		Object.entries({ ...form, total_amount: total }).forEach(([k, v]) =>
+			fd.append(k, v as string),
+		);
+		try {
+			if (editing) await QuittanceDataService.update(editing.id, fd);
+			else await QuittanceDataService.create(fd);
+			setModalVisible(false);
+			fetchAll();
+		} catch (err) {
+			console.error(err);
+		}
+	};
 
-  const handleEmailQuittance = async (id: number) => {
-    setEmailSendingId(id)
-    setEmailResult(null)
-    try {
-      const res = await PdfDataService.emailQuittance(id)
-      setEmailResult({ type: 'success', message: res.data.message })
-      fetchAll()
-    } catch (e: any) {
-      setEmailResult({ type: 'danger', message: e?.response?.data?.message || 'Erreur lors de l\'envoi.' })
-    } finally {
-      setEmailSendingId(null)
-    }
-  }
+	const handleEmailQuittance = async (id: number) => {
+		setEmailSendingId(id);
+		setEmailResult(null);
+		try {
+			const res = await PdfDataService.emailQuittance(id);
+			setEmailResult({ type: "success", message: res.data.message });
+			fetchAll();
+		} catch (e: any) {
+			setEmailResult({
+				type: "danger",
+				message: e?.response?.data?.message || "Erreur lors de l'envoi.",
+			});
+		} finally {
+			setEmailSendingId(null);
+		}
+	};
 
-  const handleGeneratePdf = async () => {
-    if (!printing?.id) return
-    setPdfGenerating(true); setPdfUrl(null)
-    try {
-      const res = await PdfDataService.generateQuittance(printing.id)
-      const doc = res.data.document
-      setPdfUrl(DocumentDataService.downloadUrl(doc.id))
-      setQuittanceDocs((prev) => ({ ...prev, [printing.id]: doc }))
-    } catch (e) { console.error(e) }
-    finally { setPdfGenerating(false) }
-  }
+	const handleGeneratePdf = async () => {
+		if (!printing?.id) return;
+		setPdfGenerating(true);
+		setPdfUrl(null);
+		try {
+			const res = await PdfDataService.generateQuittance(printing.id);
+			const doc = res.data.document;
+			setPdfUrl(DocumentDataService.downloadUrl(doc.id));
+			setQuittanceDocs((prev) => ({ ...prev, [printing.id]: doc }));
+		} catch (e) {
+			console.error(e);
+		} finally {
+			setPdfGenerating(false);
+		}
+	};
 
-  const isAllSelected = quittances.length > 0 && quittances.every((q) => selectedIds.has(q.id))
+	const isAllSelected =
+		quittances.length > 0 && quittances.every((q) => selectedIds.has(q.id));
 
-  const toggleSelectAll = () => {
-    if (isAllSelected) {
-      setSelectedIds(new Set())
-    } else {
-      setSelectedIds(new Set(quittances.map((q) => q.id)))
-    }
-  }
+	const toggleSelectAll = () => {
+		if (isAllSelected) setSelectedIds(new Set());
+		else setSelectedIds(new Set(quittances.map((q) => q.id)));
+	};
 
-  const toggleSelect = (id: number) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
+	const toggleSelect = (id: number) => {
+		setSelectedIds((prev) => {
+			const next = new Set(prev);
+			if (next.has(id)) next.delete(id);
+			else next.add(id);
+			return next;
+		});
+	};
 
-  const handleBulkDelete = async () => {
-    setBulkLoading(true)
-    try {
-      await QuittanceDataService.bulkDelete([...selectedIds])
-      const count = selectedIds.size
-      setSelectedIds(new Set())
-      fetchAll()
-      fetchDocs()
-      setBulkAlert({ type: 'success', message: `${count} quittance(s) supprimée(s).` })
-    } catch {
-      setBulkAlert({ type: 'danger', message: 'Erreur lors de la suppression.' })
-    } finally {
-      setBulkLoading(false)
-      setBulkDeleteModal(false)
-    }
-  }
+	const handleBulkDelete = async () => {
+		setBulkLoading(true);
+		try {
+			await QuittanceDataService.bulkDelete([...selectedIds]);
+			const count = selectedIds.size;
+			setSelectedIds(new Set());
+			fetchAll();
+			fetchDocs();
+			setBulkAlert({
+				type: "success",
+				message: `${count} quittance(s) supprimée(s).`,
+			});
+		} catch {
+			setBulkAlert({
+				type: "danger",
+				message: "Erreur lors de la suppression.",
+			});
+		} finally {
+			setBulkLoading(false);
+			setBulkDeleteModal(false);
+		}
+	};
 
-  const handleBulkGeneratePdf = async () => {
-    setBulkGenerating(true)
-    setBulkAlert(null)
-    try {
-      const res = await QuittanceDataService.bulkGeneratePdf([...selectedIds])
-      const { succeeded, failed } = res.data
-      setSelectedIds(new Set())
-      fetchDocs()
-      setBulkAlert({ type: succeeded > 0 ? 'success' : 'danger', message: `${succeeded} PDF généré(s)${failed > 0 ? `, ${failed} erreur(s)` : ''}.` })
-    } catch {
-      setBulkAlert({ type: 'danger', message: 'Erreur lors de la génération des PDFs.' })
-    } finally {
-      setBulkGenerating(false)
-    }
-  }
+	const handleBulkGeneratePdf = async () => {
+		setBulkGenerating(true);
+		setBulkAlert(null);
+		try {
+			const res = await QuittanceDataService.bulkGeneratePdf([...selectedIds]);
+			const { succeeded, failed } = res.data;
+			setSelectedIds(new Set());
+			fetchDocs();
+			setBulkAlert({
+				type: succeeded > 0 ? "success" : "danger",
+				message: `${succeeded} PDF généré(s)${failed > 0 ? `, ${failed} erreur(s)` : ""}.`,
+			});
+		} catch {
+			setBulkAlert({
+				type: "danger",
+				message: "Erreur lors de la génération des PDFs.",
+			});
+		} finally {
+			setBulkGenerating(false);
+		}
+	};
 
-  const handleBulkEmail = async () => {
-    setBulkEmailing(true)
-    setBulkAlert(null)
-    try {
-      const res = await QuittanceDataService.bulkEmail([...selectedIds])
-      const { sent, errors } = res.data
-      setSelectedIds(new Set())
-      fetchAll()
-      setBulkAlert({ type: sent > 0 ? 'success' : 'danger', message: `${sent} email(s) envoyé(s)${errors > 0 ? `, ${errors} erreur(s)` : ''}.` })
-    } catch (e: any) {
-      setBulkAlert({ type: 'danger', message: e?.response?.data?.message || "Erreur lors de l'envoi des emails." })
-    } finally {
-      setBulkEmailing(false)
-    }
-  }
+	const handleBulkEmail = async () => {
+		setBulkEmailing(true);
+		setBulkAlert(null);
+		try {
+			const res = await QuittanceDataService.bulkEmail([...selectedIds]);
+			const { sent, errors } = res.data;
+			setSelectedIds(new Set());
+			fetchAll();
+			setBulkAlert({
+				type: sent > 0 ? "success" : "danger",
+				message: `${sent} email(s) envoyé(s)${errors > 0 ? `, ${errors} erreur(s)` : ""}.`,
+			});
+		} catch (e: any) {
+			setBulkAlert({
+				type: "danger",
+				message:
+					e?.response?.data?.message || "Erreur lors de l'envoi des emails.",
+			});
+		} finally {
+			setBulkEmailing(false);
+		}
+	};
 
-  return (
-    <>
-      {emailResult && (
-        <CAlert color={emailResult.type} dismissible onClose={() => setEmailResult(null)} className="mb-3">
-          {emailResult.message}
-        </CAlert>
-      )}
-      {bulkAlert && (
-        <CAlert color={bulkAlert.type} dismissible onClose={() => setBulkAlert(null)} className="mb-3">
-          {bulkAlert.message}
-        </CAlert>
-      )}
-      <CRow className="mb-4 text-center">
-        <StatCard value={quittances.length} label={quittances.length > 1 ? 'Quittances émises' : 'Quittance émise'} color="primary" />
-        <StatCard value={`${quittances.reduce((s, q) => s + parseFloat(q.total_amount || 0), 0).toFixed(2)} €`} label="Montant total" color="success" />
-        <StatCard value={new Set(quittances.map((q) => q.tenant_id)).size} label={new Set(quittances.map((q) => q.tenant_id)).size > 1 ? 'Locataires concernés' : 'Locataire concerné'} color="info" />
-      </CRow>
+	return (
+		<>
+			{emailResult && (
+				<AppAlert
+					color={emailResult.type}
+					dismissible
+					onClose={() => setEmailResult(null)}
+					className="mb-3"
+				>
+					{emailResult.message}
+				</AppAlert>
+			)}
+			{bulkAlert && (
+				<AppAlert
+					color={bulkAlert.type}
+					dismissible
+					onClose={() => setBulkAlert(null)}
+					className="mb-3"
+				>
+					{bulkAlert.message}
+				</AppAlert>
+			)}
+			<div className="grid grid-cols-3 gap-3 mb-4 text-center">
+				<StatCard
+					value={quittances.length}
+					label={
+						quittances.length > 1 ? "Quittances émises" : "Quittance émise"
+					}
+					color="primary"
+				/>
+				<StatCard
+					value={`${quittances.reduce((s, q) => s + Number.parseFloat(q.total_amount || 0), 0).toFixed(2)} €`}
+					label="Montant total"
+					color="success"
+				/>
+				<StatCard
+					value={new Set(quittances.map((q) => q.tenant_id)).size}
+					label="Locataires concernés"
+					color="info"
+				/>
+			</div>
 
-      <EntityTableCard title="Quittances de loyer" addLabel="Nouvelle quittance" onAdd={openCreate}>
-        {selectedIds.size > 0 && (
-          <div className="d-flex align-items-center gap-2 p-2 mb-2 bg-light border rounded">
-            <span className="fw-semibold text-body">{selectedIds.size} sélectionné(s)</span>
-            <CButton size="sm" color="primary" variant="outline" onClick={handleBulkGeneratePdf} disabled={bulkGenerating || bulkLoading || bulkEmailing}>
-              {bulkGenerating ? <CSpinner size="sm" className="me-1" /> : <CIcon icon={cilDescription} className="me-1" />}
-              Générer PDFs
-            </CButton>
-            <CButton size="sm" color="info" variant="outline" onClick={handleBulkEmail} disabled={bulkEmailing || bulkLoading || bulkGenerating}>
-              {bulkEmailing ? <CSpinner size="sm" className="me-1" /> : <CIcon icon={cilSend} className="me-1" />}
-              Envoyer par email
-            </CButton>
-            <CButton size="sm" color="danger" variant="outline" onClick={() => setBulkDeleteModal(true)} disabled={bulkLoading || bulkGenerating || bulkEmailing}>
-              Supprimer la sélection
-            </CButton>
-            <CButton size="sm" color="secondary" variant="ghost" onClick={() => setSelectedIds(new Set())} disabled={bulkLoading || bulkGenerating || bulkEmailing}>
-              Annuler
-            </CButton>
-          </div>
-        )}
-        <CTable align="middle" hover responsive bordered>
-          <CTableHead color="light">
-            <CTableRow>
-              <CTableHeaderCell style={{ width: '40px' }}>
-                <input type="checkbox" className="form-check-input" checked={isAllSelected} onChange={toggleSelectAll} />
-              </CTableHeaderCell>
-              <CTableHeaderCell>N°</CTableHeaderCell><CTableHeaderCell>Période</CTableHeaderCell>
-              <CTableHeaderCell>Locataire</CTableHeaderCell><CTableHeaderCell>Bien</CTableHeaderCell>
-              <CTableHeaderCell>Loyer HC</CTableHeaderCell><CTableHeaderCell>Charges</CTableHeaderCell>
-              <CTableHeaderCell>Total</CTableHeaderCell><CTableHeaderCell>Date émission</CTableHeaderCell>
-              <CTableHeaderCell className="text-end">Actions</CTableHeaderCell>
-            </CTableRow>
-          </CTableHead>
-          <CTableBody>
-            {quittances.length === 0 ? (
-              <TableEmptyRow colSpan={10} message="Aucune quittance émise" />
-            ) : quittances.map((q) => (
-              <CTableRow key={q.id}>
-                <CTableDataCell>
-                  <input type="checkbox" className="form-check-input" checked={selectedIds.has(q.id)} onChange={() => toggleSelect(q.id)} />
-                </CTableDataCell>
-                <CTableDataCell><strong>{q.number}</strong></CTableDataCell>
-                <CTableDataCell>{q.period}</CTableDataCell>
-                <CTableDataCell>{q.Tenant ? `${q.Tenant.civility || ''} ${q.Tenant.lastname}` : '-'}</CTableDataCell>
-                <CTableDataCell>{q.Property ? `${q.Property.type} - ${q.Property.city}` : '-'}</CTableDataCell>
-                <CTableDataCell>{parseFloat(q.rent_amount || 0).toFixed(2)} €</CTableDataCell>
-                <CTableDataCell>{parseFloat(q.charges_amount || 0).toFixed(2)} €</CTableDataCell>
-                <CTableDataCell><strong>{parseFloat(q.total_amount || 0).toFixed(2)} €</strong></CTableDataCell>
-                <CTableDataCell>{q.issue_date}</CTableDataCell>
-                <CTableDataCell className="text-end">
-                  <ActionButtons onEdit={() => openEdit(q)} onDelete={() => openDelete(q)}>
-                    {quittanceDocs[q.id] ? (
-                      <CTooltip content="Télécharger PDF">
-                        <a href={DocumentDataService.downloadUrl(quittanceDocs[q.id].id)} target="_blank" rel="noopener noreferrer">
-                          <CButton color="light" size="sm" className="me-1"><CIcon icon={cilCloudDownload} /></CButton>
-                        </a>
-                      </CTooltip>
-                    ) : (
-                      <CTooltip content="Générer PDF">
-                        <CButton color="light" size="sm" className="me-1" onClick={() => { setPrinting(q); setPrintModal(true); setPdfUrl(null) }}>
-                          <CIcon icon={cilDescription} />
-                        </CButton>
-                      </CTooltip>
-                    )}
-                    <CTooltip content={q.email_sent_at ? `Envoyé le ${DateUtils.formatShort(q.email_sent_at)}` : 'Envoyer par email'}>
-                      <CButton color={q.email_sent_at ? 'success' : 'light'} size="sm" className="me-1" disabled={emailSendingId === q.id} onClick={() => handleEmailQuittance(q.id)}>
-                        {emailSendingId === q.id ? <CSpinner size="sm" /> : <CIcon icon={cilSend} />}
-                      </CButton>
-                    </CTooltip>
-                  </ActionButtons>
-                </CTableDataCell>
-              </CTableRow>
-            ))}
-          </CTableBody>
-        </CTable>
-      </EntityTableCard>
+			<EntityTableCard
+				title="Quittances de loyer"
+				addLabel="Nouvelle quittance"
+				onAdd={openCreate}
+			>
+				{selectedIds.size > 0 && (
+					<div className="flex items-center gap-2 px-4 py-2 bg-muted/50 border-b flex-wrap">
+						<span className="text-sm text-muted-foreground">
+							{selectedIds.size} sélectionnée(s)
+						</span>
+						<Button
+							size="sm"
+							variant="outline"
+							onClick={handleBulkGeneratePdf}
+							disabled={bulkGenerating}
+						>
+							{bulkGenerating ? (
+								<>
+									<Spinner size="sm" className="mr-1" />
+									Génération...
+								</>
+							) : (
+								<>
+									<FileText className="h-3 w-3 mr-1" />
+									Générer les PDFs
+								</>
+							)}
+						</Button>
+						<Button
+							size="sm"
+							variant="outline"
+							onClick={handleBulkEmail}
+							disabled={bulkEmailing}
+						>
+							{bulkEmailing ? (
+								<>
+									<Spinner size="sm" className="mr-1" />
+									Envoi...
+								</>
+							) : (
+								<>
+									<Send className="h-3 w-3 mr-1" />
+									Envoyer par email
+								</>
+							)}
+						</Button>
+						<Button
+							size="sm"
+							variant="destructive"
+							onClick={() => setBulkDeleteModal(true)}
+						>
+							Supprimer
+						</Button>
+					</div>
+				)}
+				<Table>
+					<TableHeader>
+						<TableRow>
+							<TableHead className="w-8">
+								<input
+									type="checkbox"
+									checked={isAllSelected}
+									onChange={toggleSelectAll}
+									className="h-4 w-4"
+								/>
+							</TableHead>
+							<TableHead>Période</TableHead>
+							<TableHead>Locataire</TableHead>
+							<TableHead>Bien</TableHead>
+							<TableHead>Loyer HC</TableHead>
+							<TableHead>Charges</TableHead>
+							<TableHead>Total CC</TableHead>
+							<TableHead>Émission</TableHead>
+							<TableHead />
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{quittances.length === 0 ? (
+							<TableEmptyRow colSpan={9} message="Aucune quittance" />
+						) : (
+							quittances.map((q) => (
+								<TableRow key={q.id}>
+									<TableCell>
+										<input
+											type="checkbox"
+											checked={selectedIds.has(q.id)}
+											onChange={() => toggleSelect(q.id)}
+											className="h-4 w-4"
+										/>
+									</TableCell>
+									<TableCell>
+										{DateUtils.formatMonthYear(q.period) || q.period || "-"}
+									</TableCell>
+									<TableCell>
+										{q.Tenant
+											? `${q.Tenant.civility || ""} ${q.Tenant.firstname} ${q.Tenant.lastname}`.trim()
+											: "-"}
+									</TableCell>
+									<TableCell>
+										{q.Property
+											? `${q.Property.type} – ${q.Property.city}`
+											: "-"}
+									</TableCell>
+									<TableCell>
+										{Number.parseFloat(q.rent_amount || 0).toFixed(2)} €
+									</TableCell>
+									<TableCell>
+										{Number.parseFloat(q.charges_amount || 0).toFixed(2)} €
+									</TableCell>
+									<TableCell>
+										{Number.parseFloat(q.total_amount || 0).toFixed(2)} €
+									</TableCell>
+									<TableCell>{q.issue_date || "-"}</TableCell>
+									<TableCell>
+										<div className="flex items-center gap-1">
+											<TooltipProvider>
+												{quittanceDocs[q.id] ? (
+													<Tooltip>
+														<TooltipTrigger asChild>
+															<a
+																href={DocumentDataService.downloadUrl(
+																	quittanceDocs[q.id].id,
+																)}
+																target="_blank"
+																rel="noreferrer"
+															>
+																<Button
+																	size="sm"
+																	variant="ghost"
+																	className="h-7 w-7 p-0"
+																>
+																	<Download className="h-3.5 w-3.5 text-emerald-600" />
+																</Button>
+															</a>
+														</TooltipTrigger>
+														<TooltipContent>Télécharger le PDF</TooltipContent>
+													</Tooltip>
+												) : (
+													<Tooltip>
+														<TooltipTrigger asChild>
+															<Button
+																size="sm"
+																variant="ghost"
+																className="h-7 w-7 p-0"
+																onClick={() => {
+																	setPrinting(q);
+																	setPrintModal(true);
+																}}
+															>
+																<FileText className="h-3.5 w-3.5" />
+															</Button>
+														</TooltipTrigger>
+														<TooltipContent>Générer PDF</TooltipContent>
+													</Tooltip>
+												)}
+												<Tooltip>
+													<TooltipTrigger asChild>
+														<Button
+															size="sm"
+															variant="ghost"
+															className="h-7 w-7 p-0"
+															onClick={() => handleEmailQuittance(q.id)}
+															disabled={emailSendingId === q.id}
+														>
+															{emailSendingId === q.id ? (
+																<Spinner size="sm" />
+															) : (
+																<Send className="h-3.5 w-3.5" />
+															)}
+														</Button>
+													</TooltipTrigger>
+													<TooltipContent>Envoyer par email</TooltipContent>
+												</Tooltip>
+											</TooltipProvider>
+											<ActionButtons
+												onEdit={() => openEdit(q)}
+												onDelete={() => openDelete(q)}
+											/>
+										</div>
+									</TableCell>
+								</TableRow>
+							))
+						)}
+					</TableBody>
+				</Table>
+			</EntityTableCard>
 
-      <CrudModal
-        visible={modalVisible}
-        editing={editing}
-        addTitle="Nouvelle quittance"
-        editTitle="Modifier la quittance"
-        size="xl"
-        onClose={() => setModalVisible(false)}
-        onSubmit={handleSubmit}
-        submitLabel={editing ? 'Modifier' : 'Créer'}
-      >
-        <CCol md={6}><CFormSelect label="Locataire" name="tenant_id" value={form.tenant_id} onChange={handleQuittanceChange}><option value="">-- Sélectionner --</option>{tenants.map((t) => <option key={t.id} value={t.id}>{`${t.civility || ''} ${t.firstname} ${t.lastname}`}</option>)}</CFormSelect></CCol>
-        <CCol md={6}><CFormSelect label="Bien" name="property_id" value={form.property_id} onChange={handleQuittanceChange}><option value="">-- Sélectionner --</option>{properties.map((p) => <option key={p.id} value={p.id}>{`${p.type} - ${p.address}, ${p.city}`}</option>)}</CFormSelect></CCol>
-        <CCol md={6}><CFormSelect label="Bail associé (optionnel)" name="lease_id" value={form.lease_id} onChange={handleQuittanceChange}><option value="">-- Aucun --</option>{leases.map((l) => <option key={l.id} value={l.id}>{`Bail ${l.Property?.city || ''} — ${l.start_date}`}</option>)}</CFormSelect></CCol>
-        <CCol md={6}><FormInputField type="text" name="period" label="Période (ex: Janvier 2024)" value={form.period} onChange={handleQuittanceChange} required error={formErrors.period} /></CCol>
-        <CCol md={4}><FormInputField type="number" name="rent_amount" label="Loyer hors charges (€)" value={form.rent_amount} onChange={handleQuittanceChange} required error={formErrors.rent_amount} /></CCol>
-        <CCol md={4}><FormInputField type="number" name="charges_amount" label="Charges (€)" value={form.charges_amount} onChange={handleQuittanceChange} error={formErrors.charges_amount} /></CCol>
-        <CCol md={4}><FormInputField type="number" name="total_amount" label="Total (€)" value={(rent + charges).toFixed(2)} readOnly /></CCol>
-        <CCol md={6}><FormInputField type="date" name="issue_date" label="Date d'émission" value={form.issue_date} onChange={handleQuittanceChange} required error={formErrors.issue_date} /></CCol>
-      </CrudModal>
+			<CrudModal
+				visible={modalVisible}
+				editing={editing}
+				addTitle="Nouvelle quittance"
+				editTitle="Modifier la quittance"
+				onClose={() => setModalVisible(false)}
+				onSubmit={handleSubmit}
+			>
+				<FormSelectField
+					label="Locataire"
+					name="tenant_id"
+					value={form.tenant_id}
+					onChange={handleQuittanceChange}
+					required
+					error={formErrors.tenant_id}
+				>
+					<option value="">— Choisir —</option>
+					{tenants.map((t) => (
+						<option key={t.id} value={t.id}>
+							{t.civility} {t.firstname} {t.lastname}
+						</option>
+					))}
+				</FormSelectField>
 
-      {printing && (
-        <CModal size="lg" alignment="center" visible={printModal} onClose={() => { setPrintModal(false); setPdfUrl(null) }}>
-          <CModalHeader><CModalTitle>Quittance {printing.number}</CModalTitle></CModalHeader>
-          <CModalBody>
-            {pdfUrl && (
-              <CAlert color="success" className="d-flex align-items-center gap-2 mb-3">
-                <CIcon icon={cilDescription} className="me-1" />
-                PDF généré —{' '}
-                <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="alert-link d-flex align-items-center gap-1">
-                  Ouvrir <CIcon icon={cilExternalLink} size="sm" />
-                </a>
-              </CAlert>
-            )}
-            <div ref={printRef}>
-              <div className="header"><h1>Quittance de loyer</h1><h2>N° {printing.number} — {printing.period}</h2></div>
-              <div className="section"><h3>Bailleur</h3><div className="row"><span className="label">Entité</span><span className="value">Voir document PDF généré</span></div></div>
-              <div className="section">
-                <h3>Locataire</h3>
-                {printing.Tenant && (<>
-                  <div className="row"><span className="label">Nom</span><span className="value">{printing.Tenant.civility || ''} {printing.Tenant.firstname} {printing.Tenant.lastname}</span></div>
-                  <div className="row"><span className="label">Email</span><span className="value">{printing.Tenant.email}</span></div>
-                </>)}
-              </div>
-              <div className="section">
-                <h3>Bien loué</h3>
-                {printing.Property && (<>
-                  <div className="row"><span className="label">Adresse</span><span className="value">{printing.Property.address}, {printing.Property.zipcode} {printing.Property.city}</span></div>
-                  <div className="row"><span className="label">Type</span><span className="value">{printing.Property.type}</span></div>
-                </>)}
-              </div>
-              <div className="section">
-                <h3>Détail du paiement</h3>
-                <div className="row"><span className="label">Période</span><span className="value">{printing.period}</span></div>
-                <div className="row"><span className="label">Loyer hors charges</span><span className="value">{parseFloat(printing.rent_amount).toFixed(2)} €</span></div>
-                <div className="row"><span className="label">Charges</span><span className="value">{parseFloat(printing.charges_amount || 0).toFixed(2)} €</span></div>
-                <div className="total">Total payé : <strong>{parseFloat(printing.total_amount).toFixed(2)} €</strong></div>
-              </div>
-              <div className="signature">
-                <div className="signature-box">Signature du bailleur</div>
-                <div className="signature-box">Signature du locataire</div>
-              </div>
-            </div>
-            <hr />
-            <div className="d-flex gap-2 justify-content-end">
-              <CButton color="secondary" onClick={() => { setPrintModal(false); setPdfUrl(null) }}>Fermer</CButton>
-              <CButton color="info" variant="outline" onClick={() => printing && handleEmailQuittance(printing.id)} disabled={emailSendingId === printing?.id}>
-                {emailSendingId === printing?.id ? <CSpinner size="sm" className="me-1" /> : <CIcon icon={cilSend} className="me-1" />}
-                Envoyer par email
-              </CButton>
-              <CButton color="primary" onClick={handleGeneratePdf} disabled={pdfGenerating}>
-                {pdfGenerating ? <CSpinner size="sm" className="me-1" /> : <CIcon icon={cilDescription} className="me-1" />}
-                Générer PDF
-              </CButton>
-            </div>
-          </CModalBody>
-        </CModal>
-      )}
+				<FormSelectField
+					label="Bien"
+					name="property_id"
+					value={form.property_id}
+					onChange={handleQuittanceChange}
+					required
+					error={formErrors.property_id}
+				>
+					<option value="">— Choisir —</option>
+					{properties.map((p) => (
+						<option key={p.id} value={p.id}>
+							{p.type} – {p.city}
+						</option>
+					))}
+				</FormSelectField>
 
-      <DeleteModal
-        visible={deleteModal}
-        itemLabel={toDelete ? `la quittance ${toDelete.number || ''}` : undefined}
-        onClose={() => setDeleteModal(false)}
-        onConfirm={handleDelete}
-      />
-      <DeleteModal
-        visible={bulkDeleteModal}
-        itemLabel={`${selectedIds.size} quittance(s)`}
-        onClose={() => setBulkDeleteModal(false)}
-        onConfirm={handleBulkDelete}
-      />
-    </>
-  )
-}
+				<FormSelectField
+					label="Bail"
+					name="lease_id"
+					value={form.lease_id}
+					onChange={handleQuittanceChange}
+				>
+					<option value="">— Aucun bail —</option>
+					{leases.map((l) => (
+						<option key={l.id} value={l.id}>
+							{l.Tenant
+								? `${l.Tenant.firstname} ${l.Tenant.lastname}`
+								: `Bail #${l.id}`}{" "}
+							– {l.start_date}
+						</option>
+					))}
+				</FormSelectField>
 
-export default Quittances
+				<FormInputField
+					label="Période"
+					name="period"
+					type="month"
+					value={form.period}
+					onChange={handleQuittanceChange}
+					required
+					error={formErrors.period}
+				/>
+				<FormInputField
+					label="Loyer HC (€)"
+					name="rent_amount"
+					type="number"
+					step="0.01"
+					value={form.rent_amount}
+					onChange={handleQuittanceChange}
+					required
+					error={formErrors.rent_amount}
+				/>
+				<FormInputField
+					label="Charges (€)"
+					name="charges_amount"
+					type="number"
+					step="0.01"
+					value={form.charges_amount}
+					onChange={handleQuittanceChange}
+				/>
+				<FormInputField
+					label={`Total CC : ${(rent + charges).toFixed(2)} €`}
+					name="total_amount"
+					type="number"
+					step="0.01"
+					value={(rent + charges).toFixed(2)}
+					readOnly
+				/>
+				<FormInputField
+					label="Date d'émission"
+					name="issue_date"
+					type="date"
+					value={form.issue_date}
+					onChange={handleQuittanceChange}
+					required
+					error={formErrors.issue_date}
+				/>
+			</CrudModal>
+
+			<DeleteModal
+				visible={deleteModal}
+				itemLabel={
+					toDelete
+						? `la quittance de ${DateUtils.formatMonthYear(toDelete.period) || toDelete.period}`
+						: ""
+				}
+				onClose={() => setDeleteModal(false)}
+				onConfirm={handleDelete}
+			/>
+
+			<DeleteModal
+				visible={bulkDeleteModal}
+				itemLabel={`${selectedIds.size} quittance(s)`}
+				onClose={() => setBulkDeleteModal(false)}
+				onConfirm={handleBulkDelete}
+			/>
+
+			<Dialog
+				open={printModal}
+				onOpenChange={(o) => {
+					if (!o) {
+						setPrintModal(false);
+						setPdfUrl(null);
+					}
+				}}
+			>
+				<DialogContent className="max-w-lg">
+					<DialogHeader>
+						<DialogTitle>
+							Quittance –{" "}
+							{printing
+								? DateUtils.formatMonthYear(printing.period) || printing.period
+								: ""}
+						</DialogTitle>
+					</DialogHeader>
+					<div className="space-y-3">
+						{printing && (
+							<p className="text-sm text-muted-foreground">
+								{`${printing.Tenant?.civility || ""} ${printing.Tenant?.firstname || ""} ${printing.Tenant?.lastname || ""}`.trim()}
+								<br />
+								Total :{" "}
+								{Number.parseFloat(printing.total_amount || 0).toFixed(2)} €
+							</p>
+						)}
+						{pdfUrl ? (
+							<div className="flex gap-2">
+								<a href={pdfUrl} target="_blank" rel="noreferrer">
+									<Button variant="outline" size="sm">
+										<ExternalLink className="h-4 w-4 mr-1" />
+										Ouvrir
+									</Button>
+								</a>
+								<a href={pdfUrl} download>
+									<Button variant="outline" size="sm">
+										<Download className="h-4 w-4 mr-1" />
+										Télécharger
+									</Button>
+								</a>
+							</div>
+						) : (
+							<Button onClick={handleGeneratePdf} disabled={pdfGenerating}>
+								{pdfGenerating ? (
+									<>
+										<Spinner size="sm" className="mr-2" />
+										Génération...
+									</>
+								) : (
+									<>
+										<FileText className="h-4 w-4 mr-1" />
+										Générer le PDF
+									</>
+								)}
+							</Button>
+						)}
+					</div>
+				</DialogContent>
+			</Dialog>
+		</>
+	);
+};
+
+export default Quittances;

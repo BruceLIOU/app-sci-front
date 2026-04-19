@@ -8,8 +8,8 @@
 		"build": "tsc -b && vite build",
 		"preview": "vite preview",
 		"prepare": "husky",
-		"lint": "biome check .",
-		"lint:fix": "biome check --write .",
+		"lint": "biome check . --diagnostic-level=error",
+		"lint:fix": "biome check --write . --diagnostic-level=error",
 		"format": "biome format --write .",
 		"commitlint": "commitlint --from=HEAD~1 --to=HEAD --verbose"
 	},
@@ -28,11 +28,25 @@
 		"@fullcalendar/react": "^6.1.20",
 		"@fullcalendar/timegrid": "^6.1.20",
 		"@js-temporal/polyfill": "^0.5.1",
+		"@radix-ui/react-avatar": "^1.1.11",
+		"@radix-ui/react-dialog": "^1.1.15",
+		"@radix-ui/react-dropdown-menu": "^2.1.16",
+		"@radix-ui/react-label": "^2.1.8",
+		"@radix-ui/react-scroll-area": "^1.2.10",
+		"@radix-ui/react-select": "^2.2.6",
+		"@radix-ui/react-separator": "^1.1.8",
+		"@radix-ui/react-slot": "^1.2.4",
+		"@radix-ui/react-switch": "^1.2.6",
+		"@radix-ui/react-tooltip": "^1.2.8",
 		"@reduxjs/toolkit": "^2.11.2",
+		"@tailwindcss/vite": "^4.2.2",
 		"axios": "^1.15.0",
 		"chart.js": "^4.5.1",
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
 		"date-fns": "^4.1.0",
 		"leaflet": "^1.9.4",
+		"lucide-react": "^1.8.0",
 		"react": "^19.2.5",
 		"react-dom": "^19.2.5",
 		"react-leaflet": "^5.0.0",
@@ -40,6 +54,8 @@
 		"react-router-dom": "^7.14.0",
 		"simplebar": "^6.3.3",
 		"simplebar-react": "^3.3.2",
+		"tailwind-merge": "^3.5.0",
+		"tailwindcss": "^4.2.2",
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
@@ -52,13 +68,13 @@
 		"@types/react-dom": "^19.2.3",
 		"@vitejs/plugin-react": "^6.0.1",
 		"husky": "^9.1.7",
-		"sass": "^1.99.0",
 		"lint-staged": "^15.2.10",
+		"sass": "^1.99.0",
 		"typescript": "^6.0.2",
 		"vite": "^8.0.8",
 		"vite-tsconfig-paths": "^6.1.1"
 	},
 	"lint-staged": {
-		"*.{js,jsx,ts,tsx,json,css,scss,md}": "biome check --write --files-ignore-unknown=true"
+		"*.{js,jsx,ts,tsx,json,css,scss,md}": "biome check --write --diagnostic-level=error --files-ignore-unknown=true"
 	}
 }

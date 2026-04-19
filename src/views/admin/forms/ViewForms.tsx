@@ -1,118 +1,132 @@
-import React from 'react'
-import { CRow, CFormLabel, CCol, CFormInput, CContainer, CButton, CBadge } from '@coreui/react'
-import DocumentsSection from '../../../components/DocumentsSection'
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import type React from "react";
+import DocumentsSection from "../../../components/DocumentsSection";
 
 interface ViewFormsProps {
-  entities: string
-  data: any[]
-  setModalVisible: (v: boolean) => void
+	entities: string;
+	data: any[];
+	setModalVisible: (v: boolean) => void;
 }
 
 const ViewForms = ({ entities, data, setModalVisible }: ViewFormsProps) => {
-  const isTenant = entities === 'tenants'
+	const isTenant = entities === "tenants";
 
-  return (
-    <>
-      {data.map((item) => (
-        <CContainer key={item.id}>
-          {isTenant ? (
-            <>
-              {item.avatar && (
-                <div className="text-center mb-3">
-                  <img src={item.avatar} alt="Avatar" className="rounded-circle" style={{ width: 96, height: 96, objectFit: 'cover' }} />
-                </div>
-              )}
-              <CRow className="mb-3"><CFormLabel className="col-sm-3 col-form-label">Civilité</CFormLabel><CCol sm={9}><CFormInput type="text" defaultValue={item.civility} readOnly plainText /></CCol></CRow>
-              <CRow className="mb-3"><CFormLabel className="col-sm-3 col-form-label">Prénom</CFormLabel><CCol sm={9}><CFormInput type="text" defaultValue={item.firstname} readOnly plainText /></CCol></CRow>
-              <CRow className="mb-3"><CFormLabel className="col-sm-3 col-form-label">Nom</CFormLabel><CCol sm={9}><CFormInput type="text" defaultValue={item.lastname} readOnly plainText /></CCol></CRow>
-              <CRow className="mb-3">
-                <CFormLabel className="col-sm-3 col-form-label">Email</CFormLabel>
-                <CCol sm={9} className="d-flex align-items-center">
-                  {item.email ? <a href={`mailto:${item.email}`} className="form-control-plaintext text-decoration-none">{item.email}</a> : <span className="form-control-plaintext text-muted">—</span>}
-                </CCol>
-              </CRow>
-              <CRow className="mb-3">
-                <CFormLabel className="col-sm-3 col-form-label">Téléphone</CFormLabel>
-                <CCol sm={9} className="d-flex align-items-center">
-                  {item.mobile ? <a href={`tel:${item.mobile}`} className="form-control-plaintext text-decoration-none">{item.mobile}</a> : <span className="form-control-plaintext text-muted">—</span>}
-                </CCol>
-              </CRow>
-              <CRow className="mb-3">
-                <CFormLabel className="col-sm-3 col-form-label">Bien loué</CFormLabel>
-                <CCol sm={9}>
-                  <CFormInput type="text" defaultValue={item.Property ? `${item.Property.type} de ${item.Property.area} m² à ${item.Property.city}` : 'Aucun bien associé'} readOnly plainText />
-                </CCol>
-              </CRow>
-              {(item.previous_address || item.previous_city) && (
-                <CRow className="mb-3">
-                  <CFormLabel className="col-sm-3 col-form-label">Anc. adresse</CFormLabel>
-                  <CCol sm={9}>
-                    <CFormInput type="text" defaultValue={[item.previous_address, item.previous_zipcode, item.previous_city].filter(Boolean).join(', ')} readOnly plainText />
-                  </CCol>
-                </CRow>
-              )}
-              {item.comments && (
-                <CRow className="mb-3">
-                  <CFormLabel className="col-sm-3 col-form-label">Commentaires</CFormLabel>
-                  <CCol sm={9}><p className="form-control-plaintext" style={{ whiteSpace: 'pre-wrap' }}>{item.comments}</p></CCol>
-                </CRow>
-              )}
-              <hr />
-              <strong className="d-block mb-2">Documents</strong>
-              <DocumentsSection entityType="tenant" entityId={item.id} />
-            </>
-          ) : (
-            <>
-              <CRow className="mb-3"><CFormLabel className="col-sm-2 col-form-label">Adresse</CFormLabel><CCol sm={10}><CFormInput type="text" defaultValue={item.address} readOnly plainText /></CCol></CRow>
-              <CRow className="mb-3"><CFormLabel className="col-sm-2 col-form-label">Code postal</CFormLabel><CCol sm={10}><CFormInput type="text" defaultValue={item.zipcode} readOnly plainText /></CCol></CRow>
-              <CRow className="mb-3"><CFormLabel className="col-sm-2 col-form-label">Ville</CFormLabel><CCol sm={10}><CFormInput type="text" defaultValue={item.city} readOnly plainText /></CCol></CRow>
-              <CRow className="mb-3"><CFormLabel className="col-sm-2 col-form-label">Type</CFormLabel><CCol sm={10}><CFormInput type="text" defaultValue={item.type} readOnly plainText /></CCol></CRow>
-              <CRow className="mb-3"><CFormLabel className="col-sm-2 col-form-label">Pièces</CFormLabel><CCol sm={10}><CFormInput type="text" defaultValue={item.pieces} readOnly plainText /></CCol></CRow>
-              <CRow className="mb-3"><CFormLabel className="col-sm-2 col-form-label">Superficie</CFormLabel><CCol sm={10}><CFormInput type="text" defaultValue={`${item.area} m²`} readOnly plainText /></CCol></CRow>
-              {(() => {
-                const rooms: { type: string; count: number }[] = (() => { try { return JSON.parse(item.rooms || '[]') } catch { return [] } })()
-                const features: string[] = (() => { try { return JSON.parse(item.features || '[]') } catch { return [] } })()
-                return (
-                  <>
-                    {rooms.length > 0 && (
-                      <CRow className="mb-3">
-                        <CFormLabel className="col-sm-2 col-form-label">Détail pièces</CFormLabel>
-                        <CCol sm={10} className="d-flex flex-wrap gap-2 align-self-center">
-                          {rooms.map((r, i) => (
-                            <CBadge key={i} color="info" className="fs-6 fw-normal">{r.count > 1 ? `${r.count}× ` : ''}{r.type}</CBadge>
-                          ))}
-                        </CCol>
-                      </CRow>
-                    )}
-                    {features.length > 0 && (
-                      <CRow className="mb-3">
-                        <CFormLabel className="col-sm-2 col-form-label">Caractéristiques</CFormLabel>
-                        <CCol sm={10} className="d-flex flex-wrap gap-2 align-self-center">
-                          {features.map((f, i) => (
-                            <CBadge key={i} color="success" className="fs-6 fw-normal">{f}</CBadge>
-                          ))}
-                        </CCol>
-                      </CRow>
-                    )}
-                    {item.comments && (
-                      <CRow className="mb-3">
-                        <CFormLabel className="col-sm-2 col-form-label">Commentaires</CFormLabel>
-                        <CCol sm={10}><p className="form-control-plaintext">{item.comments}</p></CCol>
-                      </CRow>
-                    )}
-                  </>
-                )
-              })()}
-            </>
-          )}
-          <hr />
-          <CCol md={12} className="d-flex gap-2 justify-content-end">
-            <CButton color="primary" onClick={() => setModalVisible(false)}>Quitter</CButton>
-          </CCol>
-        </CContainer>
-      ))}
-    </>
-  )
-}
+	const Field = ({
+		label,
+		value,
+		link,
+	}: { label: string; value?: React.ReactNode; link?: string }) => (
+		<div className="grid grid-cols-3 gap-2 py-1.5 border-b last:border-0">
+			<span className="text-sm font-medium text-muted-foreground">{label}</span>
+			<span className="col-span-2 text-sm">
+				{link && value ? (
+					<a href={link} className="text-primary hover:underline">
+						{value}
+					</a>
+				) : (
+					value || <span className="text-muted-foreground">—</span>
+				)}
+			</span>
+		</div>
+	);
 
-export default ViewForms
+	return (
+		<>
+			{data.map((item) => (
+				<div key={item.id}>
+					{isTenant ? (
+						<>
+							{item.avatar && (
+								<div className="text-center mb-3">
+									<img
+										src={item.avatar}
+										alt="Avatar"
+										className="rounded-full mx-auto"
+										style={{ width: 96, height: 96, objectFit: "cover" }}
+									/>
+								</div>
+							)}
+							<Field label="Civilité" value={item.civility} />
+							<Field label="Prénom" value={item.firstname} />
+							<Field label="Nom" value={item.lastname} />
+							<Field
+								label="Email"
+								value={item.email}
+								link={item.email ? `mailto:${item.email}` : undefined}
+							/>
+							<Field
+								label="Téléphone"
+								value={item.mobile}
+								link={item.mobile ? `tel:${item.mobile}` : undefined}
+							/>
+							<Field
+								label="Bien loué"
+								value={
+									item.Property
+										? `${item.Property.type} de ${item.Property.area} m² à ${item.Property.city}`
+										: "Aucun bien associé"
+								}
+							/>
+							{(item.previous_address || item.previous_city) && (
+								<Field
+									label="Anc. adresse"
+									value={[
+										item.previous_address,
+										item.previous_zipcode,
+										item.previous_city,
+									]
+										.filter(Boolean)
+										.join(", ")}
+								/>
+							)}
+							{item.comments && (
+								<Field
+									label="Commentaires"
+									value={
+										<span style={{ whiteSpace: "pre-wrap" }}>
+											{item.comments}
+										</span>
+									}
+								/>
+							)}
+						</>
+					) : (
+						<>
+							<Field
+								label="Type"
+								value={<Badge variant="outline">{item.type}</Badge>}
+							/>
+							<Field label="Adresse" value={item.address} />
+							<Field label="Ville" value={item.city} />
+							<Field label="Code postal" value={item.zipcode} />
+							<Field
+								label="Surface"
+								value={item.area ? `${item.area} m²` : undefined}
+							/>
+							<Field label="Pièces" value={item.pieces} />
+							{item.comments && (
+								<Field
+									label="Commentaires"
+									value={
+										<span style={{ whiteSpace: "pre-wrap" }}>
+											{item.comments}
+										</span>
+									}
+								/>
+							)}
+							<div className="mt-3">
+								<DocumentsSection entityType="property" entityId={item.id} />
+							</div>
+						</>
+					)}
+					<div className="flex justify-end mt-4 pt-3 border-t">
+						<Button onClick={() => setModalVisible(false)}>Quitter</Button>
+					</div>
+				</div>
+			))}
+		</>
+	);
+};
+
+export default ViewForms;

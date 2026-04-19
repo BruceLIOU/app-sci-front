@@ -1,29 +1,39 @@
-import React from 'react'
-import { CButton, CCol, CContainer, CFormInput, CInputGroup, CInputGroupText, CRow } from '@coreui/react'
-import CIcon from '@coreui/icons-react'
-import { cilMagnifyingGlass } from '@coreui/icons'
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
+import React from "react";
 
 const Page500 = () => {
-  return (
-    <div className="bg-light min-vh-100 d-flex flex-row align-items-center">
-      <CContainer>
-        <CRow className="justify-content-center">
-          <CCol md={6}>
-            <span className="clearfix">
-              <h1 className="float-start display-3 me-4">500</h1>
-              <h4 className="pt-3">Houston, we have a problem!</h4>
-              <p className="text-medium-emphasis float-start">The page you are looking for is temporarily unavailable.</p>
-            </span>
-            <CInputGroup className="input-prepend">
-              <CInputGroupText><CIcon icon={cilMagnifyingGlass} /></CInputGroupText>
-              <CFormInput type="text" placeholder="What are you looking for?" />
-              <CButton color="info">Search</CButton>
-            </CInputGroup>
-          </CCol>
-        </CRow>
-      </CContainer>
-    </div>
-  )
-}
+	return (
+		<div className="bg-muted min-h-screen flex flex-row items-center">
+			<div className="container mx-auto">
+				<div className="flex justify-center">
+					<div className="max-w-md w-full mx-4">
+						<span className="clearfix">
+							<h1 className="float-left text-6xl font-bold mr-4">500</h1>
+							<h4 className="pt-3 text-lg font-semibold">
+								Houston, we have a problem!
+							</h4>
+							<p className="text-muted-foreground">
+								The page you are looking for is temporarily unavailable.
+							</p>
+						</span>
+						<div className="flex gap-2 mt-4">
+							<div className="relative flex-1">
+								<Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+								<Input
+									type="text"
+									placeholder="What are you looking for?"
+									className="pl-8"
+								/>
+							</div>
+							<Button variant="secondary">Search</Button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+};
 
-export default Page500
+export default Page500;

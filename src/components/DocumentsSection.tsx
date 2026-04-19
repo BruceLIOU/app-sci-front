@@ -1,229 +1,289 @@
-import React, { useEffect, useState } from 'react'
-import DocumentDataService from '../services/document.service'
-import {
-  CButton, CSpinner, CBadge, CFormInput, CFormSelect, CFormTextarea, CRow, CCol,
-} from '@coreui/react'
-import CIcon from '@coreui/icons-react'
-import { cilCloudDownload, cilTrash, cilPlus, cilX } from '@coreui/icons'
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { cn } from "@/lib/utils";
+import { CloudDownload, Plus, Trash2, X } from "lucide-react";
+import type React from "react";
+import { useEffect, useState } from "react";
+import DocumentDataService from "../services/document.service";
 
 const CATEGORIES: { value: string; label: string; color: string }[] = [
-  { value: 'bail', label: 'Bail', color: 'primary' },
-  { value: 'etat-des-lieux', label: 'État des lieux', color: 'info' },
-  { value: 'quittance', label: 'Quittance', color: 'success' },
-  { value: 'assurance', label: 'Assurance', color: 'warning' },
-  { value: 'diagnostic', label: 'Diagnostic', color: 'secondary' },
-  { value: 'identite', label: 'Identité', color: 'dark' },
-  { value: 'justificatif', label: 'Justificatif', color: 'light' },
-  { value: 'revenu', label: 'Revenus', color: 'success' },
-  { value: 'autre', label: 'Autre', color: 'secondary' },
-]
+	{ value: "bail", label: "Bail", color: "blue" },
+	{ value: "etat-des-lieux", label: "État des lieux", color: "teal" },
+	{ value: "quittance", label: "Quittance", color: "emerald" },
+	{ value: "assurance", label: "Assurance", color: "amber" },
+	{ value: "diagnostic", label: "Diagnostic", color: "slate" },
+	{ value: "identite", label: "Identité", color: "slate" },
+	{ value: "justificatif", label: "Justificatif", color: "slate" },
+	{ value: "revenu", label: "Revenus", color: "emerald" },
+	{ value: "autre", label: "Autre", color: "slate" },
+];
+
+const catBadgeClass: Record<string, string> = {
+	blue: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+	teal: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300",
+	emerald:
+		"bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+	amber: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+	slate: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
+};
 
 const CATEGORIES_BY_ENTITY: Record<string, string[]> = {
-  property: ['bail', 'etat-des-lieux', 'diagnostic', 'assurance', 'autre'],
-  tenant: ['identite', 'assurance', 'justificatif', 'revenu', 'autre'],
-  lease: ['bail', 'quittance', 'assurance', 'diagnostic', 'autre'],
-  inspection: ['etat-des-lieux', 'diagnostic', 'autre'],
-}
+	property: ["bail", "etat-des-lieux", "diagnostic", "assurance", "autre"],
+	tenant: ["identite", "assurance", "justificatif", "revenu", "autre"],
+	lease: ["bail", "quittance", "assurance", "diagnostic", "autre"],
+	inspection: ["etat-des-lieux", "diagnostic", "autre"],
+};
 
 function formatSize(bytes?: number) {
-  if (!bytes) return ''
-  if (bytes < 1024) return `${bytes} o`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} Ko`
-  return `${(bytes / 1024 / 1024).toFixed(1)} Mo`
+	if (!bytes) return "";
+	if (bytes < 1024) return `${bytes} o`;
+	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} Ko`;
+	return `${(bytes / 1024 / 1024).toFixed(1)} Mo`;
 }
 
 interface DocumentsSectionProps {
-  entityType: 'property' | 'tenant' | 'lease' | 'inspection'
-  entityId: number
+	entityType: "property" | "tenant" | "lease" | "inspection";
+	entityId: number;
 }
 
-const emptyForm = { title: '', category: '', notes: '' }
+const emptyForm = { title: "", category: "", notes: "" };
 
-const DocumentsSection: React.FC<DocumentsSectionProps> = ({ entityType, entityId }) => {
-  const [docs, setDocs] = useState<any[]>([])
-  const [loading, setLoading] = useState(false)
-  const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState(emptyForm)
-  const [file, setFile] = useState<File | null>(null)
-  const [uploading, setUploading] = useState(false)
-  const [deleting, setDeleting] = useState<number | null>(null)
+const DocumentsSection: React.FC<DocumentsSectionProps> = ({
+	entityType,
+	entityId,
+}) => {
+	// biome-ignore lint/suspicious/noExplicitAny: shape docs non typée
+	const [docs, setDocs] = useState<any[]>([]);
+	const [loading, setLoading] = useState(false);
+	const [showForm, setShowForm] = useState(false);
+	const [form, setForm] = useState(emptyForm);
+	const [file, setFile] = useState<File | null>(null);
+	const [uploading, setUploading] = useState(false);
+	const [deleting, setDeleting] = useState<number | null>(null);
 
-  const allowedCategories = CATEGORIES.filter((c) =>
-    (CATEGORIES_BY_ENTITY[entityType] ?? []).includes(c.value),
-  )
+	const allowedCategories = CATEGORIES.filter((c) =>
+		(CATEGORIES_BY_ENTITY[entityType] ?? []).includes(c.value),
+	);
 
-  const fetchDocs = () => {
-    setLoading(true)
-    DocumentDataService.getAll({ entity_type: entityType, entity_id: entityId })
-      .then((r) => setDocs(r.data))
-      .catch(console.error)
-      .finally(() => setLoading(false))
-  }
+	const fetchDocs = () => {
+		setLoading(true);
+		DocumentDataService.getAll({ entity_type: entityType, entity_id: entityId })
+			.then((r) => setDocs(r.data))
+			.catch(console.error)
+			.finally(() => setLoading(false));
+	};
 
-  useEffect(() => {
-    if (entityId) fetchDocs()
-  }, [entityType, entityId])
+	// biome-ignore lint/correctness/useExhaustiveDependencies: fetchDocs redéfinie inline
+	useEffect(() => {
+		if (entityId) fetchDocs();
+	}, [entityId]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!file) return
-    const fd = new FormData()
-    fd.append('title', form.title)
-    fd.append('category', form.category)
-    fd.append('notes', form.notes)
-    fd.append('entity_type', entityType)
-    fd.append('entity_id', String(entityId))
-    fd.append('file', file)
-    setUploading(true)
-    try {
-      await DocumentDataService.create(fd)
-      setShowForm(false)
-      setForm(emptyForm)
-      setFile(null)
-      fetchDocs()
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setUploading(false)
-    }
-  }
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!file) return;
+		const fd = new FormData();
+		fd.append("title", form.title);
+		fd.append("category", form.category);
+		fd.append("notes", form.notes);
+		fd.append("entity_type", entityType);
+		fd.append("entity_id", String(entityId));
+		fd.append("file", file);
+		setUploading(true);
+		try {
+			await DocumentDataService.create(fd);
+			setShowForm(false);
+			setForm(emptyForm);
+			setFile(null);
+			fetchDocs();
+		} catch (err) {
+			console.error(err);
+		} finally {
+			setUploading(false);
+		}
+	};
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Supprimer ce document ?')) return
-    setDeleting(id)
-    try {
-      await DocumentDataService.delete(id)
-      setDocs((prev) => prev.filter((d) => d.id !== id))
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setDeleting(null)
-    }
-  }
+	const handleDelete = async (id: number) => {
+		if (!window.confirm("Supprimer ce document ?")) return;
+		setDeleting(id);
+		try {
+			await DocumentDataService.delete(id);
+			setDocs((prev) => prev.filter((d) => d.id !== id));
+		} catch (err) {
+			console.error(err);
+		} finally {
+			setDeleting(null);
+		}
+	};
 
-  const getCatMeta = (val: string) => CATEGORIES.find((c) => c.value === val)
+	const getCatMeta = (val: string) => CATEGORIES.find((c) => c.value === val);
 
-  return (
-    <div>
-      <div className="d-flex justify-content-between align-items-center mb-2">
-        <span className="fw-semibold text-medium-emphasis small">{docs.length} document{docs.length > 1 ? 's' : ''}</span>
-        <CButton
-          color="primary"
-          size="sm"
-          variant="outline"
-          onClick={() => {
-            setShowForm((v) => !v)
-            if (showForm) { setForm(emptyForm); setFile(null) }
-          }}
-        >
-          {showForm ? <><CIcon icon={cilX} className="me-1" />Annuler</> : <><CIcon icon={cilPlus} className="me-1" />Ajouter</>}
-        </CButton>
-      </div>
+	return (
+		<div>
+			<div className="flex justify-between items-center mb-2">
+				<span className="text-sm text-muted-foreground font-medium">
+					{docs.length} document{docs.length > 1 ? "s" : ""}
+				</span>
+				<Button
+					variant="outline"
+					size="sm"
+					className="h-7 gap-1 text-xs"
+					onClick={() => {
+						setShowForm((v) => !v);
+						if (showForm) {
+							setForm(emptyForm);
+							setFile(null);
+						}
+					}}
+				>
+					{showForm ? (
+						<>
+							<X className="h-3 w-3" />
+							Annuler
+						</>
+					) : (
+						<>
+							<Plus className="h-3 w-3" />
+							Ajouter
+						</>
+					)}
+				</Button>
+			</div>
 
-      {/* Formulaire d'ajout */}
-      {showForm && (
-        <form onSubmit={handleSubmit} className="border rounded p-3 mb-3 bg-light">
-          <CRow className="g-2 mb-2">
-            <CCol md={6}>
-              <CFormInput
-                size="sm"
-                placeholder="Titre du document"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                required
-              />
-            </CCol>
-            <CCol md={6}>
-              <CFormSelect
-                size="sm"
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-                required
-              >
-                <option value="">-- Catégorie --</option>
-                {allowedCategories.map((c) => (
-                  <option key={c.value} value={c.value}>{c.label}</option>
-                ))}
-              </CFormSelect>
-            </CCol>
-            <CCol md={12}>
-              <CFormInput
-                type="file"
-                size="sm"
-                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                required
-              />
-            </CCol>
-            <CCol md={12}>
-              <CFormTextarea
-                placeholder="Notes (optionnel)"
-                rows={2}
-                value={form.notes}
-                onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              />
-            </CCol>
-          </CRow>
-          <div className="d-flex justify-content-end gap-2">
-            <CButton
-              color="secondary"
-              size="sm"
-              type="button"
-              onClick={() => { setShowForm(false); setForm(emptyForm); setFile(null) }}
-            >
-              Annuler
-            </CButton>
-            <CButton color="primary" size="sm" type="submit" disabled={uploading}>
-              {uploading ? <CSpinner size="sm" className="me-1" /> : null}
-              Enregistrer
-            </CButton>
-          </div>
-        </form>
-      )}
+			{showForm && (
+				<form
+					onSubmit={handleSubmit}
+					className="border rounded-lg p-3 mb-3 bg-muted/30 space-y-2"
+				>
+					<div className="grid grid-cols-2 gap-2">
+						<input
+							className="h-8 rounded-md border border-input bg-background px-3 text-sm col-span-2 sm:col-span-1"
+							placeholder="Titre du document"
+							value={form.title}
+							onChange={(e) => setForm({ ...form, title: e.target.value })}
+							required
+						/>
+						<select
+							className="h-8 rounded-md border border-input bg-background px-3 text-sm col-span-2 sm:col-span-1"
+							value={form.category}
+							onChange={(e) => setForm({ ...form, category: e.target.value })}
+							required
+						>
+							<option value="">-- Catégorie --</option>
+							{allowedCategories.map((c) => (
+								<option key={c.value} value={c.value}>
+									{c.label}
+								</option>
+							))}
+						</select>
+						<input
+							type="file"
+							className="h-8 col-span-2 text-sm file:mr-2 file:h-7 file:rounded-md file:border-0 file:bg-muted file:px-2 file:text-xs"
+							onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+							required
+						/>
+						<textarea
+							className="col-span-2 rounded-md border border-input bg-background px-3 py-2 text-sm resize-none"
+							placeholder="Notes (optionnel)"
+							rows={2}
+							value={form.notes}
+							onChange={(e) => setForm({ ...form, notes: e.target.value })}
+						/>
+					</div>
+					<div className="flex justify-end gap-2">
+						<Button
+							variant="outline"
+							size="sm"
+							type="button"
+							onClick={() => {
+								setShowForm(false);
+								setForm(emptyForm);
+								setFile(null);
+							}}
+						>
+							Annuler
+						</Button>
+						<Button size="sm" type="submit" disabled={uploading}>
+							{uploading && <Spinner size="sm" className="mr-1" />}
+							Enregistrer
+						</Button>
+					</div>
+				</form>
+			)}
 
-      {/* Liste des documents */}
-      {loading ? (
-        <div className="text-center py-3"><CSpinner size="sm" /></div>
-      ) : docs.length === 0 ? (
-        <p className="text-medium-emphasis fst-italic small">Aucun document associé.</p>
-      ) : (
-        <ul className="list-group list-group-flush">
-          {docs.map((doc) => {
-            const cat = getCatMeta(doc.category)
-            return (
-              <li key={doc.id} className="list-group-item px-0 py-2 d-flex align-items-center gap-2">
-                <div className="flex-grow-1 min-width-0">
-                  <div className="fw-semibold small text-truncate">{doc.title}</div>
-                  <div className="d-flex align-items-center gap-1 mt-1 flex-wrap">
-                    {cat && <CBadge color={cat.color} className="small">{cat.label}</CBadge>}
-                    {doc.file_size && <span className="text-muted" style={{ fontSize: '0.75rem' }}>{formatSize(doc.file_size)}</span>}
-                    {doc.notes && <span className="text-muted fst-italic" style={{ fontSize: '0.75rem', maxWidth: 200 }} title={doc.notes}>{doc.notes}</span>}
-                  </div>
-                </div>
-                <a
-                  href={DocumentDataService.downloadUrl(doc.id)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-light btn-sm"
-                  title="Télécharger"
-                >
-                  <CIcon icon={cilCloudDownload} />
-                </a>
-                <CButton
-                  color="light"
-                  size="sm"
-                  title="Supprimer"
-                  onClick={() => handleDelete(doc.id)}
-                  disabled={deleting === doc.id}
-                >
-                  {deleting === doc.id ? <CSpinner size="sm" /> : <CIcon icon={cilTrash} className="text-danger" />}
-                </CButton>
-              </li>
-            )
-          })}
-        </ul>
-      )}
-    </div>
-  )
-}
+			{loading ? (
+				<div className="flex justify-center py-4">
+					<Spinner />
+				</div>
+			) : docs.length === 0 ? (
+				<p className="text-sm text-muted-foreground italic">
+					Aucun document associé.
+				</p>
+			) : (
+				<ul className="divide-y">
+					{docs.map((doc) => {
+						const cat = getCatMeta(doc.category);
+						return (
+							<li key={doc.id} className="flex items-center gap-2 py-2">
+								<div className="flex-1 min-w-0">
+									<div className="text-sm font-medium truncate">
+										{doc.title}
+									</div>
+									<div className="flex items-center gap-1 mt-0.5 flex-wrap">
+										{cat && (
+											<span
+												className={cn(
+													"inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+													catBadgeClass[cat.color],
+												)}
+											>
+												{cat.label}
+											</span>
+										)}
+										{doc.file_size && (
+											<span className="text-xs text-muted-foreground">
+												{formatSize(doc.file_size)}
+											</span>
+										)}
+										{doc.notes && (
+											<span
+												className="text-xs text-muted-foreground italic truncate max-w-[200px]"
+												title={doc.notes}
+											>
+												{doc.notes}
+											</span>
+										)}
+									</div>
+								</div>
+								<a
+									href={DocumentDataService.downloadUrl(doc.id)}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="flex items-center justify-center h-7 w-7 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+									title="Télécharger"
+								>
+									<CloudDownload className="h-4 w-4" />
+								</a>
+								<Button
+									variant="ghost"
+									size="icon"
+									className="h-7 w-7 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+									title="Supprimer"
+									onClick={() => handleDelete(doc.id)}
+									disabled={deleting === doc.id}
+								>
+									{deleting === doc.id ? (
+										<Spinner size="sm" />
+									) : (
+										<Trash2 className="h-3.5 w-3.5" />
+									)}
+								</Button>
+							</li>
+						);
+					})}
+				</ul>
+			)}
+		</div>
+	);
+};
 
-export default DocumentsSection
+export default DocumentsSection;

@@ -1,17 +1,29 @@
-import http from '../utils/http-common'
+import http from "../utils/http-common";
 
 class ChargeDataService {
-  getAll() { return http.get('/charges') }
-  get(id: number) { return http.get(`/charges/${id}`) }
-  create(data: FormData) { return http.post('/charges', data) }
-  update(id: number, data: FormData) { return http.put(`/charges/${id}`, data) }
-  delete(id: number) { return http.delete(`/charges/${id}`) }
-  syncMatera() { return http.post('/charges/sync-matera') }
-  bulkDelete(ids: number[]) {
-    const fd = new FormData()
-    fd.append('ids', JSON.stringify(ids))
-    return http.post('/charges/bulk-delete', fd)
-  }
+	getAll() {
+		return http.get("/charges");
+	}
+	get(id: number) {
+		return http.get(`/charges/${id}`);
+	}
+	create(data: FormData) {
+		return http.post("/charges", data);
+	}
+	update(id: number, data: FormData) {
+		return http.put(`/charges/${id}`, data);
+	}
+	delete(id: number) {
+		return http.delete(`/charges/${id}`);
+	}
+	syncMatera() {
+		return http.post("/charges/sync-matera");
+	}
+	bulkDelete(ids: number[]) {
+		const fd = new FormData();
+		fd.append("ids", JSON.stringify(ids));
+		return http.post("/charges/bulk-delete", fd);
+	}
 }
 
-export default new ChargeDataService()
+export default new ChargeDataService();

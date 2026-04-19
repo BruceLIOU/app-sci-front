@@ -1,52 +1,72 @@
-import React from 'react'
-import { CButton, CTooltip } from '@coreui/react'
-import CIcon from '@coreui/icons-react'
-import { cilPen, cilTrash } from '@coreui/icons'
-import { useSelector } from 'react-redux'
-import { RootState } from '../store'
+import { Button } from "@/components/ui/button";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Pencil, Trash2 } from "lucide-react";
+import type React from "react";
+import { useSelector } from "react-redux";
+import type { RootState } from "../store";
 
 interface ActionButtonsProps {
-  onEdit: () => void
-  onDelete: () => void
-  editTooltip?: string
-  deleteTooltip?: string
-  children?: React.ReactNode
+	onEdit: () => void;
+	onDelete: () => void;
+	editTooltip?: string;
+	deleteTooltip?: string;
+	children?: React.ReactNode;
 }
 
-/**
- * Boutons d'actions réutilisables pour les lignes de tableau.
- * Utilisez `children` pour ajouter des boutons supplémentaires avant Modifier/Supprimer.
- * Les boutons Modifier/Supprimer sont masqués pour les utilisateurs avec le rôle 'viewer'.
- */
 const ActionButtons: React.FC<ActionButtonsProps> = ({
-  onEdit,
-  onDelete,
-  editTooltip = 'Modifier',
-  deleteTooltip = 'Supprimer',
-  children,
+	onEdit,
+	onDelete,
+	editTooltip = "Modifier",
+	deleteTooltip = "Supprimer",
+	children,
 }) => {
-  const userRole = useSelector((state: RootState) => state.auth.user?.role ?? 'viewer')
-  const isAdmin = userRole === 'admin'
+	const userRole = useSelector(
+		(state: RootState) => state.auth.user?.role ?? "viewer",
+	);
+	const isAdmin = userRole === "admin";
 
-  return (
-    <>
-      {children}
-      {isAdmin && (
-        <>
-          <CTooltip content={editTooltip}>
-            <CButton color="light" size="sm" className="me-1 app-table-action-button" onClick={onEdit}>
-              <CIcon icon={cilPen} />
-            </CButton>
-          </CTooltip>
-          <CTooltip content={deleteTooltip}>
-            <CButton color="light" size="sm" className="app-table-action-button" onClick={onDelete}>
-              <CIcon icon={cilTrash} />
-            </CButton>
-          </CTooltip>
-        </>
-      )}
-    </>
-  )
-}
+	return (
+		<TooltipProvider delayDuration={300}>
+			<div className="flex items-center gap-1">
+				{children}
+				{isAdmin && (
+					<>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Button
+									size="icon"
+									variant="ghost"
+									className="h-7 w-7 rounded-md"
+									onClick={onEdit}
+								>
+									<Pencil className="h-3.5 w-3.5" />
+								</Button>
+							</TooltipTrigger>
+							<TooltipContent>{editTooltip}</TooltipContent>
+						</Tooltip>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Button
+									size="icon"
+									variant="ghost"
+									className="h-7 w-7 rounded-md text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+									onClick={onDelete}
+								>
+									<Trash2 className="h-3.5 w-3.5" />
+								</Button>
+							</TooltipTrigger>
+							<TooltipContent>{deleteTooltip}</TooltipContent>
+						</Tooltip>
+					</>
+				)}
+			</div>
+		</TooltipProvider>
+	);
+};
 
-export default ActionButtons
+export default ActionButtons;

@@ -1,15 +1,14 @@
-import { cilAccountLogout, cilMoon, cilSettings, cilUser } from "@coreui/icons";
-import CIcon from "@coreui/icons-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-	CAvatar,
-	CDropdown,
-	CDropdownDivider,
-	CDropdownHeader,
-	CDropdownItem,
-	CDropdownMenu,
-	CDropdownToggle,
-	CFormSwitch,
-} from "@coreui/react";
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Switch } from "@/components/ui/switch";
+import { LogOut, Moon, Settings, User } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -59,80 +58,91 @@ const AppHeaderDropdown = () => {
 				"data-coreui-theme",
 				checked ? "dark" : "light",
 			);
+			document.documentElement.classList.toggle("dark", checked);
 		} catch {
 			/* ignore */
 		}
 	};
 
 	return (
-		<CDropdown variant="nav-item">
-			<CDropdownToggle className="py-0 px-2 app-profile-trigger" caret={false}>
-				{avatarSrc && !avatarLoadFailed ? (
-					<CAvatar
-						src={avatarSrc}
-						size="md"
-						onError={() => setAvatarLoadFailed(true)}
-					/>
-				) : (
-					<CAvatar color="primary" size="md">
-						{initials}
-					</CAvatar>
-				)}
-			</CDropdownToggle>
-			<CDropdownMenu
+		<DropdownMenu>
+			<DropdownMenuTrigger asChild>
+				<button
+					type="button"
+					className="py-0 px-2 app-profile-trigger focus:outline-none"
+				>
+					<Avatar className="h-8 w-8">
+						{avatarSrc && !avatarLoadFailed ? (
+							<AvatarImage
+								src={avatarSrc}
+								onError={() => setAvatarLoadFailed(true)}
+							/>
+						) : null}
+						<AvatarFallback className="bg-primary text-primary-foreground text-xs">
+							{initials}
+						</AvatarFallback>
+					</Avatar>
+				</button>
+			</DropdownMenuTrigger>
+			<DropdownMenuContent
+				align="end"
 				className="pt-0 app-dropdown-menu"
 				style={{ minWidth: "220px" }}
 			>
-				<CDropdownHeader className="bg-body-secondary fw-semibold py-2">
-					<div className="small text-truncate">{user?.name}</div>
-					<div className="text-medium-emphasis" style={{ fontSize: "0.72rem" }}>
+				<DropdownMenuLabel className="bg-muted/50 py-2">
+					<div className="text-sm truncate font-medium">{user?.name}</div>
+					<div
+						className="text-muted-foreground"
+						style={{ fontSize: "0.72rem" }}
+					>
 						{user?.email}
 					</div>
-				</CDropdownHeader>
+				</DropdownMenuLabel>
 
-				<CDropdownItem
+				<DropdownMenuSeparator />
+
+				<DropdownMenuItem
 					onClick={() => navigate("/admin/profile")}
-					style={{ cursor: "pointer" }}
+					className="cursor-pointer"
 				>
-					<CIcon icon={cilUser} className="me-2" />
+					<User className="mr-2 h-4 w-4" />
 					Mon profil
-				</CDropdownItem>
+				</DropdownMenuItem>
 
-				<CDropdownItem
+				<DropdownMenuItem
 					onClick={() => navigate("/admin/settings")}
-					style={{ cursor: "pointer" }}
+					className="cursor-pointer"
 				>
-					<CIcon icon={cilSettings} className="me-2" />
+					<Settings className="mr-2 h-4 w-4" />
 					Paramètres
-				</CDropdownItem>
+				</DropdownMenuItem>
 
-				<CDropdownDivider />
+				<DropdownMenuSeparator />
 
 				{/* Toggle darkMode inline */}
-				<div className="px-3 py-2 d-flex align-items-center justify-content-between">
-					<span className="small">
-						<CIcon icon={cilMoon} className="me-2" />
+				<div className="px-3 py-2 flex items-center justify-between">
+					<span className="text-sm flex items-center">
+						<Moon className="mr-2 h-4 w-4" />
 						Mode sombre
 					</span>
-					<CFormSwitch
+					<Switch
 						id="darkModeToggle"
 						checked={user?.preferences?.darkMode || false}
-						onChange={(e) => handleDarkMode(e.target.checked)}
+						onCheckedChange={handleDarkMode}
 					/>
 				</div>
 
-				<CDropdownDivider />
+				<DropdownMenuSeparator />
 
-				<CDropdownItem
+				<DropdownMenuItem
 					onClick={handleLogout}
-					style={{ cursor: "pointer" }}
-					className="text-danger"
+					className="cursor-pointer text-destructive focus:text-destructive"
 				>
-					<CIcon icon={cilAccountLogout} className="me-2" />
+					<LogOut className="mr-2 h-4 w-4" />
 					Se déconnecter
-				</CDropdownItem>
-			</CDropdownMenu>
-		</CDropdown>
+				</DropdownMenuItem>
+			</DropdownMenuContent>
+		</DropdownMenu>
 	);
 };
 

@@ -1,140 +1,122 @@
-import React from 'react'
-import CIcon from '@coreui/icons-react'
 import {
-  cilHome,
-  cilContact,
-  cilEuro,
-  cilSpeedometer,
-  cilChartLine,
-  cilFolder,
-  cilDescription,
-  cilList,
-  cilTask,
-  cilPeople,
-  cilBuilding,
-  cilCalendar,
-} from '@coreui/icons'
-import { CNavItem, CNavTitle } from '@coreui/react'
-import { ComponentType } from 'react'
+	Building2,
+	Calendar,
+	ClipboardList,
+	Euro,
+	FileText,
+	Folder,
+	Home,
+	LayoutDashboard,
+	List,
+	TrendingUp,
+	User,
+	Users,
+} from "lucide-react";
+import type React from "react";
 
-interface NavItem {
-  component: ComponentType<any>
-  name: string
-  to?: string
-  icon?: React.ReactNode
-  items?: NavItem[]
-  roles?: ('admin' | 'viewer')[]
+export interface NavItem {
+	type: "item" | "title";
+	name: string;
+	to?: string;
+	icon?: React.ReactNode;
+	roles?: ("admin" | "viewer")[];
 }
 
 const _nav: NavItem[] = [
-  {
-    component: CNavItem,
-    name: 'Tableau de bord',
-    to: '/dashboard',
-    icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
-  },
-  {
-    component: CNavTitle,
-    name: 'Gestion locative',
-  },
-  {
-    component: CNavItem,
-    name: 'Mes biens',
-    to: '/admin/properties',
-    icon: <CIcon icon={cilHome} customClassName="nav-icon" />,
-  },
-  {
-    component: CNavItem,
-    name: 'Mes locataires',
-    to: '/admin/tenants',
-    icon: <CIcon icon={cilContact} customClassName="nav-icon" />,
-  },
-  {
-    component: CNavItem,
-    name: 'Baux',
-    to: '/admin/leases',
-    icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
-  },
-  {
-    component: CNavItem,
-    name: 'États des lieux',
-    to: '/admin/inspections',
-    icon: <CIcon icon={cilTask} customClassName="nav-icon" />,
-  },
-  {
-    component: CNavItem,
-    name: 'Calendrier visites',
-    to: '/admin/visits',
-    icon: <CIcon icon={cilCalendar} customClassName="nav-icon" />,
-  },
-  {
-    component: CNavTitle,
-    name: 'Finance',
-    roles: ['admin'],
-  },
-  {
-    component: CNavItem,
-    name: 'Paiements',
-    to: '/admin/payments',
-    icon: <CIcon icon={cilEuro} customClassName="nav-icon" />,
-    roles: ['admin'],
-  },
-  {
-    component: CNavItem,
-    name: 'Quittances',
-    to: '/admin/quittances',
-    icon: <CIcon icon={cilList} customClassName="nav-icon" />,
-    roles: ['admin'],
-  },
-  {
-    component: CNavItem,
-    name: 'Charges',
-    to: '/admin/charges',
-    icon: <CIcon icon={cilBuilding} customClassName="nav-icon" />,
-    roles: ['admin'],
-  },
-  {
-    component: CNavItem,
-    name: 'Comptabilité',
-    to: '/admin/comptability',
-    icon: <CIcon icon={cilChartLine} customClassName="nav-icon" />,
-    roles: ['admin'],
-  },
-  {
-    component: CNavTitle,
-    name: 'Bailleurs',
-  },
-  {
-    component: CNavItem,
-    name: 'Co-bailleurs',
-    to: '/admin/associates',
-    icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
-  },
-  {
-    component: CNavItem,
-    name: 'Déclaration 2072',
-    to: '/admin/declarations',
-    icon: <CIcon icon={cilChartLine} customClassName="nav-icon" />,
-    roles: ['admin'],
-  },
-  {
-    component: CNavItem,
-    name: 'Documents',
-    to: '/admin/documents',
-    icon: <CIcon icon={cilFolder} customClassName="nav-icon" />,
-  },
-  {
-    component: CNavTitle,
-    name: 'Application',
-    roles: ['admin'],
-  },
-  {
-    component: CNavItem,
-    name: 'Utilisateurs',
-    to: '/admin/users',
-    icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
-    roles: ['admin'],
-  },
-]
+	{
+		type: "item",
+		name: "Tableau de bord",
+		to: "/dashboard",
+		icon: <LayoutDashboard className="w-5 h-5" />,
+	},
+	{ type: "title", name: "Gestion locative" },
+	{
+		type: "item",
+		name: "Mes biens",
+		to: "/admin/properties",
+		icon: <Home className="w-5 h-5" />,
+	},
+	{
+		type: "item",
+		name: "Mes locataires",
+		to: "/admin/tenants",
+		icon: <User className="w-5 h-5" />,
+	},
+	{
+		type: "item",
+		name: "Baux",
+		to: "/admin/leases",
+		icon: <FileText className="w-5 h-5" />,
+	},
+	{
+		type: "item",
+		name: "États des lieux",
+		to: "/admin/inspections",
+		icon: <ClipboardList className="w-5 h-5" />,
+	},
+	{
+		type: "item",
+		name: "Calendrier visites",
+		to: "/admin/visits",
+		icon: <Calendar className="w-5 h-5" />,
+	},
+	{ type: "title", name: "Finance", roles: ["admin"] },
+	{
+		type: "item",
+		name: "Paiements",
+		to: "/admin/payments",
+		icon: <Euro className="w-5 h-5" />,
+		roles: ["admin"],
+	},
+	{
+		type: "item",
+		name: "Quittances",
+		to: "/admin/quittances",
+		icon: <List className="w-5 h-5" />,
+		roles: ["admin"],
+	},
+	{
+		type: "item",
+		name: "Charges",
+		to: "/admin/charges",
+		icon: <Building2 className="w-5 h-5" />,
+		roles: ["admin"],
+	},
+	{
+		type: "item",
+		name: "Comptabilité",
+		to: "/admin/comptability",
+		icon: <TrendingUp className="w-5 h-5" />,
+		roles: ["admin"],
+	},
+	{ type: "title", name: "Bailleurs" },
+	{
+		type: "item",
+		name: "Co-bailleurs",
+		to: "/admin/associates",
+		icon: <Users className="w-5 h-5" />,
+	},
+	{
+		type: "item",
+		name: "Déclaration 2072",
+		to: "/admin/declarations",
+		icon: <TrendingUp className="w-5 h-5" />,
+		roles: ["admin"],
+	},
+	{
+		type: "item",
+		name: "Documents",
+		to: "/admin/documents",
+		icon: <Folder className="w-5 h-5" />,
+	},
+	{ type: "title", name: "Application", roles: ["admin"] },
+	{
+		type: "item",
+		name: "Utilisateurs",
+		to: "/admin/users",
+		icon: <Users className="w-5 h-5" />,
+		roles: ["admin"],
+	},
+];
 
-export default _nav
+export default _nav;

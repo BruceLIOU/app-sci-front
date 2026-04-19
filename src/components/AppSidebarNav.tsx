@@ -1,69 +1,44 @@
-import React from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
-import { CBadge, CNavLink } from '@coreui/react'
+import { cn } from "@/lib/utils";
+import React from "react";
+import { NavLink } from "react-router-dom";
+import type { NavItem } from "../_nav";
 
-interface NavItem {
-  component: any
-  name?: string
-  icon?: React.ReactNode
-  badge?: { color: string; text: string }
-  to?: string
-  items?: NavItem[]
-  [key: string]: any
-}
+export const AppSidebarNav = ({
+	items,
+	narrow = false,
+}: { items: NavItem[]; narrow?: boolean }) => (
+	<React.Fragment>
+		{items.map((item, index) => {
+			if (item.type === "title") {
+				if (narrow) return null;
+				return (
+					<div key={item.name} className="nav-title">
+						{item.name}
+					</div>
+				);
+			}
 
-export const AppSidebarNav = ({ items }: { items: NavItem[] }) => {
-  const location = useLocation()
-
-  const navLink = (name?: string, icon?: React.ReactNode, badge?: { color: string; text: string }) => (
-    <>
-      {icon && icon}
-      {name && name}
-      {badge && (
-        <CBadge color={badge.color} className="ms-auto">
-          {badge.text}
-        </CBadge>
-      )}
-    </>
-  )
-
-  const navItem = (item: NavItem, index: number) => {
-    const { component, name, badge, icon, to, ...rest } = item
-    const Component = component
-    return (
-      <Component key={index} {...rest}>
-        {to ? (
-          <CNavLink as={NavLink} to={to}>
-            {navLink(name, icon, badge)}
-          </CNavLink>
-        ) : (
-          navLink(name, icon, badge)
-        )}
-      </Component>
-    )
-  }
-
-  const navGroup = (item: NavItem, index: number) => {
-    const { component, name, icon, to, ...rest } = item
-    const Component = component
-    return (
-      <Component
-        idx={String(index)}
-        key={index}
-        toggler={navLink(name, icon)}
-        visible={location.pathname.startsWith(to || '')}
-        {...rest}
-      >
-        {item.items?.map((child, i) =>
-          child.items ? navGroup(child, i) : navItem(child, i),
-        )}
-      </Component>
-    )
-  }
-
-  return (
-    <React.Fragment>
-      {items && items.map((item, index) => (item.items ? navGroup(item, index) : navItem(item, index)))}
-    </React.Fragment>
-  )
-}
+			return (
+				<NavLink
+					key={item.to ?? item.name}
+					to={item.to ?? ""}
+					className={({ isActive }) =>
+						cn(
+							"nav-link flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors",
+							isActive
+								? "nav-link-active bg-white/10 text-white"
+								: "text-white/70 hover:text-white hover:bg-white/8",
+						)
+					}
+				>
+					{item.icon && (
+						<span className="shrink-0 flex items-center w-5 h-5">
+							{item.icon}
+						</span>
+					)}
+					{!narrow && <span>{item.name}</span>}
+				</NavLink>
+			);
+		})}
+	</React.Fragment>
+);

@@ -1,17 +1,17 @@
-import React from 'react'
-import { CFooter } from '@coreui/react'
+import React from "react";
 
-const AppFooter = () => {
-  return (
-    <CFooter className="app-footer px-4">
-      <div className="app-footer-copy">
-        <a href="https://coreui.io" target="_blank" rel="noopener noreferrer">
-          Bruce LIOU
-        </a>
-        <span className="ms-1">&copy; 2024-{new Date().getFullYear()}.</span>
-      </div>
-    </CFooter>
-  )
-}
+const AppFooter = () => (
+	<footer className="app-footer px-4 py-2 text-xs text-muted-foreground border-t flex items-center gap-1">
+		<a
+			href="https://bruceliou.fr"
+			target="_blank"
+			rel="noopener noreferrer"
+			className="hover:underline"
+		>
+			Bruce LIOU
+		</a>
+		<span>&copy; 2024-{new Date().getFullYear()}.</span>
+	</footer>
+);
 
-export default React.memo(AppFooter)
+export default React.memo(AppFooter);

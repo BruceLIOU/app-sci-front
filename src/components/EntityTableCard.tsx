@@ -1,50 +1,49 @@
-import React from 'react'
-import { CCard, CCardBody, CCardHeader, CButton } from '@coreui/react'
-import CIcon from '@coreui/icons-react'
-import { cilPlus } from '@coreui/icons'
-import { useSelector } from 'react-redux'
-import { RootState } from '../store'
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Plus } from "lucide-react";
+import type React from "react";
+import { useSelector } from "react-redux";
+import type { RootState } from "../store";
 
 interface EntityTableCardProps {
-  title: string
-  addLabel?: string
-  onAdd?: () => void
-  children: React.ReactNode
+	title: string;
+	addLabel?: string;
+	onAdd?: () => void;
+	children: React.ReactNode;
 }
 
-/**
- * CCard avec en-tête contenant un titre et (optionnellement) un bouton "Ajouter".
- * Le bouton "Ajouter" est masqué pour les utilisateurs avec le rôle 'viewer'.
- *
- * @example
- * <EntityTableCard title="Baux de location" addLabel="Nouveau bail" onAdd={openCreate}>
- *   <ViewControlBar ... />
- *   <CTable>...</CTable>
- * </EntityTableCard>
- */
 const EntityTableCard: React.FC<EntityTableCardProps> = ({
-  title,
-  addLabel = 'Ajouter',
-  onAdd,
-  children,
+	title,
+	addLabel = "Ajouter",
+	onAdd,
+	children,
 }) => {
-  const userRole = useSelector((state: RootState) => state.auth.user?.role ?? 'viewer')
-  const isAdmin = userRole === 'admin'
+	const userRole = useSelector(
+		(state: RootState) => state.auth.user?.role ?? "viewer",
+	);
+	const isAdmin = userRole === "admin";
 
-  return (
-    <CCard className="app-entity-card app-table-card">
-      <CCardHeader className="d-flex justify-content-between align-items-center">
-        <strong className="app-card-title">{title}</strong>
-        {isAdmin && onAdd && (
-          <CButton color="primary" size="sm" onClick={onAdd} className="app-ghost-button">
-            <CIcon icon={cilPlus} className="me-1" />
-            {addLabel}
-          </CButton>
-        )}
-      </CCardHeader>
-      <CCardBody className="app-table-card-body">{children}</CCardBody>
-    </CCard>
-  )
-}
+	return (
+		<Card>
+			<CardHeader className="flex flex-row items-center justify-between py-3 px-4 border-b space-y-0">
+				<h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
+					{title}
+				</h3>
+				{isAdmin && onAdd && (
+					<Button
+						size="sm"
+						variant="outline"
+						onClick={onAdd}
+						className="h-7 gap-1 text-xs"
+					>
+						<Plus className="h-3 w-3" />
+						{addLabel}
+					</Button>
+				)}
+			</CardHeader>
+			<CardContent className="p-0">{children}</CardContent>
+		</Card>
+	);
+};
 
-export default EntityTableCard
+export default EntityTableCard;
