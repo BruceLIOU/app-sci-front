@@ -4,7 +4,13 @@ const Dashboard = React.lazy(() => import("./views/dashboard/Dashboard"));
 const Properties = React.lazy(
 	() => import("./views/admin/properties/Properties"),
 );
+const PropertyFormPage = React.lazy(
+	() => import("./views/admin/properties/PropertyFormPage"),
+);
 const Tenants = React.lazy(() => import("./views/admin/tenants/Tenants"));
+const TenantFormPage = React.lazy(
+	() => import("./views/admin/tenants/TenantFormPage"),
+);
 const Leases = React.lazy(() => import("./views/admin/leases/Leases"));
 const Inspections = React.lazy(
 	() => import("./views/admin/inspections/Inspections"),
@@ -31,6 +37,10 @@ const Users = React.lazy(() => import("./views/admin/users/Users"));
 const Notifications = React.lazy(
 	() => import("./views/admin/notifications/Notifications"),
 );
+const Maintenance = React.lazy(
+	() => import("./views/admin/maintenance/Maintenance"),
+);
+const Reporting = React.lazy(() => import("./views/admin/reporting/Reporting"));
 
 interface Route {
 	path: string;
@@ -46,7 +56,31 @@ const routes: Route[] = [
 	{ path: "/dashboard", name: "Tableau de bord", element: Dashboard },
 	{ path: "/admin", name: "Administration", element: Properties, exact: true },
 	{ path: "/admin/properties", name: "Mes biens", element: Properties },
+	{
+		path: "/admin/properties/new",
+		name: "Nouveau bien",
+		element: PropertyFormPage,
+		roles: ["admin"],
+	},
+	{
+		path: "/admin/properties/:id/edit",
+		name: "Modifier le bien",
+		element: PropertyFormPage,
+		roles: ["admin"],
+	},
 	{ path: "/admin/tenants", name: "Mes locataires", element: Tenants },
+	{
+		path: "/admin/tenants/new",
+		name: "Nouveau locataire",
+		element: TenantFormPage,
+		roles: ["admin"],
+	},
+	{
+		path: "/admin/tenants/:id/edit",
+		name: "Modifier le locataire",
+		element: TenantFormPage,
+		roles: ["admin"],
+	},
 	{ path: "/admin/leases", name: "Baux", element: Leases },
 	{ path: "/admin/inspections", name: "États des lieux", element: Inspections },
 	{
@@ -73,6 +107,12 @@ const routes: Route[] = [
 		element: Comptability,
 		roles: ["admin"],
 	},
+	{
+		path: "/admin/reporting",
+		name: "Reporting & Rentabilité",
+		element: Reporting,
+		roles: ["admin"],
+	},
 	{ path: "/admin/associates", name: "Co-bailleurs", element: Associates },
 	{
 		path: "/admin/declarations",
@@ -81,6 +121,7 @@ const routes: Route[] = [
 		roles: ["admin"],
 		sciOnly: true,
 	},
+	{ path: "/admin/maintenance", name: "Maintenance", element: Maintenance },
 	{ path: "/admin/documents", name: "Documents", element: Documents },
 	{ path: "/admin/settings", name: "Paramètres", element: Settings },
 	{ path: "/admin/visits", name: "Calendrier des visites", element: Visits },

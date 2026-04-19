@@ -36,6 +36,10 @@ export interface OwnerConfigData {
 	// Cron
 	charge_cron_schedule?: string;
 	charge_cron_enabled?: boolean;
+	// Email templates
+	email_template_payment_reminder?: string;
+	email_template_lease_expiry?: string;
+	email_template_quittance?: string;
 }
 
 export interface SiretLookupData {

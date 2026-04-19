@@ -8,7 +8,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
-import { Info, Send } from "lucide-react";
+import { Info, Send, TrendingUp } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { DateUtils } from "src/utils/date";
 import ActionButtons from "../../../components/ActionButtons";
@@ -75,6 +75,15 @@ const Leases = () => {
 		type: "success" | "danger";
 		message: string;
 	} | null>(null);
+	const [irlModal, setIrlModal] = useState(false);
+	const [irlLease, setIrlLease] = useState<any>(null);
+	const [irlSimulation, setIrlSimulation] = useState<any>(null);
+	const [irlLoading, setIrlLoading] = useState(false);
+	const [irlApplying, setIrlApplying] = useState(false);
+	const [irlResult, setIrlResult] = useState<{
+		type: "success" | "danger";
+		message: string;
+	} | null>(null);
 
 	const {
 		items: leases,
@@ -137,6 +146,45 @@ const Leases = () => {
 	const resetFilters = () => {
 		setFilterStatus("");
 		setFilterLeaseType("");
+	};
+
+	const handleOpenIrl = async (lease: any) => {
+		setIrlLease(lease);
+		setIrlSimulation(null);
+		setIrlResult(null);
+		setIrlModal(true);
+		setIrlLoading(true);
+		try {
+			const res = await LeaseDataService.simulateIrl(lease.id);
+			setIrlSimulation(res.data);
+		} catch (e: any) {
+			setIrlResult({
+				type: "danger",
+				message: e?.response?.data?.message || "Erreur simulation IRL.",
+			});
+		} finally {
+			setIrlLoading(false);
+		}
+	};
+
+	const handleApplyIrl = async () => {
+		if (!irlLease) return;
+		setIrlApplying(true);
+		try {
+			const res = await LeaseDataService.applyIrl(irlLease.id);
+			setIrlResult({
+				type: "success",
+				message: `Loyer mis à jour : ${res.data.old_rent} € → ${res.data.new_rent} €`,
+			});
+			fetchAll();
+		} catch (e: any) {
+			setIrlResult({
+				type: "danger",
+				message: e?.response?.data?.message || "Erreur application IRL.",
+			});
+		} finally {
+			setIrlApplying(false);
+		}
 	};
 
 	const handleEmailBail = async (id: number) => {
@@ -308,6 +356,17 @@ const Leases = () => {
 												>
 													<Info className="h-4 w-4" />
 												</Button>
+												{l.status === "active" && (
+													<Button
+														variant="ghost"
+														size="sm"
+														className="mr-1"
+														title="Révision IRL"
+														onClick={() => handleOpenIrl(l)}
+													>
+														<TrendingUp className="h-4 w-4" />
+													</Button>
+												)}
 												<Button
 													variant="ghost"
 													size="sm"
@@ -576,6 +635,84 @@ const Leases = () => {
 					</DialogContent>
 				</Dialog>
 			)}
+
+			{/* IRL simulation modal */}
+			<Dialog open={irlModal} onOpenChange={(o) => !o && setIrlModal(false)}>
+				<DialogContent className="max-w-lg">
+					<DialogHeader>
+						<DialogTitle>Révision IRL — {irlLease?.Property?.city}</DialogTitle>
+					</DialogHeader>
+					<div className="py-2 space-y-3">
+						{irlResult && (
+							<AppAlert
+								color={irlResult.type}
+								dismissible
+								onClose={() => setIrlResult(null)}
+							>
+								{irlResult.message}
+							</AppAlert>
+						)}
+						{irlLoading ? (
+							<div className="flex justify-center py-6">
+								<Spinner size="lg" />
+							</div>
+						) : irlSimulation ? (
+							<div className="space-y-2 text-sm">
+								<div className="grid grid-cols-2 gap-2">
+									<div>
+										<div className="text-muted-foreground">Loyer actuel</div>
+										<div className="font-bold text-lg">
+											{Number(irlSimulation.current_rent).toFixed(2)} €
+										</div>
+									</div>
+									<div>
+										<div className="text-muted-foreground">Loyer révisé</div>
+										<div className="font-bold text-lg text-emerald-600">
+											{Number(irlSimulation.new_rent).toFixed(2)} €
+										</div>
+									</div>
+									<div>
+										<div className="text-muted-foreground">
+											IRL de référence
+										</div>
+										<div>{irlSimulation.reference_irl}</div>
+									</div>
+									<div>
+										<div className="text-muted-foreground">
+											IRL actuel ({irlSimulation.current_irl?.period})
+										</div>
+										<div>{irlSimulation.current_irl?.value}</div>
+									</div>
+									<div className="col-span-2">
+										<div className="text-muted-foreground">Variation</div>
+										<div
+											className={
+												Number(irlSimulation.variation_pct) >= 0
+													? "text-emerald-600 font-semibold"
+													: "text-rose-600 font-semibold"
+											}
+										>
+											{Number(irlSimulation.variation_pct) >= 0 ? "+" : ""}
+											{irlSimulation.variation_pct} %
+										</div>
+									</div>
+								</div>
+							</div>
+						) : null}
+					</div>
+					<DialogFooter>
+						<Button variant="outline" onClick={() => setIrlModal(false)}>
+							Annuler
+						</Button>
+						{irlSimulation && !irlResult && (
+							<Button disabled={irlApplying} onClick={handleApplyIrl}>
+								{irlApplying ? <Spinner size="sm" className="mr-1" /> : null}
+								Appliquer la révision
+							</Button>
+						)}
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 
 			<DeleteModal
 				visible={deleteModal}

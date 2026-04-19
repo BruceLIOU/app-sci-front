@@ -16,7 +16,15 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
-import { CChartBar, CChartDoughnut } from "@coreui/react-chartjs";
+import {
+	ArcElement,
+	BarElement,
+	CategoryScale,
+	Chart as ChartJS,
+	Legend,
+	LinearScale,
+	Tooltip,
+} from "chart.js";
 import {
 	AlertTriangle,
 	Calendar,
@@ -28,6 +36,7 @@ import {
 	User,
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
+import { Bar, Doughnut } from "react-chartjs-2";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { DateUtils } from "src/utils/date";
@@ -47,6 +56,15 @@ import {
 	updatePreferences,
 } from "../../store";
 import SettingsOnboarding from "../admin/settings/SettingsOnboarding";
+
+ChartJS.register(
+	CategoryScale,
+	LinearScale,
+	BarElement,
+	ArcElement,
+	Tooltip,
+	Legend,
+);
 
 const chargeTypeLabel: Record<string, string> = {
 	assurance: "Assurance",
@@ -681,7 +699,7 @@ const Dashboard = () => {
 									Aucune donnée pour cette période
 								</div>
 							) : (
-								<CChartBar
+								<Bar
 									data={{
 										labels: chartMonthKeys.map((k) =>
 											DateUtils.formatMonthYear(k),
@@ -888,7 +906,7 @@ const Dashboard = () => {
 									className="relative shrink-0"
 									style={{ width: 148, height: 148 }}
 								>
-									<CChartDoughnut
+									<Doughnut
 										data={{
 											labels: ["Perçus", "En attente / retard"],
 											datasets: [
@@ -970,7 +988,7 @@ const Dashboard = () => {
 									className="relative shrink-0"
 									style={{ width: 148, height: 148 }}
 								>
-									<CChartDoughnut
+									<Doughnut
 										data={{
 											labels: chargeTypeEntries.map(
 												([t]) => chargeTypeLabel[t] || t,

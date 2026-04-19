@@ -90,6 +90,49 @@ const ViewForms = ({ entities, data, setModalVisible }: ViewFormsProps) => {
 									}
 								/>
 							)}
+							{(item.guarantor_firstname || item.guarantor_lastname) && (
+								<>
+									<div className="py-2 border-b font-semibold text-sm">
+										Garant
+									</div>
+									<Field
+										label="Identité"
+										value={[
+											item.guarantor_civility === "MR" ? "M." : "Mme",
+											item.guarantor_firstname,
+											item.guarantor_lastname,
+										]
+											.filter(Boolean)
+											.join(" ")}
+									/>
+									{item.guarantor_email && (
+										<Field
+											label="Email"
+											value={item.guarantor_email}
+											link={`mailto:${item.guarantor_email}`}
+										/>
+									)}
+									{item.guarantor_mobile && (
+										<Field
+											label="Téléphone"
+											value={item.guarantor_mobile}
+											link={`tel:${item.guarantor_mobile}`}
+										/>
+									)}
+									{(item.guarantor_address || item.guarantor_city) && (
+										<Field
+											label="Adresse"
+											value={[
+												item.guarantor_address,
+												item.guarantor_zipcode,
+												item.guarantor_city,
+											]
+												.filter(Boolean)
+												.join(", ")}
+										/>
+									)}
+								</>
+							)}
 						</>
 					) : (
 						<>
@@ -114,6 +157,51 @@ const ViewForms = ({ entities, data, setModalVisible }: ViewFormsProps) => {
 										</span>
 									}
 								/>
+							)}
+							{(item.dpe_class ||
+								item.diagnostic_amiante ||
+								item.diagnostic_plomb ||
+								item.diagnostic_elec ||
+								item.diagnostic_gaz) && (
+								<>
+									<div className="py-2 border-b font-semibold text-sm">
+										Diagnostics
+									</div>
+									{item.dpe_class && (
+										<Field
+											label="DPE"
+											value={`Classe ${item.dpe_class}${item.dpe_value ? ` — ${item.dpe_value} kWh/m²/an` : ""}`}
+										/>
+									)}
+									{item.ges_class && (
+										<Field
+											label="GES"
+											value={`Classe ${item.ges_class}${item.ges_value ? ` — ${item.ges_value} kg CO₂/m²/an` : ""}`}
+										/>
+									)}
+									{item.dpe_date && (
+										<Field label="Date DPE" value={item.dpe_date} />
+									)}
+									{item.diagnostic_date && (
+										<Field
+											label="Date diagnostics"
+											value={item.diagnostic_date}
+										/>
+									)}
+									<Field
+										label="Présence"
+										value={
+											[
+												item.diagnostic_amiante && "Amiante",
+												item.diagnostic_plomb && "Plomb",
+												item.diagnostic_elec && "Électricité",
+												item.diagnostic_gaz && "Gaz",
+											]
+												.filter(Boolean)
+												.join(", ") || "—"
+										}
+									/>
+								</>
 							)}
 							<div className="mt-3">
 								<DocumentsSection entityType="property" entityId={item.id} />

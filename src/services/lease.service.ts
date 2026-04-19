@@ -16,6 +16,15 @@ class LeaseDataService {
 	delete(id: number) {
 		return http.delete(`/leases/${id}`);
 	}
+	getIrl() {
+		return http.get("/leases/irl");
+	}
+	simulateIrl(leaseId: number) {
+		return http.get(`/leases/${leaseId}/irl-simulate`);
+	}
+	applyIrl(leaseId: number) {
+		return http.post(`/leases/${leaseId}/irl-apply`, {});
+	}
 }
 
 export default new LeaseDataService();

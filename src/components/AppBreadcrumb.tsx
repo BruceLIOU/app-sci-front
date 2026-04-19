@@ -33,7 +33,7 @@ const AppBreadcrumb = () => {
 
 	return (
 		<nav aria-label="breadcrumb" className="m-0 ms-2">
-			<ol className="flex items-center gap-1 text-sm text-muted-foreground">
+			<ol className="flex list-none items-center gap-1 text-sm text-muted-foreground p-0 m-0">
 				<li>
 					<Link to="/" className="hover:text-foreground transition-colors">
 						Accueil

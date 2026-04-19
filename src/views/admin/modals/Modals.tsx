@@ -4,6 +4,13 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import {
+	Sheet,
+	SheetBody,
+	SheetContent,
+	SheetHeader,
+	SheetTitle,
+} from "@/components/ui/sheet";
 import type React from "react";
 import { useEffect, useState } from "react";
 import CreateForms from "../forms/CreateForms";
@@ -19,6 +26,15 @@ interface ModalsProps {
 	data: any[];
 }
 
+const SHEET_TYPES = ["view"];
+
+const TITLES: Record<string, string> = {
+	view: "Visualisation",
+	create: "Création",
+	edit: "Modification",
+	delete: "Suppression",
+};
+
 const Modals = ({
 	entities,
 	type,
@@ -26,89 +42,82 @@ const Modals = ({
 	setModalVisible,
 	data,
 }: ModalsProps) => {
-	const [dataModal, setDataModal] = useState<{
-		title?: string;
-		component?: React.ReactNode;
-		size?: string;
-	}>({});
+	const [mounted, setMounted] = useState(false);
 
 	useEffect(() => {
+		if (modalVisible) setMounted(true);
+	}, [modalVisible]);
+
+	const title = type ? (TITLES[type] ?? "") : "";
+	const isSheet = type ? SHEET_TYPES.includes(type) : false;
+
+	const formContent = () => {
 		switch (type) {
 			case "view":
-				setDataModal({
-					title: "Visualisation",
-					size: "xl",
-					component: (
-						<ViewForms
-							entities={entities}
-							data={data}
-							setModalVisible={setModalVisible}
-						/>
-					),
-				});
-				break;
+				return (
+					<ViewForms
+						entities={entities}
+						data={data}
+						setModalVisible={setModalVisible}
+					/>
+				);
 			case "create":
-				setDataModal({
-					title: "Création",
-					size: "xl",
-					component: (
-						<CreateForms
-							entities={entities}
-							data={data}
-							setModalVisible={setModalVisible}
-						/>
-					),
-				});
-				break;
+				return (
+					<CreateForms
+						entities={entities}
+						data={data}
+						setModalVisible={setModalVisible}
+					/>
+				);
 			case "edit":
-				setDataModal({
-					title: "Modification",
-					size: "xl",
-					component: (
-						<EditForms
-							entities={entities}
-							data={data}
-							setModalVisible={setModalVisible}
-						/>
-					),
-				});
-				break;
+				return (
+					<EditForms
+						entities={entities}
+						data={data}
+						setModalVisible={setModalVisible}
+					/>
+				);
 			case "delete":
-				setDataModal({
-					title: "Suppression",
-					size: "lg",
-					component: (
-						<DeleteForms
-							entities={entities}
-							data={data}
-							setModalVisible={setModalVisible}
-						/>
-					),
-				});
-				break;
+				return (
+					<DeleteForms
+						entities={entities}
+						data={data}
+						setModalVisible={setModalVisible}
+					/>
+				);
 			default:
-				break;
+				return null;
 		}
-	}, [entities, type]);
+	};
+
+	if (!mounted) return null;
+
+	if (isSheet) {
+		return (
+			<Sheet
+				open={modalVisible}
+				onOpenChange={(o) => !o && setModalVisible(false)}
+			>
+				<SheetContent side="right">
+					<SheetHeader>
+						<SheetTitle>{title}</SheetTitle>
+					</SheetHeader>
+					<SheetBody>{formContent()}</SheetBody>
+				</SheetContent>
+			</Sheet>
+		);
+	}
 
 	return (
 		<Dialog
 			open={modalVisible}
 			onOpenChange={(o) => !o && setModalVisible(false)}
 		>
-			<DialogContent
-				className={
-					dataModal.size === "xl"
-						? "max-w-4xl"
-						: dataModal.size === "lg"
-							? "max-w-2xl"
-							: ""
-				}
-			>
+			<DialogContent className="max-w-lg">
 				<DialogHeader>
-					<DialogTitle>{dataModal.title}</DialogTitle>
+					<DialogTitle>{title}</DialogTitle>
 				</DialogHeader>
-				{dataModal.component}
+				{formContent()}
 			</DialogContent>
 		</Dialog>
 	);

@@ -42,7 +42,14 @@ interface Property {
 	city?: string;
 }
 
-const TABS = ["owner", "google", "smtp", "imap", "cron"] as const;
+const TABS = [
+	"owner",
+	"google",
+	"smtp",
+	"imap",
+	"cron",
+	"email_templates",
+] as const;
 type Tab = (typeof TABS)[number];
 const TAB_LABELS: Record<Tab, string> = {
 	owner: "Bailleurs",
@@ -50,6 +57,16 @@ const TAB_LABELS: Record<Tab, string> = {
 	smtp: "Envoi de mail",
 	imap: "Récup. mail Matera",
 	cron: "Cron",
+	email_templates: "Templates email",
+};
+
+const DEFAULT_TEMPLATES = {
+	email_template_payment_reminder:
+		"Bonjour {{civilite}} {{nom_locataire}},\n\nVotre loyer de {{montant}} € pour le mois de {{mois}} (bien : {{bien}}) est en retard de {{jours_retard}} jours.\n\nMerci de régulariser votre situation dans les plus brefs délais.\n\nCordialement",
+	email_template_lease_expiry:
+		"Bonjour {{civilite}} {{nom_locataire}},\n\nNous vous informons que votre bail pour le bien {{bien}} arrive à échéance le {{date_fin_bail}}.\n\nMerci de nous contacter pour convenir des modalités de renouvellement ou de résiliation.\n\nCordialement",
+	email_template_quittance:
+		"Bonjour {{civilite}} {{nom_locataire}},\n\nVeuillez trouver ci-joint votre quittance de loyer pour le mois de {{mois}} d'un montant de {{montant}} € (bien : {{bien}}).\n\nCordialement",
 };
 
 const Settings: React.FC = () => {
@@ -201,7 +218,9 @@ const Settings: React.FC = () => {
 	};
 
 	const handleChange = (
-		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+		e: React.ChangeEvent<
+			HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+		>,
 	) => {
 		setSaved(false);
 		setConfig((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -981,6 +1000,117 @@ const Settings: React.FC = () => {
 								</div>
 
 								<div className="flex justify-end">
+									<SaveButton />
+								</div>
+							</div>
+						)}
+
+						{/* Tab: Email templates */}
+						{activeTab === "email_templates" && (
+							<div>
+								{saved && (
+									<AppAlert
+										color="success"
+										dismissible
+										onClose={() => setSaved(false)}
+									>
+										Templates enregistrés.
+									</AppAlert>
+								)}
+								{error && <AppAlert color="danger">{error}</AppAlert>}
+
+								<p className="text-sm text-muted-foreground mb-4">
+									Personnalisez les emails envoyés automatiquement à vos
+									locataires. Utilisez les variables entre doubles accolades
+									pour insérer des données dynamiques.
+								</p>
+
+								<div className="mb-2 p-3 rounded-md bg-muted/50 border border-border text-xs text-muted-foreground">
+									<strong className="text-foreground">
+										Variables disponibles :
+									</strong>{" "}
+									{[
+										"{{civilite}}",
+										"{{nom_locataire}}",
+										"{{montant}}",
+										"{{mois}}",
+										"{{bien}}",
+										"{{date_echeance}}",
+										"{{jours_retard}}",
+										"{{date_fin_bail}}",
+									].map((v) => (
+										<code
+											key={v}
+											className="mx-1 px-1 py-0.5 rounded bg-muted border border-border"
+										>
+											{v}
+										</code>
+									))}
+								</div>
+
+								<div className="space-y-5 mt-4">
+									<div>
+										<Label className="text-sm font-medium">
+											Rappel de paiement
+										</Label>
+										<p className="text-xs text-muted-foreground mb-1">
+											Envoyé automatiquement en cas de loyer impayé ou en
+											retard.
+										</p>
+										<textarea
+											name="email_template_payment_reminder"
+											value={
+												config.email_template_payment_reminder ??
+												DEFAULT_TEMPLATES.email_template_payment_reminder
+											}
+											onChange={handleChange}
+											rows={6}
+											className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring mt-1 font-mono resize-y"
+										/>
+									</div>
+
+									<div>
+										<Label className="text-sm font-medium">
+											Expiration de bail
+										</Label>
+										<p className="text-xs text-muted-foreground mb-1">
+											Envoyé à l'approche de la date de fin de bail pour
+											informer le locataire.
+										</p>
+										<textarea
+											name="email_template_lease_expiry"
+											value={
+												config.email_template_lease_expiry ??
+												DEFAULT_TEMPLATES.email_template_lease_expiry
+											}
+											onChange={handleChange}
+											rows={6}
+											className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring mt-1 font-mono resize-y"
+										/>
+									</div>
+
+									<div>
+										<Label className="text-sm font-medium">
+											Envoi de quittance
+										</Label>
+										<p className="text-xs text-muted-foreground mb-1">
+											Corps de l'email accompagnant la quittance de loyer en
+											pièce jointe.
+										</p>
+										<textarea
+											name="email_template_quittance"
+											value={
+												config.email_template_quittance ??
+												DEFAULT_TEMPLATES.email_template_quittance
+											}
+											onChange={handleChange}
+											rows={6}
+											className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring mt-1 font-mono resize-y"
+										/>
+									</div>
+								</div>
+
+								<div className="flex justify-end mt-4">
 									<SaveButton />
 								</div>
 							</div>

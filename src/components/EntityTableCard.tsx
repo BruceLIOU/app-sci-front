@@ -9,6 +9,8 @@ interface EntityTableCardProps {
 	title: string;
 	addLabel?: string;
 	onAdd?: () => void;
+	/** Extra controls rendered in the header (right side, before/instead of the Add button) */
+	headerActions?: React.ReactNode;
 	children: React.ReactNode;
 }
 
@@ -16,6 +18,7 @@ const EntityTableCard: React.FC<EntityTableCardProps> = ({
 	title,
 	addLabel = "Ajouter",
 	onAdd,
+	headerActions,
 	children,
 }) => {
 	const userRole = useSelector(
@@ -29,17 +32,20 @@ const EntityTableCard: React.FC<EntityTableCardProps> = ({
 				<h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
 					{title}
 				</h3>
-				{isAdmin && onAdd && (
-					<Button
-						size="sm"
-						variant="outline"
-						onClick={onAdd}
-						className="h-7 gap-1 text-xs"
-					>
-						<Plus className="h-3 w-3" />
-						{addLabel}
-					</Button>
-				)}
+				<div className="flex items-center gap-2">
+					{headerActions}
+					{isAdmin && onAdd && (
+						<Button
+							size="sm"
+							variant="outline"
+							onClick={onAdd}
+							className="h-7 gap-1 text-xs"
+						>
+							<Plus className="h-3 w-3" />
+							{addLabel}
+						</Button>
+					)}
+				</div>
 			</CardHeader>
 			<CardContent className="p-0">{children}</CardContent>
 		</Card>

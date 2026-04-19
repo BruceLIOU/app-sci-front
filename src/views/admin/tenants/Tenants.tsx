@@ -9,6 +9,7 @@ import {
 	User,
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { DateUtils } from "src/utils/date";
 import ViewControlBar from "../../../components/ViewControlBar";
 import type { ViewMode } from "../../../components/ViewControlBar";
@@ -17,6 +18,7 @@ import TenantDataService from "../../../services/tenant.service";
 import Modal from "../modals/Modals";
 
 const Tenants = () => {
+	const navigate = useNavigate();
 	const [data, setData] = useState<any[]>([]);
 	const [tenantId, setTenantId] = useState<number | null>(null);
 	const [modalVisible, setModalVisible] = useState(false);
@@ -59,9 +61,7 @@ const Tenants = () => {
 		setModalVisible(true);
 	};
 	const handleEditTenant = (id: number) => {
-		setTenantId(id);
-		setModalType("edit");
-		setModalVisible(true);
+		navigate(`/admin/tenants/${id}/edit`);
 	};
 	const handleDeleteTenant = (id: number) => {
 		setTenantId(id);
@@ -69,8 +69,7 @@ const Tenants = () => {
 		setModalVisible(true);
 	};
 	const handleCreateTenant = () => {
-		setModalType("create");
-		setModalVisible(true);
+		navigate("/admin/tenants/new");
 	};
 	const handleToggleActive = async (id: number) => {
 		try {

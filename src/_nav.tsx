@@ -11,6 +11,7 @@ import {
 	TrendingUp,
 	User,
 	Users,
+	Wrench,
 } from "lucide-react";
 import type React from "react";
 
@@ -60,6 +61,12 @@ const _nav: NavItem[] = [
 		to: "/admin/visits",
 		icon: <Calendar className="w-5 h-5" />,
 	},
+	{
+		type: "item",
+		name: "Maintenance",
+		to: "/admin/maintenance",
+		icon: <Wrench className="w-5 h-5" />,
+	},
 	{ type: "title", name: "Finance", roles: ["admin"] },
 	{
 		type: "item",
@@ -86,6 +93,13 @@ const _nav: NavItem[] = [
 		type: "item",
 		name: "Comptabilité",
 		to: "/admin/comptability",
+		icon: <TrendingUp className="w-5 h-5" />,
+		roles: ["admin"],
+	},
+	{
+		type: "item",
+		name: "Reporting",
+		to: "/admin/reporting",
 		icon: <TrendingUp className="w-5 h-5" />,
 		roles: ["admin"],
 	},

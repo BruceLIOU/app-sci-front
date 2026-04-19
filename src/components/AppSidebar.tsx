@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { ChevronLeft, X } from "lucide-react";
+import { X } from "lucide-react";
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import SimpleBar from "simplebar-react";
@@ -125,21 +125,6 @@ const AppSidebar = () => {
 						<AppSidebarNav items={filteredNav} narrow={unfoldable} />
 					</SimpleBar>
 				</div>
-
-				{/* Toggle narrow (desktop only) */}
-				<button
-					type="button"
-					className="hidden lg:flex items-center justify-center h-10 border-t border-white/10 text-white/50 hover:text-white transition-colors"
-					onClick={() => dispatch(set({ sidebarUnfoldable: !unfoldable }))}
-					title={unfoldable ? "Étendre la sidebar" : "Réduire la sidebar"}
-				>
-					<ChevronLeft
-						className={cn(
-							"h-4 w-4 transition-transform duration-200",
-							unfoldable && "rotate-180",
-						)}
-					/>
-				</button>
 			</aside>
 		</>
 	);

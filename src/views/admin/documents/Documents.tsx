@@ -127,6 +127,35 @@ const Documents = () => {
 			.catch(() => {});
 	}, [fetchDocs]);
 
+	const detectCategory = (filename: string): string => {
+		const name = filename.toLowerCase();
+		if (/bail|contrat|location/.test(name)) return "bail";
+		if (/quittance|recu|recu/.test(name)) return "quittance";
+		if (/etat.des.lieux|edl/.test(name)) return "etat-des-lieux";
+		if (/assurance|mrh/.test(name)) return "assurance";
+		if (/dpe|diagnostic|amiante|plomb|gaz|electr/.test(name))
+			return "diagnostic";
+		if (/cni|carte.identite|passeport/.test(name)) return "identite";
+		if (/salaire|bulletin|revenu|avis.imposition|impot/.test(name))
+			return "revenu";
+		if (/justificatif|domicile|facture.edf|facture.eau/.test(name))
+			return "justificatif";
+		return "autre";
+	};
+
+	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0];
+		if (!file) return;
+		const category = detectCategory(file.name);
+		const title = file.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " ");
+		setForm((prev) => ({
+			...prev,
+			file,
+			category,
+			title: prev.title || title,
+		}));
+	};
+
 	const entityOptions = () => {
 		if (form.entity_type === "tenant")
 			return tenants.map((t) => ({
@@ -477,15 +506,7 @@ const Documents = () => {
 								required
 								type="file"
 								accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,.xls,.xlsx"
-								onChange={(e) => {
-									const file = e.target.files?.[0] ?? null;
-									setForm({
-										...form,
-										file,
-										title:
-											form.title || (file?.name.replace(/\.[^.]+$/, "") ?? ""),
-									});
-								}}
+								onChange={handleFileChange}
 							/>
 							<p className="text-muted-foreground text-sm">
 								PDF, Word, images, Excel acceptés

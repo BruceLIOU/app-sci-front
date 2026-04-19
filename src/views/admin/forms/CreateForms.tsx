@@ -100,6 +100,14 @@ const CreateForms = ({ setModalVisible, entities }: CreateFormsProps) => {
 					previous_address: "",
 					previous_zipcode: "",
 					previous_city: "",
+					guarantor_civility: "MR",
+					guarantor_firstname: "",
+					guarantor_lastname: "",
+					guarantor_email: "",
+					guarantor_mobile: "",
+					guarantor_address: "",
+					guarantor_zipcode: "",
+					guarantor_city: "",
 				}
 			: {
 					address: "",
@@ -111,6 +119,16 @@ const CreateForms = ({ setModalVisible, entities }: CreateFormsProps) => {
 					latitude: "",
 					longitude: "",
 					comments: "",
+					dpe_class: "",
+					dpe_value: "",
+					dpe_date: "",
+					ges_class: "",
+					ges_value: "",
+					diagnostic_amiante: false,
+					diagnostic_plomb: false,
+					diagnostic_elec: false,
+					diagnostic_gaz: false,
+					diagnostic_date: "",
 				},
 	);
 
@@ -358,6 +376,91 @@ const CreateForms = ({ setModalVisible, entities }: CreateFormsProps) => {
 						}
 					/>
 				</div>
+
+				{/* Garant */}
+				<div className="col-span-2">
+					<hr />
+					<strong>Garant</strong>
+				</div>
+				<FormSelectField
+					label="Civilité"
+					name="guarantor_civility"
+					value={inputValue.guarantor_civility}
+					onChange={handleChangeInput}
+				>
+					<option value="MR">M.</option>
+					<option value="MME">Mme</option>
+				</FormSelectField>
+				<FormInputField
+					type="text"
+					name="guarantor_firstname"
+					label="Prénom du garant"
+					placeholder="Prénom"
+					value={inputValue.guarantor_firstname}
+					onChange={handleChangeInput}
+				/>
+				<FormInputField
+					type="text"
+					name="guarantor_lastname"
+					label="Nom du garant"
+					placeholder="Nom"
+					value={inputValue.guarantor_lastname}
+					onChange={handleChangeInput}
+				/>
+				<FormInputField
+					type="email"
+					name="guarantor_email"
+					label="Email du garant"
+					placeholder="Email"
+					value={inputValue.guarantor_email}
+					error={fieldErrors.guarantor_email}
+					onChange={handleChangeInput}
+				/>
+				<FormInputField
+					type="text"
+					name="guarantor_mobile"
+					label="Téléphone du garant"
+					placeholder="Téléphone"
+					value={inputValue.guarantor_mobile}
+					onChange={handleChangeInput}
+				/>
+				<div className="col-span-2">
+					<AddressAutocomplete
+						label="Adresse du garant"
+						value={inputValue.guarantor_address}
+						onChange={(val) =>
+							setInputValue((prev: any) => ({
+								...prev,
+								guarantor_address: val,
+							}))
+						}
+						onSelect={(d) =>
+							setInputValue((prev: any) => ({
+								...prev,
+								guarantor_address: d.address,
+								guarantor_zipcode: d.zipcode,
+								guarantor_city: d.city,
+							}))
+						}
+					/>
+				</div>
+				<FormInputField
+					type="text"
+					name="guarantor_zipcode"
+					label="CP garant"
+					placeholder="Code postal"
+					value={inputValue.guarantor_zipcode}
+					onChange={handleChangeInput}
+				/>
+				<FormInputField
+					type="text"
+					name="guarantor_city"
+					label="Ville garant"
+					placeholder="Ville"
+					value={inputValue.guarantor_city}
+					onChange={handleChangeInput}
+				/>
+
 				<div className="col-span-2 flex justify-end gap-2 pt-2 border-t">
 					<Button
 						type="button"
@@ -608,6 +711,96 @@ const CreateForms = ({ setModalVisible, entities }: CreateFormsProps) => {
 								className="h-4 w-4 rounded border-input accent-primary"
 							/>
 							{feat}
+						</label>
+					))}
+				</div>
+			</div>
+
+			{/* Diagnostics */}
+			<div className="col-span-2">
+				<hr />
+				<strong>Diagnostics</strong>
+			</div>
+			<FormSelectField
+				label="Classe DPE"
+				name="dpe_class"
+				value={inputValue.dpe_class}
+				onChange={handleChangeInput}
+			>
+				<option value="">-- Non renseigné --</option>
+				{["A", "B", "C", "D", "E", "F", "G"].map((c) => (
+					<option key={c} value={c}>
+						{c}
+					</option>
+				))}
+			</FormSelectField>
+			<FormInputField
+				type="number"
+				name="dpe_value"
+				label="DPE (kWh/m²/an)"
+				placeholder="ex: 120"
+				value={inputValue.dpe_value}
+				onChange={handleChangeInput}
+			/>
+			<FormSelectField
+				label="Classe GES"
+				name="ges_class"
+				value={inputValue.ges_class}
+				onChange={handleChangeInput}
+			>
+				<option value="">-- Non renseigné --</option>
+				{["A", "B", "C", "D", "E", "F", "G"].map((c) => (
+					<option key={c} value={c}>
+						{c}
+					</option>
+				))}
+			</FormSelectField>
+			<FormInputField
+				type="number"
+				name="ges_value"
+				label="GES (kg CO₂/m²/an)"
+				placeholder="ex: 25"
+				value={inputValue.ges_value}
+				onChange={handleChangeInput}
+			/>
+			<FormInputField
+				type="date"
+				name="dpe_date"
+				label="Date DPE"
+				value={inputValue.dpe_date}
+				onChange={handleChangeInput}
+			/>
+			<FormInputField
+				type="date"
+				name="diagnostic_date"
+				label="Date diagnostics"
+				value={inputValue.diagnostic_date}
+				onChange={handleChangeInput}
+			/>
+			<div className="col-span-2">
+				<div className="flex flex-wrap gap-4">
+					{[
+						{ key: "diagnostic_amiante", label: "Amiante" },
+						{ key: "diagnostic_plomb", label: "Plomb (CREP)" },
+						{ key: "diagnostic_elec", label: "Électricité" },
+						{ key: "diagnostic_gaz", label: "Gaz" },
+					].map(({ key, label }) => (
+						<label
+							key={key}
+							className="flex items-center gap-2 text-sm cursor-pointer"
+						>
+							<input
+								type="checkbox"
+								checked={Boolean(inputValue[key])}
+								onChange={(e) =>
+									setInputValue((prev: any) => ({
+										...prev,
+										[key]: e.target.checked,
+									}))
+								}
+								className="h-4 w-4 rounded border-input accent-primary"
+							/>
+							{label}
 						</label>
 					))}
 				</div>

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { DateUtils } from "src/utils/date";
 import ViewControlBar from "../../../components/ViewControlBar";
 import type { ViewMode } from "../../../components/ViewControlBar";
@@ -19,6 +20,7 @@ const gridImgRatio: Record<number, string> = {
 };
 
 const Properties = () => {
+	const navigate = useNavigate();
 	const [data, setData] = useState<any[]>([]);
 	const [propertyId, setPropertyId] = useState<number | null>(null);
 	const [modalVisible, setModalVisible] = useState(false);
@@ -64,9 +66,7 @@ const Properties = () => {
 		setDetailVisible(true);
 	};
 	const handleEditProperty = (id: number) => {
-		setPropertyId(id);
-		setModalType("edit");
-		setModalVisible(true);
+		navigate(`/admin/properties/${id}/edit`);
 	};
 	const handleDeleteProperty = (id: number) => {
 		setPropertyId(id);
@@ -74,15 +74,12 @@ const Properties = () => {
 		setModalVisible(true);
 	};
 	const handleCreateProperty = () => {
-		setModalType("create");
-		setModalVisible(true);
+		navigate("/admin/properties/new");
 	};
 
 	const handleEditFromDetail = () => {
 		setDetailVisible(false);
-		setPropertyId(selectedProperty?.id ?? null);
-		setModalType("edit");
-		setModalVisible(true);
+		navigate(`/admin/properties/${selectedProperty?.id}/edit`);
 	};
 	const handleDeleteFromDetail = () => {
 		setDetailVisible(false);
