@@ -16,7 +16,7 @@ Statuts : `[ ]` pending · `[~]` en cours · `[x]` terminé
 ---
 
 ## T7 — Supprimer les classes CSS fantômes
-**Statut : [ ]** · Priorité : haute
+**Statut : [x]** · Priorité : haute
 
 Les classes `app-page-hero`, `app-page-kicker`, `app-display-title`, `app-page-description`,
 `app-filter-chip`, `app-ghost-button`, `app-panel-card`, `app-table-card`, `app-calendar-card`
@@ -41,7 +41,7 @@ que de retirer — elles servent de marqueurs sémantiques réutilisables.
 ---
 
 ## T8 — Composant StatusBadge centralisé
-**Statut : [ ]** · Priorité : haute
+**Statut : [x]** · Priorité : haute
 
 6 vues implémentent leurs badges de statut avec des classes hardcodées (`bg-emerald-100
 text-emerald-700`, `bg-rose-100`, etc.) sans dark mode. Pattern répété et incohérent.
@@ -67,7 +67,7 @@ text-emerald-700`, `bg-rose-100`, etc.) sans dark mode. Pattern répété et inc
 ---
 
 ## T9 — Hero sections manquantes
-**Statut : [ ]** · Priorité : haute
+**Statut : [x]** · Priorité : haute
 
 10 vues n'ont pas de section hero (en-tête avec titre, description, chips de contexte).
 Pattern de référence : `Comptability.tsx` lignes 217-252 (Card + app-page-hero + kicker + titre +
@@ -119,7 +119,7 @@ composant `Select` shadcn (Radix). Le rendu est incohérent entre navigateurs et
 ---
 
 ## T11 — Dark mode : remplacer data-coreui-theme par classe CSS dark:
-**Statut : [ ]** · Priorité : basse
+**Statut : [x]** · Priorité : basse
 
 3 vues détectent le dark mode via `document.documentElement.getAttribute("data-coreui-theme")`
 au lieu de la classe CSS `dark:` Tailwind. C'est fragile si le mécanisme de toggle change.
