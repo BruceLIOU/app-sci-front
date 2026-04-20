@@ -76,6 +76,6 @@
 		"vite-tsconfig-paths": "^6.1.1"
 	},
 	"lint-staged": {
-		"*.{js,jsx,ts,tsx,json,css,scss,md}": "biome check --write --diagnostic-level=error --files-ignore-unknown=true"
+		"*.{js,jsx,ts,tsx,json,css,scss}": "biome check --write --diagnostic-level=error --files-ignore-unknown=true"
 	}
 }
