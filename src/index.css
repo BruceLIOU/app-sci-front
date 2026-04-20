@@ -79,3 +79,76 @@ html {
 html.dark {
 	color-scheme: dark;
 }
+
+/* === Semantic UI helpers === */
+
+.app-page-hero {
+	padding: 1.25rem 1.5rem;
+	background: linear-gradient(
+		135deg,
+		var(--color-card) 0%,
+		oklch(from var(--color-primary) l c h / 0.04) 100%
+	);
+	border-radius: var(--radius);
+}
+
+.app-page-kicker {
+	font-size: 0.7rem;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--color-primary);
+}
+
+.app-display-title {
+	font-size: 1.5rem;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	color: var(--color-foreground);
+	line-height: 1.2;
+}
+
+.app-page-description {
+	font-size: 0.875rem;
+	color: var(--color-muted-foreground);
+	line-height: 1.5;
+}
+
+.app-filter-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	padding: 0.2rem 0.65rem;
+	border-radius: 9999px;
+	border: 1px solid var(--color-border);
+	background-color: var(--color-muted);
+	color: var(--color-muted-foreground);
+	font-size: 0.75rem;
+	font-weight: 500;
+	white-space: nowrap;
+}
+
+.app-ghost-button {
+	background: transparent;
+	border: none;
+	color: var(--color-muted-foreground);
+	cursor: pointer;
+}
+.app-ghost-button:hover {
+	color: var(--color-foreground);
+}
+
+.app-panel-card {
+	border-radius: var(--radius);
+	border: 1px solid var(--color-border);
+}
+
+.app-table-card {
+	overflow: hidden;
+}
+
+.app-calendar-card {
+	border-radius: var(--radius);
+	border: 1px solid var(--color-border);
+	overflow: hidden;
+}

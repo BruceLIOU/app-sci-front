@@ -21,6 +21,7 @@ import {
 	FormSelectField,
 } from "../../../components/FormFields";
 import StatCard from "../../../components/StatCard";
+import { StatusBadge } from "../../../components/StatusBadge";
 import TableEmptyRow from "../../../components/TableEmptyRow";
 import ViewControlBar from "../../../components/ViewControlBar";
 import useEntityCrud from "../../../hooks/useEntityCrud";
@@ -34,14 +35,6 @@ const statusLabel: Record<string, string> = {
 	active: "Actif",
 	expired: "Expiré",
 	terminated: "Résilié",
-};
-const statusBadgeClass: Record<string, string> = {
-	active:
-		"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-700",
-	expired:
-		"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-amber-100 text-amber-700",
-	terminated:
-		"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-rose-100 text-rose-700",
 };
 const typeLabel: Record<string, string> = {
 	nu: "Location nue",
@@ -331,14 +324,7 @@ const Leases = () => {
 											{DateUtils.formatShort(l.end_date) || "En cours"}
 										</td>
 										<td className="px-4 py-3">
-											<span
-												className={
-													statusBadgeClass[l.status] ||
-													"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-slate-100 text-slate-600"
-												}
-											>
-												{statusLabel[l.status]}
-											</span>
+											<StatusBadge value={l.status} />
 										</td>
 										<td className="px-4 py-3 text-right">
 											<ActionButtons

@@ -11,6 +11,7 @@ import {
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DateUtils } from "src/utils/date";
+import { StatusBadge } from "../../../components/StatusBadge";
 import ViewControlBar from "../../../components/ViewControlBar";
 import type { ViewMode } from "../../../components/ViewControlBar";
 import useIsAdmin from "../../../hooks/useIsAdmin";
@@ -170,9 +171,7 @@ const Tenants = () => {
 									<h3 className="font-semibold text-base text-center">
 										{`${item.civility || ""} ${item.firstname} ${item.lastname}`}
 										{!item.is_active && (
-											<span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-slate-100 text-slate-600 ml-2">
-												Inactif
-											</span>
+											<StatusBadge value="inactive" className="ml-2" />
 										)}
 									</h3>
 									<p className="text-sm text-muted-foreground">

@@ -13,6 +13,7 @@ import {
 	FormSelectField,
 } from "../../../components/FormFields";
 import StatCard from "../../../components/StatCard";
+import { StatusBadge } from "../../../components/StatusBadge";
 import TableEmptyRow from "../../../components/TableEmptyRow";
 import ViewControlBar from "../../../components/ViewControlBar";
 import useEntityCrud from "../../../hooks/useEntityCrud";
@@ -28,22 +29,6 @@ const typeLabel: Record<string, string> = {
 	charges_copro: "Charges copro",
 	frais_gestion: "Frais gestion",
 	autre: "Autre",
-};
-const typeBadgeClass: Record<string, string> = {
-	assurance:
-		"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-teal-100 text-teal-700",
-	taxe_fonciere:
-		"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-amber-100 text-amber-700",
-	entretien:
-		"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-blue-100 text-blue-700",
-	travaux:
-		"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-rose-100 text-rose-700",
-	charges_copro:
-		"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-slate-100 text-slate-600",
-	frais_gestion:
-		"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-slate-900 text-white",
-	autre:
-		"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-slate-100 text-slate-600",
 };
 const freqLabel: Record<string, string> = {
 	unique: "Unique",
@@ -383,14 +368,7 @@ const Charges = () => {
 											/>
 										</td>
 										<td className="px-4 py-3">
-											<span
-												className={
-													typeBadgeClass[c.type] ||
-													"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-slate-100 text-slate-600"
-												}
-											>
-												{typeLabel[c.type] || c.type}
-											</span>
+											<StatusBadge value={c.type} />
 										</td>
 										<td className="px-4 py-3">{c.description || "-"}</td>
 										<td className="px-4 py-3">

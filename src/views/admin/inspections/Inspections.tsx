@@ -21,6 +21,7 @@ import {
 	FormSelectField,
 } from "../../../components/FormFields";
 import StatCard from "../../../components/StatCard";
+import { StatusBadge } from "../../../components/StatusBadge";
 import TableEmptyRow from "../../../components/TableEmptyRow";
 import useEntityCrud from "../../../hooks/useEntityCrud";
 import DocumentDataService from "../../../services/document.service";
@@ -31,26 +32,6 @@ import PropertyDataService from "../../../services/property.service";
 import TenantDataService from "../../../services/tenant.service";
 import { inspectionFormSchema } from "../../../validation/schemas";
 
-const typeLabel: Record<string, string> = {
-	entree: "Entrée",
-	sortie: "Sortie",
-};
-const typeBadgeClass: Record<string, string> = {
-	entree:
-		"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-700",
-	sortie:
-		"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-rose-100 text-rose-700",
-};
-const statusLabel: Record<string, string> = {
-	pending: "En attente",
-	completed: "Complété",
-};
-const statusBadgeClass: Record<string, string> = {
-	pending:
-		"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-amber-100 text-amber-700",
-	completed:
-		"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-700",
-};
 const emptyForm = {
 	property_id: "",
 	tenant_id: "",
@@ -187,14 +168,6 @@ const Inspections = () => {
 		);
 	};
 
-	const conditionBadgeClass = (condition: string) => {
-		if (condition === "Très bon état" || condition === "Bon état")
-			return "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-700";
-		if (condition === "État moyen")
-			return "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-amber-100 text-amber-700";
-		return "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-rose-100 text-rose-700";
-	};
-
 	return (
 		<>
 			<div className="grid grid-cols-12 gap-4 mb-4 text-center">
@@ -264,9 +237,7 @@ const Inspections = () => {
 											className="border-b hover:bg-muted/30 transition-colors"
 										>
 											<td className="px-4 py-3">
-												<span className={typeBadgeClass[i.type]}>
-													{typeLabel[i.type]}
-												</span>
+												<StatusBadge value={i.type} />
 											</td>
 											<td className="px-4 py-3">
 												{i.Property
@@ -285,9 +256,7 @@ const Inspections = () => {
 												{roomCount} pièce{roomCount > 1 ? "s" : ""}
 											</td>
 											<td className="px-4 py-3">
-												<span className={statusBadgeClass[i.status]}>
-													{statusLabel[i.status]}
-												</span>
+												<StatusBadge value={i.status} />
 											</td>
 											<td className="px-4 py-3 text-right">
 												<ActionButtons
@@ -441,9 +410,7 @@ const Inspections = () => {
 					<DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
 						<DialogHeader>
 							<DialogTitle>
-								<span className={`${typeBadgeClass[viewing.type]} mr-2`}>
-									{typeLabel[viewing.type]}
-								</span>
+								<StatusBadge value={viewing.type} className="mr-2" />
 								{viewing.Property
 									? `${viewing.Property.type} - ${viewing.Property.city}`
 									: "État des lieux"}
@@ -467,9 +434,7 @@ const Inspections = () => {
 								</div>
 								<div>
 									<div className="text-muted-foreground text-sm">Statut</div>
-									<span className={statusBadgeClass[viewing.status]}>
-										{statusLabel[viewing.status]}
-									</span>
+									<StatusBadge value={viewing.status} />
 								</div>
 								<div className="col-span-2">
 									<div className="text-muted-foreground text-sm">
@@ -501,11 +466,7 @@ const Inspections = () => {
 													<tr key={idx} className="border-b">
 														<td className="px-3 py-2">{r.name}</td>
 														<td className="px-3 py-2">
-															<span
-																className={conditionBadgeClass(r.condition)}
-															>
-																{r.condition}
-															</span>
+															<StatusBadge value={r.condition} isCondition />
 														</td>
 														<td className="px-3 py-2">{r.notes || "-"}</td>
 													</tr>

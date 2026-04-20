@@ -1,5 +1,4 @@
 import { AppAlert } from "@/components/ui/app-alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -28,6 +27,7 @@ import {
 	FormSelectField,
 	FormTextareaField,
 } from "../../../components/FormFields";
+import { StatusBadge } from "../../../components/StatusBadge";
 import TableEmptyRow from "../../../components/TableEmptyRow";
 import useIsAdmin from "../../../hooks/useIsAdmin";
 import MaintenanceDataService from "../../../services/maintenance.service";
@@ -57,20 +57,6 @@ const STATUS_LABELS: Record<string, string> = {
 	in_progress: "En cours",
 	resolved: "Résolu",
 	closed: "Clôturé",
-};
-
-const priorityBadge: Record<string, string> = {
-	low: "secondary",
-	medium: "outline",
-	high: "default",
-	urgent: "destructive",
-};
-
-const statusBadge: Record<string, string> = {
-	open: "destructive",
-	in_progress: "default",
-	resolved: "secondary",
-	closed: "outline",
 };
 
 const emptyForm = {
@@ -287,14 +273,10 @@ const Maintenance = () => {
 									<TableCell className="font-medium">{item.title}</TableCell>
 									<TableCell>{TYPE_LABELS[item.type] || item.type}</TableCell>
 									<TableCell>
-										<Badge variant={priorityBadge[item.priority] as any}>
-											{PRIORITY_LABELS[item.priority]}
-										</Badge>
+										<StatusBadge value={item.priority} />
 									</TableCell>
 									<TableCell>
-										<Badge variant={statusBadge[item.status] as any}>
-											{STATUS_LABELS[item.status]}
-										</Badge>
+										<StatusBadge value={item.status} />
 									</TableCell>
 									<TableCell>{item.provider_name || "—"}</TableCell>
 									<TableCell>

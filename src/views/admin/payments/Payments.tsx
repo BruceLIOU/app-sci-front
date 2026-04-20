@@ -11,6 +11,7 @@ import {
 	FormSelectField,
 } from "../../../components/FormFields";
 import StatCard from "../../../components/StatCard";
+import { StatusBadge } from "../../../components/StatusBadge";
 import TableEmptyRow from "../../../components/TableEmptyRow";
 import ViewControlBar from "../../../components/ViewControlBar";
 import useEntityCrud from "../../../hooks/useEntityCrud";
@@ -23,12 +24,6 @@ const statusLabel: Record<string, string> = {
 	paid: "Payé",
 	pending: "En attente",
 	late: "En retard",
-};
-const statusBadgeClass: Record<string, string> = {
-	paid: "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-	pending:
-		"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-	late: "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
 };
 
 const emptyForm = {
@@ -319,14 +314,7 @@ const Payments = () => {
 											{DateUtils.formatShort(payment.due_date) || "-"}
 										</td>
 										<td className="px-4 py-3">
-											<span
-												className={
-													statusBadgeClass[payment.status] ||
-													"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-slate-100 text-slate-600"
-												}
-											>
-												{statusLabel[payment.status] || payment.status}
-											</span>
+											<StatusBadge value={payment.status} />
 										</td>
 										<td className="px-4 py-3 text-right">
 											<ActionButtons
