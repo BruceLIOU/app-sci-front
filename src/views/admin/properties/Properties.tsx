@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -102,16 +103,39 @@ const Properties = () => {
 
 	return (
 		<>
-			<div className="max-w-screen-xl mx-auto px-4">
-				<div className="flex justify-end mb-4">
-					{isAdmin && (
-						<Button onClick={handleCreateProperty}>
-							<Plus className="h-4 w-4 mr-2" />
-							Ajouter un bien
-						</Button>
-					)}
-				</div>
+			<div className="mb-4">
+				<Card className="app-page-hero border-0">
+					<CardContent className="p-0">
+						<div className="app-page-kicker mb-3">Gestion locative</div>
+						<h2 className="mb-2 app-display-title">Mes biens</h2>
+						<p className="app-page-description mb-3">
+							Gérez votre parc immobilier : appartements, maisons et locaux
+							commerciaux.
+						</p>
+						<div className="flex flex-wrap items-center gap-2">
+							<span className="app-filter-chip">
+								{data.length} bien{data.length > 1 ? "s" : ""}
+							</span>
+							<span className="app-filter-chip">
+								{data.filter((d) => d.is_rented).length} loué
+								{data.filter((d) => d.is_rented).length > 1 ? "s" : ""}
+							</span>
+							{isAdmin && (
+								<Button
+									size="sm"
+									onClick={handleCreateProperty}
+									className="ml-auto"
+								>
+									<Plus className="h-4 w-4 mr-1" />
+									Ajouter un bien
+								</Button>
+							)}
+						</div>
+					</CardContent>
+				</Card>
+			</div>
 
+			<div className="max-w-screen-xl mx-auto px-4">
 				<div className="mb-3">
 					<PropertyMap properties={data} onMarkerClick={handleViewProperty} />
 				</div>

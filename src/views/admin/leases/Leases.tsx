@@ -1,5 +1,6 @@
 import { AppAlert } from "@/components/ui/app-alert";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
 	Dialog,
 	DialogContent,
@@ -209,6 +210,30 @@ const Leases = () => {
 					{emailResult.message}
 				</AppAlert>
 			)}
+			<div className="mb-4">
+				<Card className="app-page-hero border-0">
+					<CardContent className="p-0">
+						<div className="app-page-kicker mb-3">Gestion locative</div>
+						<h2 className="mb-2 app-display-title">Baux de location</h2>
+						<p className="app-page-description mb-3">
+							Suivez l'ensemble de vos contrats de bail, leur statut et les
+							loyers associés.
+						</p>
+						<div className="flex flex-wrap items-center gap-2">
+							<span className="app-filter-chip">
+								{leases.length} bail{leases.length > 1 ? "x" : ""}
+							</span>
+							<span className="app-filter-chip">
+								{totalActive} actif{totalActive > 1 ? "s" : ""}
+							</span>
+							<span className="app-filter-chip">
+								{totalRent.toFixed(0)} € / mois
+							</span>
+						</div>
+					</CardContent>
+				</Card>
+			</div>
+
 			<div className="grid grid-cols-12 gap-4 mb-4 text-center">
 				<StatCard value={totalActive} label="Baux actifs" color="success" />
 				<StatCard

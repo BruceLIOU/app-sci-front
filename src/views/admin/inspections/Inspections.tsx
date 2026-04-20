@@ -1,5 +1,6 @@
 import { AppAlert } from "@/components/ui/app-alert";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
 	Dialog,
 	DialogContent,
@@ -170,6 +171,37 @@ const Inspections = () => {
 
 	return (
 		<>
+			<div className="mb-4">
+				<Card className="app-page-hero border-0">
+					<CardContent className="p-0">
+						<div className="app-page-kicker mb-3">Gestion locative</div>
+						<h2 className="mb-2 app-display-title">États des lieux</h2>
+						<p className="app-page-description mb-3">
+							Enregistrez et consultez les états des lieux d'entrée et de sortie
+							pour chaque bien.
+						</p>
+						<div className="flex flex-wrap items-center gap-2">
+							<span className="app-filter-chip">
+								{inspections.length} état{inspections.length > 1 ? "s" : ""} des
+								lieux
+							</span>
+							<span className="app-filter-chip">
+								{inspections.filter((i) => i.type === "entree").length} entrée
+								{inspections.filter((i) => i.type === "entree").length > 1
+									? "s"
+									: ""}
+							</span>
+							<span className="app-filter-chip">
+								{inspections.filter((i) => i.type === "sortie").length} sortie
+								{inspections.filter((i) => i.type === "sortie").length > 1
+									? "s"
+									: ""}
+							</span>
+						</div>
+					</CardContent>
+				</Card>
+			</div>
+
 			<div className="grid grid-cols-12 gap-4 mb-4 text-center">
 				<StatCard
 					value={inspections.filter((i) => i.type === "entree").length}

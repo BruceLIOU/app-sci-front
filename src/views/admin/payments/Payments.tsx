@@ -1,5 +1,6 @@
 import { AppAlert } from "@/components/ui/app-alert";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import React, { useState, useEffect, useMemo } from "react";
 import { DateUtils } from "src/utils/date";
 import ActionButtons from "../../../components/ActionButtons";
@@ -155,6 +156,33 @@ const Payments = () => {
 
 	return (
 		<>
+			<div className="mb-4">
+				<Card className="app-page-hero border-0">
+					<CardContent className="p-0">
+						<div className="app-page-kicker mb-3">Gestion locative</div>
+						<h2 className="mb-2 app-display-title">Paiements</h2>
+						<p className="app-page-description mb-3">
+							Suivez les encaissements, les retards et la performance de
+							recouvrement.
+						</p>
+						<div className="flex flex-wrap items-center gap-2">
+							<span className="app-filter-chip">
+								{payments.length} paiement{payments.length > 1 ? "s" : ""}
+							</span>
+							<span className="app-filter-chip">
+								{payments.filter((p) => p.status === "paid").length} payé
+								{payments.filter((p) => p.status === "paid").length > 1
+									? "s"
+									: ""}
+							</span>
+							<span className="app-filter-chip">
+								{payments.filter((p) => p.status === "late").length} en retard
+							</span>
+						</div>
+					</CardContent>
+				</Card>
+			</div>
+
 			<div className="grid grid-cols-12 gap-4 mb-4 text-center">
 				<StatCard
 					value={`${totalPaid.toFixed(2)} €`}

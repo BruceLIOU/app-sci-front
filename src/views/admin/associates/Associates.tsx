@@ -223,6 +223,27 @@ const Associates = () => {
 
 	return (
 		<>
+			<div className="mb-4">
+				<Card className="app-page-hero border-0">
+					<CardContent className="p-0">
+						<div className="app-page-kicker mb-3">Gouvernance</div>
+						<h2 className="mb-2 app-display-title">{labels.title}</h2>
+						<p className="app-page-description mb-3">
+							Gérez les associés de votre SCI : parts sociales, gérant et
+							coordonnées.
+						</p>
+						<div className="flex flex-wrap items-center gap-2">
+							<span className="app-filter-chip">
+								{associates.length} associé{associates.length > 1 ? "s" : ""}
+							</span>
+							<span className="app-filter-chip">
+								{totalShares.toFixed(0)} % répartis
+							</span>
+						</div>
+					</CardContent>
+				</Card>
+			</div>
+
 			<div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4 text-center">
 				<StatCard
 					value={associates.length}

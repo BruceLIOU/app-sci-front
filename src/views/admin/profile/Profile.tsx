@@ -116,6 +116,19 @@ const Profile: React.FC = () => {
 				</AppAlert>
 			)}
 
+			<div className="mb-4">
+				<Card className="app-page-hero border-0">
+					<CardContent className="p-0">
+						<div className="app-page-kicker mb-3">Compte</div>
+						<h2 className="mb-2 app-display-title">Mon profil</h2>
+						<p className="app-page-description mb-3">
+							Gérez vos informations personnelles, votre mot de passe et votre
+							avatar.
+						</p>
+					</CardContent>
+				</Card>
+			</div>
+
 			<div className="flex justify-center">
 				<div className="w-full max-w-lg">
 					{/* Carte profil */}

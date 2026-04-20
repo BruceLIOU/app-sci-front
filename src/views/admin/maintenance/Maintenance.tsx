@@ -191,6 +191,30 @@ const Maintenance = () => {
 
 	return (
 		<>
+			<div className="mb-4">
+				<Card className="app-page-hero border-0">
+					<CardContent className="p-0">
+						<div className="app-page-kicker mb-3">Gestion du patrimoine</div>
+						<h2 className="mb-2 app-display-title">Maintenance & travaux</h2>
+						<p className="app-page-description mb-3">
+							Signalez et suivez les interventions sur vos biens : plomberie,
+							électricité, travaux et entretien.
+						</p>
+						<div className="flex flex-wrap items-center gap-2">
+							<span className="app-filter-chip">
+								{items.length} demande{items.length > 1 ? "s" : ""}
+							</span>
+							<span className="app-filter-chip">
+								{totalOpen} ouverte{totalOpen > 1 ? "s" : ""}
+							</span>
+							<span className="app-filter-chip">
+								{totalInProgress} en cours
+							</span>
+						</div>
+					</CardContent>
+				</Card>
+			</div>
+
 			{/* Header KPIs */}
 			<div className="grid grid-cols-3 gap-3 mb-4 text-center">
 				<Card className="p-4">

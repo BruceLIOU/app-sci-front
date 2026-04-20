@@ -146,6 +146,30 @@ const Notifications = () => {
 				</AppAlert>
 			)}
 
+			<div className="mb-4">
+				<Card className="app-page-hero border-0">
+					<CardContent className="p-0">
+						<div className="app-page-kicker mb-3">Système</div>
+						<h2 className="mb-2 app-display-title">Notifications</h2>
+						<p className="app-page-description mb-3">
+							Alertes et événements automatiques : rappels de paiement,
+							expiration de baux, emails envoyés.
+						</p>
+						<div className="flex flex-wrap items-center gap-2">
+							<span className="app-filter-chip">
+								{notifications.length} notification
+								{notifications.length > 1 ? "s" : ""}
+							</span>
+							{unreadCount > 0 && (
+								<span className="app-filter-chip">
+									{unreadCount} non lue{unreadCount > 1 ? "s" : ""}
+								</span>
+							)}
+						</div>
+					</CardContent>
+				</Card>
+			</div>
+
 			<Card>
 				<CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2 border-b py-3 px-4 space-y-0">
 					<div className="flex items-center gap-3">

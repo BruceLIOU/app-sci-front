@@ -300,6 +300,19 @@ const Settings: React.FC = () => {
 
 	return (
 		<div className="max-w-3xl">
+			<div className="mb-4">
+				<Card className="app-page-hero border-0">
+					<CardContent className="p-0">
+						<div className="app-page-kicker mb-3">Administration</div>
+						<h2 className="mb-2 app-display-title">Paramètres</h2>
+						<p className="app-page-description mb-3">
+							Configurez votre SCI, vos notifications, vos intégrations et vos
+							modèles d'email.
+						</p>
+					</CardContent>
+				</Card>
+			</div>
+
 			<Card className="mb-4 app-panel-card">
 				<CardHeader className="border-b py-3 px-4">
 					<strong>Paramètres</strong>
