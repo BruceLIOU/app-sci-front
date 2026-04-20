@@ -129,8 +129,7 @@ const Reporting = () => {
 		}
 	}
 
-	const isDarkTheme =
-		document.documentElement.getAttribute("data-coreui-theme") === "dark";
+	const isDarkTheme = document.documentElement.classList.contains("dark");
 	const chartTextColor = isDarkTheme ? "#94a3b8" : "#64748b";
 	const chartGridColor = isDarkTheme
 		? "rgba(148,163,184,0.1)"
