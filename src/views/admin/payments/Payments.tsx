@@ -80,8 +80,8 @@ const Payments = () => {
 		emptyForm,
 		validationSchema: paymentFormSchema,
 		toForm: (p) => ({
-			tenant_id: p.tenant_id || "",
-			property_id: p.property_id || "",
+			tenant_id: p.tenant_id ? String(p.tenant_id) : "",
+			property_id: p.property_id ? String(p.property_id) : "",
 			amount: p.amount || "",
 			month: p.month || "",
 			due_date: p.due_date || "",

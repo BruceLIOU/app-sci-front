@@ -90,9 +90,9 @@ const Inspections = () => {
 		emptyForm,
 		validationSchema: inspectionFormSchema,
 		toForm: (i) => ({
-			property_id: i.property_id || "",
-			tenant_id: i.tenant_id || "",
-			lease_id: i.lease_id || "",
+			property_id: i.property_id ? String(i.property_id) : "",
+			tenant_id: i.tenant_id ? String(i.tenant_id) : "",
+			lease_id: i.lease_id ? String(i.lease_id) : "",
 			type: i.type,
 			date: i.date,
 			status: i.status,

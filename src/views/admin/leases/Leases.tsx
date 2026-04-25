@@ -131,8 +131,8 @@ const Leases = () => {
 		emptyForm,
 		validationSchema: leaseFormSchema,
 		toForm: (l) => ({
-			property_id: l.property_id || "",
-			tenant_id: l.tenant_id || "",
+			property_id: l.property_id ? String(l.property_id) : "",
+			tenant_id: l.tenant_id ? String(l.tenant_id) : "",
 			type: l.type || "nu",
 			start_date: l.start_date || "",
 			end_date: l.end_date || "",

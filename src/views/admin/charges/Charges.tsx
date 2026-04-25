@@ -96,7 +96,7 @@ const Charges = () => {
 		emptyForm,
 		validationSchema: chargeFormSchema,
 		toForm: (c) => ({
-			property_id: c.property_id || "",
+			property_id: c.property_id ? String(c.property_id) : "",
 			type: c.type,
 			description: c.description || "",
 			amount: c.amount,
