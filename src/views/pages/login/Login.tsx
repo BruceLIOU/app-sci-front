@@ -200,8 +200,8 @@ const Login = () => {
 									<div className="flex justify-between items-center gap-3 pt-1">
 										<Button
 											type="button"
-											variant="link"
-											className="p-0 h-auto"
+											variant="secondary"
+											className="p-1 h-auto"
 											onClick={() => {
 												setStep("request");
 												setCode("");
@@ -213,8 +213,8 @@ const Login = () => {
 										</Button>
 										<Button
 											type="button"
-											variant="link"
-											className="p-0 h-auto"
+											variant="secondary"
+											className="p-1 h-auto"
 											onClick={handleResend}
 											disabled={loading}
 										>
