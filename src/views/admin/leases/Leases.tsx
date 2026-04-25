@@ -9,7 +9,16 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
-import { Info, Send, TrendingUp } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
+import { CircleX, Info, RefreshCw, Send, TrendingUp } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { DateUtils } from "src/utils/date";
 import ActionButtons from "../../../components/ActionButtons";
@@ -18,6 +27,7 @@ import DeleteModal from "../../../components/DeleteModal";
 import DocumentsSection from "../../../components/DocumentsSection";
 import EntityTableCard from "../../../components/EntityTableCard";
 import {
+	FormDateField,
 	FormInputField,
 	FormSelectField,
 	FormTextareaField,
@@ -76,6 +86,25 @@ const Leases = () => {
 	const [irlLoading, setIrlLoading] = useState(false);
 	const [irlApplying, setIrlApplying] = useState(false);
 	const [irlResult, setIrlResult] = useState<{
+		type: "success" | "danger";
+		message: string;
+	} | null>(null);
+	const [renewModal, setRenewModal] = useState(false);
+	const [renewLease, setRenewLease] = useState<any>(null);
+	const [renewDate, setRenewDate] = useState("");
+	const [renewLoading, setRenewLoading] = useState(false);
+	const [renewResult, setRenewResult] = useState<{
+		type: "success" | "danger";
+		message: string;
+	} | null>(null);
+	const [renewSendEmail, setRenewSendEmail] = useState(true);
+	const [terminateSendEmail, setTerminateSendEmail] = useState(true);
+	const [terminateModal, setTerminateModal] = useState(false);
+	const [terminateLease, setTerminateLease] = useState<any>(null);
+	const [terminateDate, setTerminateDate] = useState("");
+	const [terminateReason, setTerminateReason] = useState("");
+	const [terminateLoading, setTerminateLoading] = useState(false);
+	const [terminateResult, setTerminateResult] = useState<{
 		type: "success" | "danger";
 		message: string;
 	} | null>(null);
@@ -188,6 +217,74 @@ const Leases = () => {
 			});
 		} finally {
 			setIrlApplying(false);
+		}
+	};
+
+	const handleOpenRenew = (lease: any) => {
+		const defaultDate = lease.end_date
+			? new Date(
+					new Date(lease.end_date).setFullYear(
+						new Date(lease.end_date).getFullYear() + 1,
+					),
+				)
+					.toISOString()
+					.slice(0, 10)
+			: "";
+		setRenewLease(lease);
+		setRenewDate(defaultDate);
+		setRenewResult(null);
+		setRenewSendEmail(!!lease.Tenant?.email);
+		setRenewModal(true);
+	};
+
+	const handleRenew = async () => {
+		if (!renewLease || !renewDate) return;
+		setRenewLoading(true);
+		try {
+			await LeaseDataService.renew(renewLease.id, renewDate, renewSendEmail);
+			setRenewResult({
+				type: "success",
+				message: "Bail renouvelé avec succès.",
+			});
+			fetchAll();
+		} catch (e: any) {
+			setRenewResult({
+				type: "danger",
+				message: e?.response?.data?.message || "Erreur lors du renouvellement.",
+			});
+		} finally {
+			setRenewLoading(false);
+		}
+	};
+
+	const handleOpenTerminate = (lease: any) => {
+		setTerminateLease(lease);
+		setTerminateDate(new Date().toISOString().slice(0, 10));
+		setTerminateReason("");
+		setTerminateResult(null);
+		setTerminateSendEmail(!!lease.Tenant?.email);
+		setTerminateModal(true);
+	};
+
+	const handleTerminate = async () => {
+		if (!terminateLease) return;
+		setTerminateLoading(true);
+		try {
+			await LeaseDataService.terminate(
+				terminateLease.id,
+				terminateDate,
+				terminateReason || undefined,
+				terminateSendEmail,
+			);
+			setTerminateResult({ type: "success", message: "Bail résilié." });
+			fetchAll();
+		} catch (e: any) {
+			setTerminateResult({
+				type: "danger",
+				message: e?.response?.data?.message || "Erreur lors de la résiliation.",
+			});
+		} finally {
+			setTerminateLoading(false);
 		}
 	};
 
@@ -324,131 +421,130 @@ const Leases = () => {
 					itemLabel="bail"
 					itemLabelPlural="baux"
 				/>
-				<div className="overflow-x-auto">
-					<table className="w-full text-sm">
-						<thead>
-							<tr className="border-b bg-muted/50">
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Bien
-								</th>
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Locataire
-								</th>
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Type
-								</th>
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Loyer CC
-								</th>
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Dépôt
-								</th>
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Début
-								</th>
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Fin
-								</th>
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Statut
-								</th>
-								<th className="px-4 py-3 text-right font-medium text-muted-foreground">
-									Actions
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							{filteredLeases.length === 0 ? (
-								<TableEmptyRow colSpan={9} message="Aucun bail enregistré" />
-							) : (
-								filteredLeases.map((l) => (
-									<tr
-										key={l.id}
-										className="border-b hover:bg-muted/30 transition-colors"
-									>
-										<td className="px-4 py-3">
-											{l.Property
-												? `${l.Property.type} - ${l.Property.city}`
-												: "-"}
-										</td>
-										<td className="px-4 py-3">
-											{l.Tenant
-												? `${l.Tenant.civility || ""} ${l.Tenant.lastname}`
-												: "-"}
-										</td>
-										<td className="px-4 py-3">{typeLabel[l.type] || l.type}</td>
-										<td className="px-4 py-3">
-											{(
-												Number.parseFloat(l.rent_amount || 0) +
-												Number.parseFloat(l.charges_amount || 0)
-											).toFixed(2)}{" "}
-											€
-										</td>
-										<td className="px-4 py-3">
-											{Number.parseFloat(l.deposit_amount || 0).toFixed(2)} €
-										</td>
-										<td className="px-4 py-3">
-											{DateUtils.formatShort(l.start_date) || "-"}
-										</td>
-										<td className="px-4 py-3">
-											{DateUtils.formatShort(l.end_date) || "En cours"}
-										</td>
-										<td className="px-4 py-3">
-											<StatusBadge value={l.status} />
-										</td>
-										<td className="px-4 py-3 text-right">
-											<ActionButtons
-												onEdit={() => openEdit(l)}
-												onDelete={() => openDelete(l)}
+				<Table>
+					<TableHeader>
+						<TableRow>
+							<TableHead>Bien</TableHead>
+							<TableHead>Locataire</TableHead>
+							<TableHead>Type</TableHead>
+							<TableHead>Loyer CC</TableHead>
+							<TableHead>Dépôt</TableHead>
+							<TableHead>Début</TableHead>
+							<TableHead>Fin</TableHead>
+							<TableHead>Statut</TableHead>
+							<TableHead className="text-right">Actions</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{filteredLeases.length === 0 ? (
+							<TableEmptyRow colSpan={9} message="Aucun bail enregistré" />
+						) : (
+							filteredLeases.map((l) => (
+								<TableRow key={l.id}>
+									<TableCell>
+										{l.Property
+											? `${l.Property.type} - ${l.Property.city}`
+											: "-"}
+									</TableCell>
+									<TableCell>
+										{l.Tenant
+											? `${l.Tenant.civility || ""} ${l.Tenant.lastname}`
+											: "-"}
+									</TableCell>
+									<TableCell>{typeLabel[l.type] || l.type}</TableCell>
+									<TableCell>
+										{(
+											Number.parseFloat(l.rent_amount || 0) +
+											Number.parseFloat(l.charges_amount || 0)
+										).toFixed(2)}{" "}
+										€
+									</TableCell>
+									<TableCell>
+										{Number.parseFloat(l.deposit_amount || 0).toFixed(2)} €
+									</TableCell>
+									<TableCell>
+										{DateUtils.formatShort(l.start_date) || "-"}
+									</TableCell>
+									<TableCell>
+										{DateUtils.formatShort(l.end_date) || "En cours"}
+									</TableCell>
+									<TableCell>
+										<StatusBadge value={l.status} />
+									</TableCell>
+									<TableCell className="text-right">
+										<ActionButtons
+											onEdit={() => openEdit(l)}
+											onDelete={() => openDelete(l)}
+										>
+											<Button
+												variant="secondary"
+												size="sm"
+												className="mr-1"
+												onClick={() => {
+													setViewing(l);
+													setViewModal(true);
+												}}
 											>
+												<Info className="h-4 w-4" />
+											</Button>
+											{l.status === "active" && (
 												<Button
-													variant="ghost"
+													variant="secondary"
 													size="sm"
 													className="mr-1"
-													onClick={() => {
-														setViewing(l);
-														setViewModal(true);
-													}}
+													title="Révision IRL"
+													onClick={() => handleOpenIrl(l)}
 												>
-													<Info className="h-4 w-4" />
+													<TrendingUp className="h-4 w-4" />
 												</Button>
-												{l.status === "active" && (
-													<Button
-														variant="ghost"
-														size="sm"
-														className="mr-1"
-														title="Révision IRL"
-														onClick={() => handleOpenIrl(l)}
-													>
-														<TrendingUp className="h-4 w-4" />
-													</Button>
-												)}
+											)}
+											{l.status === "active" && (
 												<Button
-													variant="ghost"
+													variant="secondary"
 													size="sm"
-													className={`mr-1 ${l.email_sent_at ? "text-emerald-600" : ""}`}
-													disabled={emailSendingId === l.id}
-													onClick={() => handleEmailBail(l.id)}
-													title={
-														l.email_sent_at
-															? `Envoyé le ${DateUtils.formatShort(l.email_sent_at)}`
-															: "Envoyer bail par email"
-													}
+													className="mr-1 text-emerald-700"
+													title="Renouveler le bail"
+													onClick={() => handleOpenRenew(l)}
 												>
-													{emailSendingId === l.id ? (
-														<Spinner size="sm" />
-													) : (
-														<Send className="h-4 w-4" />
-													)}
+													<RefreshCw className="h-4 w-4" />
 												</Button>
-											</ActionButtons>
-										</td>
-									</tr>
-								))
-							)}
-						</tbody>
-					</table>
-				</div>
+											)}
+											{l.status === "active" && (
+												<Button
+													variant="secondary"
+													size="sm"
+													className="mr-1 text-rose-600"
+													title="Résilier le bail"
+													onClick={() => handleOpenTerminate(l)}
+												>
+													<CircleX className="h-4 w-4" />
+												</Button>
+											)}
+											<Button
+												variant="secondary"
+												size="sm"
+												className={`mr-1 ${l.email_sent_at ? "text-emerald-600" : ""}`}
+												disabled={emailSendingId === l.id}
+												onClick={() => handleEmailBail(l.id)}
+												title={
+													l.email_sent_at
+														? `Envoyé le ${DateUtils.formatShort(l.email_sent_at)}`
+														: "Envoyer bail par email"
+												}
+											>
+												{emailSendingId === l.id ? (
+													<Spinner size="sm" />
+												) : (
+													<Send className="h-4 w-4" />
+												)}
+											</Button>
+										</ActionButtons>
+									</TableCell>
+								</TableRow>
+							))
+						)}
+					</TableBody>
+				</Table>
 			</EntityTableCard>
 
 			<CrudModal
@@ -539,22 +635,20 @@ const Leases = () => {
 					/>
 				</div>
 				<div className="col-span-4">
-					<FormInputField
-						type="date"
+					<FormDateField
 						name="start_date"
 						label="Date de début"
-						value={DateUtils.formatShort(form.start_date)}
+						value={form.start_date}
 						required
 						error={formErrors.start_date}
 						onChange={handleChange}
 					/>
 				</div>
 				<div className="col-span-4">
-					<FormInputField
-						type="date"
+					<FormDateField
 						name="end_date"
 						label="Date de fin (optionnel)"
-						value={DateUtils.formatShort(form.end_date)}
+						value={form.end_date}
 						onChange={handleChange}
 					/>
 				</div>
@@ -679,6 +773,164 @@ const Leases = () => {
 					</DialogContent>
 				</Dialog>
 			)}
+
+			{/* Renew modal */}
+			<Dialog
+				open={renewModal}
+				onOpenChange={(o) => !o && setRenewModal(false)}
+			>
+				<DialogContent className="max-w-md">
+					<DialogHeader>
+						<DialogTitle>
+							Renouveler le bail — {renewLease?.Property?.city}
+						</DialogTitle>
+					</DialogHeader>
+					<div className="py-2 space-y-3">
+						{renewResult && (
+							<AppAlert
+								color={renewResult.type}
+								dismissible
+								onClose={() => setRenewResult(null)}
+							>
+								{renewResult.message}
+							</AppAlert>
+						)}
+						<FormDateField
+							label="Nouvelle date de fin"
+							name="renewDate"
+							value={renewDate}
+							required
+							onChange={(e) => setRenewDate(e.target.value)}
+						/>
+						<div className="flex items-center gap-3 rounded-lg border border-border/50 bg-muted/30 px-3 py-2.5">
+							<Switch
+								id="renew-send-email"
+								checked={renewSendEmail}
+								onCheckedChange={setRenewSendEmail}
+								disabled={!renewLease?.Tenant?.email}
+							/>
+							<label
+								htmlFor="renew-send-email"
+								className="text-sm cursor-pointer select-none"
+							>
+								{renewLease?.Tenant?.email ? (
+									<>
+										Envoyer un email de confirmation à{" "}
+										<strong>{renewLease.Tenant.email}</strong>
+									</>
+								) : (
+									<span className="text-muted-foreground">
+										Aucun email locataire enregistré
+									</span>
+								)}
+							</label>
+						</div>
+					</div>
+					<DialogFooter>
+						<Button variant="outline" onClick={() => setRenewModal(false)}>
+							Annuler
+						</Button>
+						<Button
+							disabled={
+								renewLoading ||
+								!renewDate ||
+								!!renewResult?.type.includes("success")
+							}
+							onClick={handleRenew}
+						>
+							{renewLoading ? (
+								<Spinner size="sm" className="mr-1" />
+							) : (
+								<RefreshCw className="h-4 w-4 mr-1" />
+							)}
+							Renouveler
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			{/* Terminate modal */}
+			<Dialog
+				open={terminateModal}
+				onOpenChange={(o) => !o && setTerminateModal(false)}
+			>
+				<DialogContent className="max-w-md">
+					<DialogHeader>
+						<DialogTitle>
+							Résilier le bail — {terminateLease?.Property?.city}
+						</DialogTitle>
+					</DialogHeader>
+					<div className="py-2 space-y-3">
+						{terminateResult && (
+							<AppAlert
+								color={terminateResult.type}
+								dismissible
+								onClose={() => setTerminateResult(null)}
+							>
+								{terminateResult.message}
+							</AppAlert>
+						)}
+						<FormDateField
+							label="Date de résiliation"
+							name="terminateDate"
+							value={terminateDate}
+							required
+							onChange={(e) => setTerminateDate(e.target.value)}
+						/>
+						<FormTextareaField
+							label="Motif (optionnel)"
+							name="terminateReason"
+							rows={3}
+							value={terminateReason}
+							onChange={(e) => setTerminateReason(e.target.value)}
+						/>
+						<div className="flex items-center gap-3 rounded-lg border border-border/50 bg-muted/30 px-3 py-2.5">
+							<Switch
+								id="terminate-send-email"
+								checked={terminateSendEmail}
+								onCheckedChange={setTerminateSendEmail}
+								disabled={!terminateLease?.Tenant?.email}
+							/>
+							<label
+								htmlFor="terminate-send-email"
+								className="text-sm cursor-pointer select-none"
+							>
+								{terminateLease?.Tenant?.email ? (
+									<>
+										Envoyer un email de résiliation à{" "}
+										<strong>{terminateLease.Tenant.email}</strong>
+									</>
+								) : (
+									<span className="text-muted-foreground">
+										Aucun email locataire enregistré
+									</span>
+								)}
+							</label>
+						</div>
+					</div>
+					<DialogFooter>
+						<Button variant="outline" onClick={() => setTerminateModal(false)}>
+							Annuler
+						</Button>
+						<Button
+							variant="destructive"
+							disabled={
+								terminateLoading ||
+								!terminateDate ||
+								!!terminateResult?.type.includes("success")
+							}
+							onClick={handleTerminate}
+						>
+							{terminateLoading ? (
+								<Spinner size="sm" className="mr-1" />
+							) : (
+								<CircleX className="h-4 w-4 mr-1" />
+							)}
+							Résilier
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 
 			{/* IRL simulation modal */}
 			<Dialog open={irlModal} onOpenChange={(o) => !o && setIrlModal(false)}>

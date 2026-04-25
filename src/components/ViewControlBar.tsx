@@ -108,7 +108,7 @@ const ViewControlBar: React.FC<ViewControlBarProps> = ({
 
 	return (
 		<TooltipProvider delayDuration={300}>
-			<div className="flex items-center flex-wrap gap-2 py-3 mb-4">
+			<div className="flex items-center flex-wrap gap-2 py-3 m-2">
 				{/* Boutons de mode */}
 				{showModes && (
 					<div className="flex rounded-md border border-input overflow-hidden">
@@ -209,7 +209,7 @@ const ViewControlBar: React.FC<ViewControlBarProps> = ({
 
 				{/* Compteur */}
 				{!hasActiveFilter && (
-					<span className="text-xs text-muted-foreground ml-1">
+					<span className="text-xs text-muted-foreground ml-1 inline-flex items-center">
 						{totalCount} {totalCount > 1 ? pluralLabel : itemLabel}
 					</span>
 				)}

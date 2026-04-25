@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
 import type * as React from "react";
+import { Button } from "./button";
 
 type AlertColor =
 	| "success"
@@ -49,13 +50,13 @@ export function AppAlert({
 		>
 			<span className="flex-1">{children}</span>
 			{dismissible && onClose && (
-				<button
+				<Button
 					type="button"
 					onClick={onClose}
 					className="shrink-0 opacity-60 hover:opacity-100 transition-opacity"
 				>
 					<X className="h-4 w-4" />
-				</button>
+				</Button>
 			)}
 		</div>
 	);
