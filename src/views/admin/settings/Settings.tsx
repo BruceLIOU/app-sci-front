@@ -4,12 +4,31 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
-import { Lock, Unlock, XCircle } from "lucide-react";
+import {
+	Bell,
+	Calendar,
+	Clock,
+	FileText,
+	Lock,
+	Mail,
+	Send,
+	Settings2,
+	Unlock,
+	XCircle,
+} from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
+import { FormInputField } from "../../../components/FormFields";
 import AssociateDataService from "../../../services/associate.service";
 import OwnerConfigDataService, {
 	type OwnerConfigData,
@@ -49,6 +68,7 @@ const TABS = [
 	"imap",
 	"cron",
 	"email_templates",
+	"alerts",
 ] as const;
 type Tab = (typeof TABS)[number];
 const TAB_LABELS: Record<Tab, string> = {
@@ -58,6 +78,16 @@ const TAB_LABELS: Record<Tab, string> = {
 	imap: "Récup. mail Matera",
 	cron: "Cron",
 	email_templates: "Templates email",
+	alerts: "Alertes",
+};
+const TAB_ICONS: Record<Tab, React.ReactNode> = {
+	owner: <Settings2 className="h-3.5 w-3.5" />,
+	google: <Calendar className="h-3.5 w-3.5" />,
+	smtp: <Send className="h-3.5 w-3.5" />,
+	imap: <Mail className="h-3.5 w-3.5" />,
+	cron: <Clock className="h-3.5 w-3.5" />,
+	email_templates: <FileText className="h-3.5 w-3.5" />,
+	alerts: <Bell className="h-3.5 w-3.5" />,
 };
 
 const DEFAULT_TEMPLATES = {
@@ -255,6 +285,15 @@ const Settings: React.FC = () => {
 		}
 	};
 
+	// Helper pour les composants Select (onValueChange ne fournit pas d'event)
+	const handleSelectChange = (name: string) => (value: string) => {
+		setSaved(false);
+		setConfig((prev) => ({
+			...prev,
+			[name]: value === "__none__" ? "" : value,
+		}));
+	};
+
 	const handleSave = async () => {
 		setSaving(true);
 		setSaved(false);
@@ -299,7 +338,7 @@ const Settings: React.FC = () => {
 	);
 
 	return (
-		<div className="max-w-3xl">
+		<div className="max-full">
 			<div className="mb-4">
 				<Card className="app-page-hero border-0">
 					<CardContent className="p-0">
@@ -314,29 +353,38 @@ const Settings: React.FC = () => {
 			</div>
 
 			<Card className="mb-4 app-panel-card">
-				<CardHeader className="border-b py-3 px-4">
-					<strong>Paramètres</strong>
-				</CardHeader>
 				<CardContent className="p-0">
 					{/* Tabs nav */}
-					<div className="flex gap-1 border-b px-3 pt-3 flex-wrap">
+					<div className="flex gap-1 border-b border-border/60 px-4 pt-4 overflow-x-auto overflow-y-hidden">
 						{TABS.map((tab) => (
-							<button
+							<Button
 								key={tab}
-								type="button"
-								className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === tab ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+								variant="ghost"
+								size="sm"
 								onClick={() => setActiveTab(tab)}
+								style={
+									activeTab === tab
+										? { borderBottomColor: "var(--color-card)" }
+										: undefined
+								}
+								className={[
+									"inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-md whitespace-nowrap transition-all duration-150 border -mb-px h-auto",
+									activeTab === tab
+										? "bg-transparent border-border/60 text-primary"
+										: "bg-transparent border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/40",
+								].join(" ")}
 							>
+								{TAB_ICONS[tab]}
 								{TAB_LABELS[tab]}
 								{tab === "google" && (
 									<Badge
 										variant={googleConnected ? "default" : "secondary"}
-										className="text-[0.65rem] px-1.5 py-0"
+										className="text-[0.6rem] px-1.5 py-0 h-4 ml-0.5"
 									>
-										{googleConnected ? "Connecté" : "Non connecté"}
+										{googleConnected ? "✓" : "—"}
 									</Badge>
 								)}
-							</button>
+							</Button>
 						))}
 					</div>
 
@@ -362,41 +410,47 @@ const Settings: React.FC = () => {
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
 									<div>
 										<Label>Type de bailleur</Label>
-										<select
-											name="owner_profile_type"
+										<Select
 											value={config.owner_profile_type || "INDIVIDUAL"}
-											onChange={handleChange}
-											className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring mt-1"
+											onValueChange={handleSelectChange("owner_profile_type")}
 										>
-											<option value="INDIVIDUAL">Bailleur particulier</option>
-											<option value="PROFESSIONAL">
-												Bailleur professionnel
-											</option>
-											<option value="SCI">
-												SCI (Société Civile Immobilière)
-											</option>
-										</select>
+											<SelectTrigger className="mt-1">
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="INDIVIDUAL">
+													Bailleur particulier
+												</SelectItem>
+												<SelectItem value="PROFESSIONAL">
+													Bailleur professionnel
+												</SelectItem>
+												<SelectItem value="SCI">
+													SCI (Société Civile Immobilière)
+												</SelectItem>
+											</SelectContent>
+										</Select>
 									</div>
 									{(isSciProfile || isProfessional) && (
 										<div>
-											<Label>Forme juridique</Label>
-											<Input
+											<FormInputField
+												label="Forme juridique"
 												name="legal_form"
 												value={config.legal_form || ""}
 												onChange={handleChange}
 												placeholder={isSciProfile ? "SCI" : "SARL, EIRL, etc."}
-												className="mt-1"
 											/>
 										</div>
 									)}
 								</div>
 
 								<div className="mb-3">
-									<Label>
-										{isSciProfile ? "Raison sociale" : "Nom du bailleur"}{" "}
-										<span className="text-destructive">*</span>
-									</Label>
-									<Input
+									<FormInputField
+										label={
+											<>
+												{isSciProfile ? "Raison sociale" : "Nom du bailleur"}{" "}
+												<span className="text-destructive">*</span>
+											</>
+										}
 										name="name"
 										value={config.name || ""}
 										onChange={handleChange}
@@ -407,79 +461,70 @@ const Settings: React.FC = () => {
 													? "Nom de l'entreprise ou de la personne"
 													: "Nom du bailleur affiché dans les documents"
 										}
-										className="mt-1"
 									/>
 								</div>
 
 								{(isSciProfile || isProfessional) && (
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
 										<div>
-											<Label>SIRET</Label>
-											<Input
+											<FormInputField
+												label="SIRET"
 												name="siret"
 												value={config.siret || ""}
 												onChange={handleChange}
 												placeholder="123 456 789 00010"
-												className="mt-1"
 											/>
 										</div>
 										<div>
-											<Label>RCS</Label>
-											<Input
+											<FormInputField
+												label="RCS"
 												name="rcs"
 												value={config.rcs || ""}
 												onChange={handleChange}
 												placeholder="RCS Paris 123 456 789"
-												className="mt-1"
 											/>
 										</div>
 									</div>
 								)}
 
 								<div className="mb-3">
-									<Label>
-										{isSciProfile ? "Adresse du siège social" : "Adresse"}
-									</Label>
-									<Input
+									<FormInputField
+										label={isSciProfile ? "Adresse du siège social" : "Adresse"}
 										name="address"
 										value={config.address || ""}
 										onChange={handleChange}
 										placeholder="Numéro et nom de la rue"
-										className="mt-1"
 									/>
 								</div>
 
 								<div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
 									<div>
-										<Label>Code postal</Label>
-										<Input
+										<FormInputField
+											label="Code postal"
 											name="zipcode"
 											value={config.zipcode || ""}
 											onChange={handleChange}
 											placeholder="75001"
-											className="mt-1"
 										/>
 									</div>
 									<div className="md:col-span-2">
-										<Label>Ville</Label>
-										<Input
+										<FormInputField
+											label="Ville"
 											name="city"
 											value={config.city || ""}
 											onChange={handleChange}
 											placeholder="Paris"
-											className="mt-1"
 										/>
 									</div>
 								</div>
 
 								<div className="mb-4">
-									<Label>IBAN (compte bancaire)</Label>
-									<Input
+									<FormInputField
+										label="IBAN (compte bancaire)"
 										name="iban"
 										value={config.iban || ""}
 										onChange={handleChange}
 										placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX"
-										className="mt-1"
 									/>
 								</div>
 
@@ -495,19 +540,57 @@ const Settings: React.FC = () => {
 													? "Sélectionner un gérant associé"
 													: "Sélectionner un responsable"}
 											</Label>
-											<select
-												value={config.manager_associate_id ?? ""}
-												onChange={handleGerantSelect}
+											<Select
+												value={
+													config.manager_associate_id != null
+														? String(config.manager_associate_id)
+														: "__none__"
+												}
+												onValueChange={(value) => {
+													setSaved(false);
+													const id =
+														value !== "__none__" ? Number(value) : null;
+													if (!id) {
+														setConfig((prev) => ({
+															...prev,
+															manager_associate_id: null,
+															manager_civility: "",
+															manager_firstname: "",
+															manager_lastname: "",
+															manager_email: "",
+															manager_phone: "",
+														}));
+														return;
+													}
+													const associate = gerants.find((a) => a.id === id);
+													if (associate) {
+														setConfig((prev) => ({
+															...prev,
+															manager_associate_id: associate.id,
+															manager_civility: associate.civility || "",
+															manager_firstname: associate.firstname || "",
+															manager_lastname: associate.lastname || "",
+															manager_email: associate.email || "",
+															manager_phone: associate.phone || "",
+														}));
+													}
+												}}
 												disabled={gerants.length === 0}
-												className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring mt-1 disabled:opacity-50"
 											>
-												<option value="">— Saisie manuelle —</option>
-												{gerants.map((a) => (
-													<option key={a.id} value={a.id}>
-														{a.civility} {a.firstname} {a.lastname}
-													</option>
-												))}
-											</select>
+												<SelectTrigger className="mt-1">
+													<SelectValue placeholder="— Saisie manuelle —" />
+												</SelectTrigger>
+												<SelectContent>
+													<SelectItem value="__none__">
+														— Saisie manuelle —
+													</SelectItem>
+													{gerants.map((a) => (
+														<SelectItem key={a.id} value={String(a.id)}>
+															{a.civility} {a.firstname} {a.lastname}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
 											<p className="text-xs text-muted-foreground mt-1">
 												{gerants.length === 0
 													? isSciProfile
@@ -520,56 +603,55 @@ const Settings: React.FC = () => {
 										<div className="grid grid-cols-12 gap-3 mb-3">
 											<div className="col-span-2">
 												<Label>Civilité</Label>
-												<select
-													name="manager_civility"
-													value={config.manager_civility || ""}
-													onChange={handleChange}
-													className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring mt-1"
+												<Select
+													value={config.manager_civility || "__none__"}
+													onValueChange={handleSelectChange("manager_civility")}
 												>
-													<option value="">—</option>
-													<option value="M.">M.</option>
-													<option value="Mme">Mme</option>
-												</select>
+													<SelectTrigger className="mt-1">
+														<SelectValue placeholder="—" />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value="__none__">—</SelectItem>
+														<SelectItem value="M.">M.</SelectItem>
+														<SelectItem value="Mme">Mme</SelectItem>
+													</SelectContent>
+												</Select>
 											</div>
 											<div className="col-span-5">
-												<Label>Prénom</Label>
-												<Input
+												<FormInputField
+													label="Prénom"
 													name="manager_firstname"
 													value={config.manager_firstname || ""}
 													onChange={handleChange}
-													className="mt-1"
 												/>
 											</div>
 											<div className="col-span-5">
-												<Label>Nom</Label>
-												<Input
+												<FormInputField
+													label="Nom"
 													name="manager_lastname"
 													value={config.manager_lastname || ""}
 													onChange={handleChange}
-													className="mt-1"
 												/>
 											</div>
 										</div>
 
 										<div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
 											<div>
-												<Label>Email</Label>
-												<Input
+												<FormInputField
+													label="Email"
 													type="email"
 													name="manager_email"
 													value={config.manager_email || ""}
 													onChange={handleChange}
-													className="mt-1"
 												/>
 											</div>
 											<div>
-												<Label>Téléphone</Label>
-												<Input
+												<FormInputField
+													label="Téléphone"
 													name="manager_phone"
 													value={config.manager_phone || ""}
 													onChange={handleChange}
 													placeholder="06 00 00 00 00"
-													className="mt-1"
 												/>
 											</div>
 										</div>
@@ -620,22 +702,27 @@ const Settings: React.FC = () => {
 										) : (
 											<div className="mb-3">
 												<Label>Calendrier à synchroniser</Label>
-												<select
-													name="google_calendar_id"
-													value={config.google_calendar_id ?? ""}
-													onChange={handleChange}
-													className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring mt-1"
+												<Select
+													value={config.google_calendar_id || "__none__"}
+													onValueChange={handleSelectChange(
+														"google_calendar_id",
+													)}
 												>
-													<option value="">
-														— Calendrier principal (primary) —
-													</option>
-													{googleCalendars.map((cal) => (
-														<option key={cal.id} value={cal.id}>
-															{cal.summary}
-															{cal.primary ? " (principal)" : ""}
-														</option>
-													))}
-												</select>
+													<SelectTrigger className="mt-1">
+														<SelectValue placeholder="— Calendrier principal (primary) —" />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value="__none__">
+															— Calendrier principal (primary) —
+														</SelectItem>
+														{googleCalendars.map((cal) => (
+															<SelectItem key={cal.id} value={cal.id}>
+																{cal.summary}
+																{cal.primary ? " (principal)" : ""}
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
 												<p className="text-xs text-muted-foreground mt-1">
 													Les visites seront synchronisées vers ce calendrier.
 												</p>
@@ -710,24 +797,22 @@ const Settings: React.FC = () => {
 
 								<div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
 									<div className="md:col-span-2">
-										<Label>Serveur SMTP</Label>
-										<Input
+										<FormInputField
+											label="Serveur SMTP"
 											name="smtp_host"
 											value={config.smtp_host || ""}
 											onChange={handleChange}
 											placeholder="smtp.gmail.com"
-											className="mt-1"
 										/>
 									</div>
 									<div>
-										<Label>Port</Label>
-										<Input
+										<FormInputField
+											label="Port"
 											type="number"
 											name="smtp_port"
 											value={config.smtp_port ?? ""}
 											onChange={handleChange}
 											placeholder="587"
-											className="mt-1"
 										/>
 									</div>
 								</div>
@@ -754,14 +839,13 @@ const Settings: React.FC = () => {
 
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
 									<div>
-										<Label>Utilisateur (login)</Label>
-										<Input
+										<FormInputField
+											label="Utilisateur (login)"
 											name="smtp_user"
 											value={config.smtp_user || ""}
 											onChange={handleChange}
 											placeholder="user@example.com"
 											autoComplete="off"
-											className="mt-1"
 										/>
 									</div>
 									<div>
@@ -775,29 +859,30 @@ const Settings: React.FC = () => {
 												autoComplete="new-password"
 												className="rounded-r-none"
 											/>
-											<button
+											<Button
 												type="button"
+												variant="secondary"
+												size="icon"
 												onClick={() => setShowSmtpPass((v) => !v)}
-												className="flex items-center justify-center px-3 border border-l-0 border-input rounded-r-md bg-muted hover:bg-muted/80 transition-colors"
+												className="rounded-l-none border border-l-0 border-input h-9 w-10 shrink-0"
 											>
 												{showSmtpPass ? (
 													<Unlock className="h-4 w-4" />
 												) : (
 													<Lock className="h-4 w-4" />
 												)}
-											</button>
+											</Button>
 										</div>
 									</div>
 								</div>
 
 								<div className="mb-4">
-									<Label>Adresse expéditeur (From)</Label>
-									<Input
+									<FormInputField
+										label="Adresse expéditeur (From)"
 										name="smtp_from"
 										value={config.smtp_from || ""}
 										onChange={handleChange}
 										placeholder="no-reply@example.com"
-										className="mt-1"
 									/>
 									<p className="text-xs text-muted-foreground mt-1">
 										Si vide, l&apos;adresse utilisateur sera utilisée.
@@ -830,24 +915,22 @@ const Settings: React.FC = () => {
 
 								<div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
 									<div className="md:col-span-2">
-										<Label>Serveur IMAP</Label>
-										<Input
+										<FormInputField
+											label="Serveur IMAP"
 											name="imap_host"
 											value={config.imap_host || ""}
 											onChange={handleChange}
 											placeholder="imap.free.fr"
-											className="mt-1"
 										/>
 									</div>
 									<div>
-										<Label>Port</Label>
-										<Input
+										<FormInputField
+											label="Port"
 											type="number"
 											name="imap_port"
 											value={config.imap_port ?? ""}
 											onChange={handleChange}
 											placeholder="993"
-											className="mt-1"
 										/>
 									</div>
 								</div>
@@ -874,14 +957,13 @@ const Settings: React.FC = () => {
 
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
 									<div>
-										<Label>Utilisateur (login)</Label>
-										<Input
+										<FormInputField
+											label="Utilisateur (login)"
 											name="imap_user"
 											value={config.imap_user || ""}
 											onChange={handleChange}
 											placeholder="user@free.fr"
 											autoComplete="off"
-											className="mt-1"
 										/>
 									</div>
 									<div>
@@ -895,17 +977,19 @@ const Settings: React.FC = () => {
 												autoComplete="new-password"
 												className="rounded-r-none"
 											/>
-											<button
+											<Button
 												type="button"
+												variant="secondary"
+												size="icon"
 												onClick={() => setShowImapPass((v) => !v)}
-												className="flex items-center justify-center px-3 border border-l-0 border-input rounded-r-md bg-muted hover:bg-muted/80 transition-colors"
+												className="rounded-l-none border border-l-0 border-input h-9 w-10 shrink-0"
 											>
 												{showImapPass ? (
 													<Unlock className="h-4 w-4" />
 												) : (
 													<Lock className="h-4 w-4" />
 												)}
-											</button>
+											</Button>
 										</div>
 									</div>
 								</div>
@@ -916,13 +1000,12 @@ const Settings: React.FC = () => {
 
 								<div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
 									<div className="md:col-span-2">
-										<Label>Email expéditeur Matera</Label>
-										<Input
+										<FormInputField
+											label="Email expéditeur Matera"
 											name="matera_sender_email"
 											value={config.matera_sender_email || ""}
 											onChange={handleChange}
 											placeholder="notif@matera.eu"
-											className="mt-1"
 										/>
 										<p className="text-xs text-muted-foreground mt-1">
 											Les emails reçus de cet expéditeur seront traités.
@@ -930,21 +1013,35 @@ const Settings: React.FC = () => {
 									</div>
 									<div>
 										<Label>Bien associé</Label>
-										<select
-											name="matera_property_id"
-											value={config.matera_property_id ?? ""}
-											onChange={handleChange}
+										<Select
+											value={
+												config.matera_property_id != null &&
+												config.matera_property_id !== ""
+													? String(config.matera_property_id)
+													: "__none__"
+											}
+											onValueChange={(v) => {
+												setSaved(false);
+												setConfig((prev) => ({
+													...prev,
+													matera_property_id: v === "__none__" ? null : v,
+												}));
+											}}
 											disabled={properties.length === 0}
-											className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring mt-1 disabled:opacity-50"
 										>
-											<option value="">— Aucun bien —</option>
-											{properties.map((p) => (
-												<option key={p.id} value={p.id}>
-													{p.name}
-													{p.city ? ` — ${p.city}` : ""}
-												</option>
-											))}
-										</select>
+											<SelectTrigger className="mt-1">
+												<SelectValue placeholder="— Aucun bien —" />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="__none__">— Aucun bien —</SelectItem>
+												{properties.map((p) => (
+													<SelectItem key={p.id} value={String(p.id)}>
+														{p.name}
+														{p.city ? ` — ${p.city}` : ""}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
 										<p className="text-xs text-muted-foreground mt-1">
 											Les charges seront liées à ce bien.
 										</p>
@@ -996,14 +1093,13 @@ const Settings: React.FC = () => {
 								</div>
 
 								<div className="max-w-lg mb-3">
-									<Label>Schedule (syntaxe cron)</Label>
-									<Input
+									<FormInputField
+										label="Schedule (syntaxe cron)"
 										name="charge_cron_schedule"
 										value={config.charge_cron_schedule || "0 8 * * *"}
 										onChange={handleChange}
 										placeholder="0 8 * * *"
 										disabled={config.charge_cron_enabled === false}
-										className="mt-1"
 									/>
 									<p className="text-xs text-muted-foreground mt-1">
 										Exemples : <code>0 8 * * *</code> (chaque jour à 8h00) —{" "}
@@ -1123,6 +1219,46 @@ const Settings: React.FC = () => {
 									</div>
 								</div>
 
+								<div className="flex justify-end mt-4">
+									<SaveButton />
+								</div>
+							</div>
+						)}
+
+						{activeTab === "alerts" && (
+							<div className="space-y-6">
+								<div>
+									<h3 className="font-semibold mb-1">Rappels impayés</h3>
+									<p className="text-sm text-muted-foreground mb-3">
+										Jours après l'échéance auxquels envoyer un rappel (séparés
+										par des virgules). Ex : 5,15,30
+									</p>
+									<input
+										type="text"
+										name="payment_reminder_days"
+										value={config.payment_reminder_days ?? "5,15,30"}
+										onChange={handleChange}
+										placeholder="5,15,30"
+										className="flex h-9 w-full max-w-xs rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+									/>
+								</div>
+								<div>
+									<h3 className="font-semibold mb-1">
+										Alertes expiration de bail
+									</h3>
+									<p className="text-sm text-muted-foreground mb-3">
+										Jours avant la fin du bail pour déclencher une alerte
+										(séparés par des virgules). Ex : 30,90
+									</p>
+									<input
+										type="text"
+										name="lease_expiry_alert_days"
+										value={config.lease_expiry_alert_days ?? "30,90"}
+										onChange={handleChange}
+										placeholder="30,90"
+										className="flex h-9 w-full max-w-xs rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+									/>
+								</div>
 								<div className="flex justify-end mt-4">
 									<SaveButton />
 								</div>

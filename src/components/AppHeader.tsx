@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ArrowRight, Bell, Check, Mail, Menu } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -64,9 +65,10 @@ const AppHeader = () => {
 	return (
 		<header className="sticky top-0 z-40 mb-4 app-header border-b bg-background">
 			<div className="flex h-14 items-center gap-2 px-4">
-				<button
-					type="button"
-					className="inline-flex items-center justify-center rounded-md p-1.5 hover:bg-accent"
+				<Button
+					variant="secondary"
+					size="icon"
+					className="h-8 w-8"
 					onClick={() => {
 						if (window.innerWidth >= 1024) {
 							dispatch(set({ sidebarUnfoldable: !sidebarUnfoldable }));
@@ -76,17 +78,17 @@ const AppHeader = () => {
 					}}
 				>
 					<Menu className="h-5 w-5" />
-				</button>
-
+				</Button>
 				<nav className="flex-1 min-w-0 app-header-breadcrumb-inline">
 					<AppBreadcrumb />
 				</nav>
 
 				<div className="flex items-center gap-1">
 					<div ref={containerRef} className="relative">
-						<button
-							type="button"
-							className="app-notification-trigger relative flex items-center rounded-md p-2 hover:bg-accent"
+						<Button
+							variant="ghost"
+							size="icon"
+							className="app-notification-trigger relative h-8 w-8 border-none"
 							onClick={handleBellClick}
 						>
 							<Bell className="h-5 w-5" />
@@ -98,7 +100,7 @@ const AppHeader = () => {
 									{unreadCount > 99 ? "99+" : unreadCount}
 								</Badge>
 							)}
-						</button>
+						</Button>
 
 						{popoverOpen && (
 							<div className="app-notification-popover absolute top-[calc(100%+8px)] right-0 w-[340px] z-[1050] overflow-hidden rounded-lg border bg-background shadow-lg">
@@ -112,13 +114,14 @@ const AppHeader = () => {
 										)}
 									</span>
 									{unreadCount > 0 && (
-										<button
-											type="button"
+										<Button
+											variant="secondary"
+											size="sm"
 											onClick={markAllRead}
-											className="flex items-center gap-1 text-xs text-green-600 hover:text-green-700"
+											className="h-auto px-1.5 py-0.5 text-xs text-green-600 hover:text-green-700 hover:bg-green-50"
 										>
 											<Check className="h-3 w-3" /> Tout lire
-										</button>
+										</Button>
 									)}
 								</div>
 
@@ -134,11 +137,12 @@ const AppHeader = () => {
 										</div>
 									) : (
 										recentUnread.map((n) => (
-											<button
+											<Button
 												type="button"
 												key={n.id}
+												variant="ghost"
 												onClick={() => markRead(n.id)}
-												className="flex w-full items-start gap-2.5 border-b px-3.5 py-2.5 text-left hover:bg-muted/40 transition-colors"
+												className="flex w-full h-auto items-start gap-2.5 border-b px-3.5 py-2.5 text-left hover:bg-muted/40 rounded-none justify-start"
 											>
 												<span
 													className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
@@ -160,19 +164,20 @@ const AppHeader = () => {
 													</div>
 												</div>
 												<Check className="h-3.5 w-3.5 shrink-0 opacity-40 mt-1" />
-											</button>
+											</Button>
 										))
 									)}
 								</div>
 
-								<button
+								<Button
 									type="button"
+									variant="ghost"
 									onClick={goToPage}
-									className="flex w-full items-center justify-center gap-1.5 border-t px-3.5 py-2.5 text-sm font-semibold text-primary bg-muted/40 hover:bg-muted/60 transition-colors"
+									className="flex w-full h-auto items-center justify-center gap-1.5 border-t px-3.5 py-2.5 text-sm font-semibold text-primary bg-muted/40 hover:bg-muted/60 rounded-none"
 								>
 									Voir toutes les notifications{" "}
 									<ArrowRight className="h-3.5 w-3.5" />
-								</button>
+								</Button>
 							</div>
 						)}
 					</div>

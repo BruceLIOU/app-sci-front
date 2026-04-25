@@ -1,4 +1,3 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type React from "react";
 
@@ -9,36 +8,67 @@ interface StatCardProps {
 	sm?: number;
 }
 
-const accentMap: Record<string, { border: string; dot: string }> = {
-	success: { border: "border-l-emerald-500", dot: "bg-emerald-500" },
-	warning: { border: "border-l-amber-500", dot: "bg-amber-500" },
-	danger: { border: "border-l-rose-500", dot: "bg-rose-500" },
-	info: { border: "border-l-teal-600", dot: "bg-teal-600" },
-	primary: { border: "border-l-blue-500", dot: "bg-blue-500" },
-	secondary: { border: "border-l-slate-400", dot: "bg-slate-400" },
-	dark: { border: "border-l-slate-700", dot: "bg-slate-700" },
-	light: { border: "border-l-slate-300", dot: "bg-slate-300" },
+const accentMap: Record<string, { bar: string; bg: string; bgDark: string }> = {
+	success: {
+		bar: "bg-emerald-500",
+		bg: "bg-emerald-50",
+		bgDark: "dark:bg-emerald-950/30",
+	},
+	warning: {
+		bar: "bg-amber-500",
+		bg: "bg-amber-50",
+		bgDark: "dark:bg-amber-950/30",
+	},
+	danger: {
+		bar: "bg-rose-500",
+		bg: "bg-rose-50",
+		bgDark: "dark:bg-rose-950/30",
+	},
+	info: { bar: "bg-teal-600", bg: "bg-teal-50", bgDark: "dark:bg-teal-950/30" },
+	primary: {
+		bar: "bg-blue-500",
+		bg: "bg-blue-50",
+		bgDark: "dark:bg-blue-950/30",
+	},
+	secondary: {
+		bar: "bg-slate-400",
+		bg: "bg-slate-50",
+		bgDark: "dark:bg-slate-800/40",
+	},
+	dark: {
+		bar: "bg-slate-700",
+		bg: "bg-slate-100",
+		bgDark: "dark:bg-slate-800/50",
+	},
+	light: {
+		bar: "bg-slate-300",
+		bg: "bg-slate-50",
+		bgDark: "dark:bg-slate-800/30",
+	},
 };
 
 const StatCard: React.FC<StatCardProps> = ({ value, label, color, sm = 4 }) => {
 	const accent = accentMap[color] ?? accentMap.info;
 	return (
-		<Card
+		<div
 			className={cn(
-				"border-l-[3px] mb-3 cursor-default select-none",
-				"hover:-translate-y-0.5 hover:shadow-md transition-all duration-150",
-				accent.border,
+				"rounded-xl overflow-hidden cursor-default select-none mb-3 w-52",
+				"border border-slate-200 dark:border-slate-600/50",
+				accent.bg,
+				accent.bgDark,
+				"shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-150",
 			)}
 		>
-			<CardContent className="p-4">
-				<div className="text-[1.9rem] font-extrabold tracking-tight text-slate-900 dark:text-slate-50 leading-none tabular-nums">
+			<div className={cn("h-1 w-full", accent.bar)} />
+			<div className="px-4 py-4">
+				<div className="text-2xl font-extrabold tracking-tight leading-none tabular-nums text-slate-800 dark:text-slate-100">
 					{value}
 				</div>
-				<div className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-1.5">
+				<div className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-2 leading-snug">
 					{label}
 				</div>
-			</CardContent>
-		</Card>
+			</div>
+		</div>
 	);
 };
 

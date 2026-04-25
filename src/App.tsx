@@ -28,10 +28,13 @@ const AppInner: React.FC = () => {
 			.then(({ data }) => {
 				dispatch(setUser(data));
 				// Appliquer le thème sauvegardé
-				if (data.preferences?.darkMode) {
-					document.documentElement.setAttribute("data-coreui-theme", "dark");
-					document.documentElement.classList.add("dark");
-				}
+				const isDark = !!data.preferences?.darkMode;
+				document.documentElement.setAttribute(
+					"data-coreui-theme",
+					isDark ? "dark" : "light",
+				);
+				document.documentElement.classList.toggle("dark", isDark);
+				localStorage.setItem("app-theme", isDark ? "dark" : "light");
 			})
 			.catch(() => dispatch(setUser(null)));
 	}, [dispatch]);

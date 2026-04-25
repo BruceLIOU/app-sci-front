@@ -470,9 +470,9 @@ const Dashboard = () => {
 							Tableau de bord
 						</h1>
 						<p className="text-slate-400 text-sm mt-0.5">
-							{properties.length} bien{properties.length !== 1 ? "s" : ""} ·{" "}
-							{activeLeases.length} bail{activeLeases.length !== 1 ? "x" : ""}{" "}
-							actif{activeLeases.length !== 1 ? "s" : ""} ·{" "}
+							{properties.length} bien{properties.length > 1 ? "s" : ""} ·{" "}
+							{activeLeases.length} {activeLeases.length > 1 ? "baux" : "bail"}{" "}
+							actif{activeLeases.length > 1 ? "s" : ""} ·{" "}
 							{selectedYear === "all" ? "Toutes périodes" : selectedYear}
 						</p>
 					</div>
@@ -556,7 +556,7 @@ const Dashboard = () => {
 							)}
 						>
 							<div
-								className="text-[0.58rem] font-bold uppercase tracking-widest mb-1.5"
+								className="text-lg font-bold uppercase tracking-widest mb-1.5"
 								style={{ color: `${color}80` }}
 							>
 								{label}
@@ -595,7 +595,7 @@ const Dashboard = () => {
 			)}
 
 			{/* ── Operational KPIs ──────────────────────────────────────── */}
-			<div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+			<div className="flex gap-4 mb-4 text-center w-full justify-content-center flex-direction-column">
 				{[
 					{
 						label: "Biens",
@@ -634,7 +634,7 @@ const Dashboard = () => {
 						type="button"
 						key={label}
 						onClick={() => navigate(path)}
-						className="relative rounded-xl bg-card border text-left w-full cursor-pointer select-none overflow-hidden transition-all duration-150 hover:shadow-md hover:-translate-y-0.5 group"
+						className="flex justify-center relative rounded-xl bg-card border text-left w-full cursor-pointer select-none overflow-hidden transition-all duration-150 hover:shadow-md hover:-translate-y-0.5 group"
 					>
 						{/* Colored top line */}
 						<div
@@ -643,22 +643,24 @@ const Dashboard = () => {
 								background: `linear-gradient(90deg, ${color}, ${color}50)`,
 							}}
 						/>
-						<div className="p-4 pt-5">
-							<div className="flex items-start justify-between mb-3">
+						<div className="p-4 pt-4">
+							<div className="flex items-start justify-between mb-3 gap-2">
 								<div
 									className="flex items-center justify-center rounded-xl w-9 h-9"
 									style={{ background: `${color}15`, color }}
 								>
 									<Icon className="h-4 w-4" />
 								</div>
-								<span className="text-[0.58rem] font-bold uppercase tracking-widest text-muted-foreground/40 mt-0.5">
+								<span className="font-bold uppercase tracking-widest text-muted-foreground/40 mt-0.5 text-lg text-secondary">
 									{label}
 								</span>
 							</div>
-							<div className="text-3xl font-extrabold tabular-nums leading-none tracking-tight">
+							<div className="flex justify-center gap-2 align-bottom items-end text-3xl font-extrabold tabular-nums leading-none tracking-tight">
 								{value}
+								<div className="text-xs text-muted-foreground mt-1.5">
+									{sub}
+								</div>
 							</div>
-							<div className="text-xs text-muted-foreground mt-1.5">{sub}</div>
 						</div>
 					</button>
 				))}
@@ -1054,7 +1056,7 @@ const Dashboard = () => {
 						<div className="flex items-center justify-between">
 							<span className="font-semibold text-sm">Paiements récents</span>
 							<Button
-								variant="ghost"
+								variant="secondary"
 								size="sm"
 								className="h-6 text-xs text-muted-foreground px-2"
 								onClick={() => navigate("/admin/payments")}
@@ -1146,7 +1148,7 @@ const Dashboard = () => {
 									Prochaines visites
 								</span>
 								<Button
-									variant="ghost"
+									variant="secondary"
 									size="sm"
 									className="h-6 text-xs text-muted-foreground px-2"
 									onClick={() => navigate("/admin/visits")}

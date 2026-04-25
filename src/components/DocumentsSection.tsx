@@ -1,4 +1,11 @@
 import { Button } from "@/components/ui/button";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { CloudDownload, Plus, Trash2, X } from "lucide-react";
@@ -162,19 +169,22 @@ const DocumentsSection: React.FC<DocumentsSectionProps> = ({
 							onChange={(e) => setForm({ ...form, title: e.target.value })}
 							required
 						/>
-						<select
-							className="h-8 rounded-md border border-input bg-background px-3 text-sm col-span-2 sm:col-span-1"
+						<Select
 							value={form.category}
-							onChange={(e) => setForm({ ...form, category: e.target.value })}
+							onValueChange={(v) => setForm({ ...form, category: v })}
 							required
 						>
-							<option value="">-- Catégorie --</option>
-							{allowedCategories.map((c) => (
-								<option key={c.value} value={c.value}>
-									{c.label}
-								</option>
-							))}
-						</select>
+							<SelectTrigger className="h-8 text-sm col-span-2 sm:col-span-1">
+								<SelectValue placeholder="-- Catégorie --" />
+							</SelectTrigger>
+							<SelectContent>
+								{allowedCategories.map((c) => (
+									<SelectItem key={c.value} value={c.value}>
+										{c.label}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
 						<input
 							type="file"
 							className="h-8 col-span-2 text-sm file:mr-2 file:h-7 file:rounded-md file:border-0 file:bg-muted file:px-2 file:text-xs"

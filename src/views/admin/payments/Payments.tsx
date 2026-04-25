@@ -183,7 +183,7 @@ const Payments = () => {
 				</Card>
 			</div>
 
-			<div className="grid grid-cols-12 gap-4 mb-4 text-center">
+			<div className="flex gap-4 mb-4 text-center w-full justify-content-center flex-direction-column">
 				<StatCard
 					value={`${totalPaid.toFixed(2)} €`}
 					label="Loyers perçus"
@@ -227,7 +227,7 @@ const Payments = () => {
 						</Button>
 						<Button
 							size="sm"
-							variant="ghost"
+							variant="secondary"
 							onClick={() => setSelectedIds(new Set())}
 							disabled={bulkLoading}
 						>
@@ -367,8 +367,8 @@ const Payments = () => {
 				onSubmit={handleSubmit}
 			>
 				<div className="col-span-6">
-					<select
-						className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+					<FormSelectField
+						label="Locataire"
 						name="tenant_id"
 						value={formData.tenant_id}
 						onChange={handleChange}
@@ -380,11 +380,11 @@ const Payments = () => {
 								value={t.id}
 							>{`${t.civility || ""} ${t.firstname} ${t.lastname}`}</option>
 						))}
-					</select>
+					</FormSelectField>
 				</div>
 				<div className="col-span-6">
-					<select
-						className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+					<FormSelectField
+						label="Bien"
 						name="property_id"
 						value={formData.property_id}
 						onChange={handleChange}
@@ -396,7 +396,7 @@ const Payments = () => {
 								value={p.id}
 							>{`${p.type} - ${p.address}, ${p.city}`}</option>
 						))}
-					</select>
+					</FormSelectField>
 				</div>
 				<div className="col-span-4">
 					<FormInputField

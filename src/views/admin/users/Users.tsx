@@ -9,8 +9,13 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import {
 	Table,
@@ -30,6 +35,10 @@ import { Mail, RefreshCw, Trash2, UserPlus } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import DeleteModal from "../../../components/DeleteModal";
+import {
+	FormInputField,
+	FormSelectField,
+} from "../../../components/FormFields";
 import StatCard from "../../../components/StatCard";
 import TableEmptyRow from "../../../components/TableEmptyRow";
 import UserDataService from "../../../services/user.service";
@@ -196,7 +205,7 @@ const Users = () => {
 				</Card>
 			</div>
 
-			<div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+			<div className="flex gap-4 mb-4 text-center w-full justify-content-center flex-direction-column">
 				<StatCard value={users.length} label="Utilisateurs" color="primary" />
 				<StatCard value={activeCount} label="Comptes actifs" color="success" />
 				<StatCard
@@ -300,17 +309,19 @@ const Users = () => {
 													</Badge>
 												</TableCell>
 												<TableCell>
-													<select
-														className="text-sm border rounded px-2 py-1 w-28 bg-transparent"
+													<Select
 														value={user.role}
-														onChange={(e) =>
-															handleRoleChange(user, e.target.value)
-														}
+														onValueChange={(val) => handleRoleChange(user, val)}
 														disabled={actionLoading === user.id}
 													>
-														<option value="viewer">Lecteur</option>
-														<option value="admin">Admin</option>
-													</select>
+														<SelectTrigger className="w-28 h-8 text-sm">
+															<SelectValue />
+														</SelectTrigger>
+														<SelectContent>
+															<SelectItem value="viewer">Lecteur</SelectItem>
+															<SelectItem value="admin">Admin</SelectItem>
+														</SelectContent>
+													</Select>
 												</TableCell>
 												<TableCell>
 													{new Date(user.createdAt).toLocaleDateString("fr-FR")}
@@ -391,9 +402,9 @@ const Users = () => {
 							{inviteSuccess && (
 								<AppAlert color="success">{inviteSuccess}</AppAlert>
 							)}
-							<div className="space-y-1.5">
-								<Label>Nom</Label>
-								<Input
+							<div>
+								<FormInputField
+									label="Nom"
 									type="text"
 									value={inviteName}
 									onChange={(e) => setInviteName(e.target.value)}
@@ -401,23 +412,20 @@ const Users = () => {
 									disabled={inviteLoading}
 								/>
 							</div>
-							<div className="space-y-1.5">
-								<Label>
-									Adresse email <span className="text-destructive">*</span>
-								</Label>
-								<Input
+							<div>
+								<FormInputField
+									label="Adresse email"
+									required
 									type="email"
 									value={inviteEmail}
 									onChange={(e) => setInviteEmail(e.target.value)}
 									placeholder="utilisateur@exemple.fr"
-									required
 									disabled={inviteLoading}
 								/>
 							</div>
-							<div className="space-y-1.5">
-								<Label>Rôle</Label>
-								<select
-									className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+							<div>
+								<FormSelectField
+									label="Rôle"
 									value={inviteRole}
 									onChange={(e) => setInviteRole(e.target.value)}
 									disabled={inviteLoading}
@@ -426,7 +434,7 @@ const Users = () => {
 										Lecteur — consultation uniquement
 									</option>
 									<option value="admin">Administrateur — accès complet</option>
-								</select>
+								</FormSelectField>
 							</div>
 							<p className="text-muted-foreground text-sm mb-0">
 								Un email contenant un lien d&apos;activation (valable 24h) sera

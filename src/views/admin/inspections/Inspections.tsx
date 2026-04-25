@@ -20,6 +20,7 @@ import EntityTableCard from "../../../components/EntityTableCard";
 import {
 	FormInputField,
 	FormSelectField,
+	FormTextareaField,
 } from "../../../components/FormFields";
 import StatCard from "../../../components/StatCard";
 import { StatusBadge } from "../../../components/StatusBadge";
@@ -202,7 +203,7 @@ const Inspections = () => {
 				</Card>
 			</div>
 
-			<div className="grid grid-cols-12 gap-4 mb-4 text-center">
+			<div className="flex gap-4 mb-4 text-center w-full justify-content-center flex-direction-column">
 				<StatCard
 					value={inspections.filter((i) => i.type === "entree").length}
 					label="États d'entrée"
@@ -361,11 +362,8 @@ const Inspections = () => {
 					</FormSelectField>
 				</div>
 				<div className="col-span-6">
-					<label className="text-sm font-medium leading-none mb-1 block">
-						Locataire
-					</label>
-					<select
-						className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+					<FormSelectField
+						label="Locataire"
 						name="tenant_id"
 						value={form.tenant_id}
 						onChange={handleChange}
@@ -377,21 +375,18 @@ const Inspections = () => {
 								value={t.id}
 							>{`${t.civility || ""} ${t.firstname} ${t.lastname}`}</option>
 						))}
-					</select>
+					</FormSelectField>
 				</div>
 				<div className="col-span-4">
-					<label className="text-sm font-medium leading-none mb-1 block">
-						Type
-					</label>
-					<select
-						className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+					<FormSelectField
+						label="Type"
 						name="type"
 						value={form.type}
 						onChange={handleChange}
 					>
 						<option value="entree">État d'entrée</option>
 						<option value="sortie">État de sortie</option>
-					</select>
+					</FormSelectField>
 				</div>
 				<div className="col-span-4">
 					<FormInputField
@@ -405,29 +400,23 @@ const Inspections = () => {
 					/>
 				</div>
 				<div className="col-span-4">
-					<label className="text-sm font-medium leading-none mb-1 block">
-						Statut
-					</label>
-					<select
-						className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+					<FormSelectField
+						label="Statut"
 						name="status"
 						value={form.status}
 						onChange={handleChange}
 					>
 						<option value="pending">En attente</option>
 						<option value="completed">Complété</option>
-					</select>
+					</FormSelectField>
 				</div>
 				<div className="col-span-12">
-					<label className="text-sm font-medium leading-none mb-1 block">
-						Observations générales
-					</label>
-					<textarea
+					<FormTextareaField
+						label="Observations générales"
 						name="general_notes"
 						rows={2}
 						value={form.general_notes}
 						onChange={handleChange}
-						className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm resize-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
 					/>
 				</div>
 			</CrudModal>

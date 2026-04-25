@@ -16,7 +16,11 @@ import ActionButtons from "../../../components/ActionButtons";
 import CrudModal from "../../../components/CrudModal";
 import DeleteModal from "../../../components/DeleteModal";
 import EntityTableCard from "../../../components/EntityTableCard";
-import { FormInputField } from "../../../components/FormFields";
+import {
+	FormInputField,
+	FormSelectField,
+	FormTextareaField,
+} from "../../../components/FormFields";
 import StatCard from "../../../components/StatCard";
 import TableEmptyRow from "../../../components/TableEmptyRow";
 import useEntityCrud from "../../../hooks/useEntityCrud";
@@ -227,7 +231,7 @@ const Associates = () => {
 				<Card className="app-page-hero border-0">
 					<CardContent className="p-0">
 						<div className="app-page-kicker mb-3">Gouvernance</div>
-						<h2 className="mb-2 app-display-title">{labels.title}</h2>
+						<h2 className="mb-2 app-display-title">{getPageTitle()}</h2>
 						<p className="app-page-description mb-3">
 							Gérez les associés de votre SCI : parts sociales, gérant et
 							coordonnées.
@@ -244,7 +248,7 @@ const Associates = () => {
 				</Card>
 			</div>
 
-			<div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4 text-center">
+			<div className="flex gap-4 mb-4 text-center w-full justify-content-center flex-direction-column">
 				<StatCard
 					value={associates.length}
 					label={labels.item}
@@ -378,16 +382,15 @@ const Associates = () => {
 			>
 				<div className="grid grid-cols-12 gap-3">
 					<div className="col-span-4">
-						<label className="text-sm font-medium mb-1 block">Civilité</label>
-						<select
+						<FormSelectField
+							label="Civilité"
 							name="civility"
 							value={form.civility}
 							onChange={handleChange}
-							className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
 						>
 							<option value="MR">M.</option>
 							<option value="MME">Mme</option>
-						</select>
+						</FormSelectField>
 					</div>
 					<div className="col-span-4">
 						<FormInputField
@@ -429,13 +432,12 @@ const Associates = () => {
 						/>
 					</div>
 					<div className="col-span-8">
-						<label className="text-sm font-medium mb-1 block">Adresse</label>
-						<textarea
+						<FormTextareaField
+							label="Adresse"
 							name="address"
 							rows={2}
 							value={form.address}
 							onChange={handleChange}
-							className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm"
 						/>
 					</div>
 					<div className="col-span-4">
@@ -453,19 +455,18 @@ const Associates = () => {
 						/>
 					</div>
 					<div className="col-span-12">
-						<label className="text-sm font-medium mb-1 block">Rôle</label>
-						<select
+						<FormSelectField
+							label="Rôle"
 							name="role"
 							value={form.role}
 							onChange={handleChange}
-							className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
 						>
 							{getRoleOptions().map((opt) => (
 								<option key={opt.value} value={opt.value}>
 									{opt.label}
 								</option>
 							))}
-						</select>
+						</FormSelectField>
 					</div>
 				</div>
 			</CrudModal>

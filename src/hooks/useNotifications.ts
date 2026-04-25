@@ -18,10 +18,11 @@ const WS_URL = (() => {
 
 type Listener = (notif: Notification) => void;
 
-// Singleton module-level : une seule connexion partagée entre tous les composants
+// ─── WebSocket singleton ──────────────────────────────────────────────────────
+
 let wsInstance: WebSocket | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-const listeners = new Set<Listener>();
+const wsListeners = new Set<Listener>();
 
 function connect(): void {
 	if (wsInstance && wsInstance.readyState <= WebSocket.OPEN) return;
@@ -32,7 +33,7 @@ function connect(): void {
 		try {
 			const msg = JSON.parse(event.data);
 			if (msg.type === "notification") {
-				for (const fn of listeners) fn(msg.data as Notification);
+				for (const fn of wsListeners) fn(msg.data as Notification);
 			}
 		} catch {
 			/* noop */
@@ -51,57 +52,106 @@ function connect(): void {
 	});
 }
 
-function subscribe(fn: Listener): () => void {
-	if (listeners.size === 0) connect();
-	listeners.add(fn);
-	return () => listeners.delete(fn);
+function subscribeWs(fn: Listener): () => void {
+	if (wsListeners.size === 0) connect();
+	wsListeners.add(fn);
+	return () => wsListeners.delete(fn);
+}
+
+// ─── État partagé module-level ────────────────────────────────────────────────
+// Toutes les instances du hook partagent le même état pour rester synchronisées.
+
+let sharedUnreadCount = 0;
+let sharedRecentUnread: Notification[] = [];
+let sharedPopoverLoaded = false;
+let countInitialized = false;
+
+const unreadCountSubs = new Set<(v: number) => void>();
+const recentUnreadSubs = new Set<(v: Notification[]) => void>();
+const popoverLoadedSubs = new Set<(v: boolean) => void>();
+
+function setSharedUnreadCount(value: number | ((prev: number) => number)) {
+	sharedUnreadCount =
+		typeof value === "function" ? value(sharedUnreadCount) : value;
+	for (const fn of unreadCountSubs) fn(sharedUnreadCount);
+}
+
+function setSharedRecentUnread(
+	value: Notification[] | ((prev: Notification[]) => Notification[]),
+) {
+	sharedRecentUnread =
+		typeof value === "function" ? value(sharedRecentUnread) : value;
+	for (const fn of recentUnreadSubs) fn(sharedRecentUnread);
+}
+
+function setSharedPopoverLoaded(value: boolean) {
+	sharedPopoverLoaded = value;
+	for (const fn of popoverLoadedSubs) fn(sharedPopoverLoaded);
 }
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
 export function useNotifications() {
-	const [unreadCount, setUnreadCount] = useState(0);
-	const [recentUnread, setRecentUnread] = useState<Notification[]>([]);
-	const [popoverLoaded, setPopoverLoaded] = useState(false);
+	const [unreadCount, setUnreadCount] = useState(sharedUnreadCount);
+	const [recentUnread, setRecentUnread] =
+		useState<Notification[]>(sharedRecentUnread);
+	const [popoverLoaded, setPopoverLoaded] = useState(sharedPopoverLoaded);
 
-	// Charge le compteur initial depuis l'API REST
+	// S'abonne aux changements d'état partagé
 	useEffect(() => {
-		NotificationService.getUnreadCount()
-			.then((r) => setUnreadCount(r.data.count))
-			.catch(() => {});
+		unreadCountSubs.add(setUnreadCount);
+		recentUnreadSubs.add(setRecentUnread);
+		popoverLoadedSubs.add(setPopoverLoaded);
+		return () => {
+			unreadCountSubs.delete(setUnreadCount);
+			recentUnreadSubs.delete(setRecentUnread);
+			popoverLoadedSubs.delete(setPopoverLoaded);
+		};
+	}, []);
+
+	// Charge le compteur initial une seule fois
+	useEffect(() => {
+		if (!countInitialized) {
+			countInitialized = true;
+			NotificationService.getUnreadCount()
+				.then((r) => setSharedUnreadCount(r.data.count))
+				.catch(() => {});
+		}
 	}, []);
 
 	// S'abonne aux notifications temps réel
 	useEffect(() => {
-		const unsub = subscribe((notif) => {
-			setUnreadCount((c) => c + 1);
+		const unsub = subscribeWs((notif) => {
+			setSharedUnreadCount((c) => c + 1);
 			// Ajoute en tête si le popover est ouvert
-			setRecentUnread((prev) => (prev.length > 0 ? [notif, ...prev] : prev));
+			setSharedRecentUnread((prev) =>
+				prev.length > 0 ? [notif, ...prev] : prev,
+			);
 		});
 		return unsub;
 	}, []);
 
 	// Chargement des non lues (appelé à l'ouverture du popover)
 	const loadUnread = useCallback(() => {
-		setPopoverLoaded(false);
+		setSharedPopoverLoaded(false);
 		NotificationService.getAll(true)
 			.then((r) => {
-				setRecentUnread(r.data);
-				setPopoverLoaded(true);
+				setSharedRecentUnread(r.data);
+				setSharedPopoverLoaded(true);
 			})
-			.catch(() => setPopoverLoaded(true));
+			.catch(() => setSharedPopoverLoaded(true));
 	}, []);
 
 	const markRead = useCallback(async (id: number) => {
 		await NotificationService.markRead(id).catch(() => {});
-		setRecentUnread((prev) => prev.filter((n) => n.id !== id));
-		setUnreadCount((c) => Math.max(0, c - 1));
+		setSharedRecentUnread((prev) => prev.filter((n) => n.id !== id));
+		setSharedUnreadCount((c) => Math.max(0, c - 1));
 	}, []);
 
 	const markAllRead = useCallback(async () => {
 		await NotificationService.markAllRead().catch(() => {});
-		setRecentUnread([]);
-		setUnreadCount(0);
+		setSharedRecentUnread([]);
+		setSharedUnreadCount(0);
 	}, []);
 
 	return {

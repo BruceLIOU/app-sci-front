@@ -40,6 +40,7 @@ const Notifications = React.lazy(
 const Maintenance = React.lazy(
 	() => import("./views/admin/maintenance/Maintenance"),
 );
+const Providers = React.lazy(() => import("./views/admin/providers/Providers"));
 const Reporting = React.lazy(() => import("./views/admin/reporting/Reporting"));
 
 interface Route {
@@ -122,6 +123,7 @@ const routes: Route[] = [
 		sciOnly: true,
 	},
 	{ path: "/admin/maintenance", name: "Maintenance", element: Maintenance },
+	{ path: "/admin/providers", name: "Prestataires", element: Providers },
 	{ path: "/admin/documents", name: "Documents", element: Documents },
 	{ path: "/admin/settings", name: "Paramètres", element: Settings },
 	{ path: "/admin/visits", name: "Calendrier des visites", element: Visits },

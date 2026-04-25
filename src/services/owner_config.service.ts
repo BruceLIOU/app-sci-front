@@ -40,6 +40,9 @@ export interface OwnerConfigData {
 	email_template_payment_reminder?: string;
 	email_template_lease_expiry?: string;
 	email_template_quittance?: string;
+	// Alert thresholds
+	payment_reminder_days?: string;
+	lease_expiry_alert_days?: string;
 }
 
 export interface SiretLookupData {

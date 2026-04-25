@@ -2,11 +2,13 @@ import { AppAlert } from "@/components/ui/app-alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+	FormInputField,
+	FormSelectField,
+} from "../../../components/FormFields";
 import OwnerConfigDataService, {
 	type OwnerConfigData,
 } from "../../../services/owner_config.service";
@@ -54,9 +56,6 @@ const frequencyToSchedule = (frequency: string) => {
 	if (frequency === "weekly") return "0 8 * * 1";
 	return "0 8 * * *";
 };
-
-const selectCls =
-	"flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring mt-1 disabled:opacity-50";
 
 const SettingsOnboarding: React.FC<Props> = ({
 	config,
@@ -324,8 +323,8 @@ const SettingsOnboarding: React.FC<Props> = ({
 			return (
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 					<div>
-						<Label>Vous etes :</Label>
-						<select
+						<FormSelectField
+							label="Vous êtes :"
 							value={config.owner_profile_type || "INDIVIDUAL"}
 							onChange={(e) => {
 								const ownerProfileType = e.target.value as
@@ -337,23 +336,21 @@ const SettingsOnboarding: React.FC<Props> = ({
 									owner_profile_type: ownerProfileType,
 								}));
 							}}
-							className={selectCls}
 						>
 							<option value="INDIVIDUAL">Bailleur particulier</option>
 							<option value="PROFESSIONAL">Bailleur professionnel</option>
 							<option value="SCI">SCI</option>
-						</select>
+						</FormSelectField>
 					</div>
 
 					<div>
-						<Label>Nom affiche dans vos documents</Label>
-						<Input
+						<FormInputField
+							label="Nom affiché dans vos documents"
 							value={config.name || ""}
 							onChange={(e) =>
 								setConfig((prev) => ({ ...prev, name: e.target.value }))
 							}
-							placeholder="Nom du bailleur ou de la societe"
-							className="mt-1"
+							placeholder="Nom du bailleur ou de la société"
 						/>
 					</div>
 
@@ -361,14 +358,13 @@ const SettingsOnboarding: React.FC<Props> = ({
 						(config.owner_profile_type || "INDIVIDUAL") === "SCI") && (
 						<>
 							<div className="md:col-span-1">
-								<Label>SIRET</Label>
-								<Input
+								<FormInputField
+									label="SIRET"
 									value={config.siret || ""}
 									onChange={(e) =>
 										setConfig((prev) => ({ ...prev, siret: e.target.value }))
 									}
 									placeholder="12345678900010"
-									className="mt-1"
 								/>
 							</div>
 							<div className="flex items-end">
@@ -436,8 +432,8 @@ const SettingsOnboarding: React.FC<Props> = ({
 					{useMatera && (
 						<>
 							<div>
-								<Label>Email expediteur Matera</Label>
-								<Input
+								<FormInputField
+									label="Email expéditeur Matera"
 									value={config.matera_sender_email || ""}
 									onChange={(e) =>
 										setConfig((prev) => ({
@@ -446,13 +442,12 @@ const SettingsOnboarding: React.FC<Props> = ({
 										}))
 									}
 									placeholder="notif@matera.eu"
-									className="mt-1"
 								/>
 							</div>
 
 							<div>
-								<Label>Frequence de synchronisation</Label>
-								<select
+								<FormSelectField
+									label="Fréquence de synchronisation"
 									value={materaFrequency}
 									onChange={(e) => {
 										const value = e.target.value;
@@ -463,18 +458,17 @@ const SettingsOnboarding: React.FC<Props> = ({
 											charge_cron_schedule: frequencyToSchedule(value),
 										}));
 									}}
-									className={selectCls}
 								>
 									<option value="30min">Toutes les 30 minutes</option>
 									<option value="6h">Toutes les 6 heures</option>
-									<option value="daily">Chaque jour a 8h</option>
-									<option value="weekly">Chaque lundi a 8h</option>
-								</select>
+									<option value="daily">Chaque jour à 8h</option>
+									<option value="weekly">Chaque lundi à 8h</option>
+								</FormSelectField>
 							</div>
 
 							<div>
-								<Label>Serveur IMAP</Label>
-								<Input
+								<FormInputField
+									label="Serveur IMAP"
 									value={config.imap_host || ""}
 									onChange={(e) =>
 										setConfig((prev) => ({
@@ -483,13 +477,12 @@ const SettingsOnboarding: React.FC<Props> = ({
 										}))
 									}
 									placeholder="imap.free.fr"
-									className="mt-1"
 								/>
 							</div>
 
 							<div>
-								<Label>Utilisateur IMAP</Label>
-								<Input
+								<FormInputField
+									label="Utilisateur IMAP"
 									value={config.imap_user || ""}
 									onChange={(e) =>
 										setConfig((prev) => ({
@@ -498,13 +491,12 @@ const SettingsOnboarding: React.FC<Props> = ({
 										}))
 									}
 									placeholder="user@provider.fr"
-									className="mt-1"
 								/>
 							</div>
 
 							<div className="md:col-span-2">
-								<Label>Bien associe (optionnel)</Label>
-								<select
+								<FormSelectField
+									label="Bien associé (optionnel)"
 									value={config.matera_property_id ?? ""}
 									onChange={(e) =>
 										setConfig((prev) => ({
@@ -512,7 +504,6 @@ const SettingsOnboarding: React.FC<Props> = ({
 											matera_property_id: e.target.value || null,
 										}))
 									}
-									className={selectCls}
 								>
 									<option value="">Aucun bien</option>
 									{properties.map((property) => (
@@ -521,7 +512,7 @@ const SettingsOnboarding: React.FC<Props> = ({
 											{property.city ? ` - ${property.city}` : ""}
 										</option>
 									))}
-								</select>
+								</FormSelectField>
 							</div>
 						</>
 					)}
@@ -607,36 +598,33 @@ const SettingsOnboarding: React.FC<Props> = ({
 		return (
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
 				<div>
-					<Label>Serveur SMTP</Label>
-					<Input
+					<FormInputField
+						label="Serveur SMTP"
 						value={config.smtp_host || ""}
 						onChange={(e) =>
 							setConfig((prev) => ({ ...prev, smtp_host: e.target.value }))
 						}
 						placeholder="smtp.gmail.com"
-						className="mt-1"
 					/>
 				</div>
 				<div>
-					<Label>Utilisateur SMTP</Label>
-					<Input
+					<FormInputField
+						label="Utilisateur SMTP"
 						value={config.smtp_user || ""}
 						onChange={(e) =>
 							setConfig((prev) => ({ ...prev, smtp_user: e.target.value }))
 						}
 						placeholder="user@example.com"
-						className="mt-1"
 					/>
 				</div>
 				<div>
-					<Label>Adresse expediteur</Label>
-					<Input
+					<FormInputField
+						label="Adresse expéditeur"
 						value={config.smtp_from || ""}
 						onChange={(e) =>
 							setConfig((prev) => ({ ...prev, smtp_from: e.target.value }))
 						}
 						placeholder="no-reply@example.com"
-						className="mt-1"
 					/>
 				</div>
 

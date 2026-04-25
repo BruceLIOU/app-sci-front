@@ -27,21 +27,20 @@ const EntityTableCard: React.FC<EntityTableCardProps> = ({
 	const isAdmin = userRole === "admin";
 
 	return (
-		<Card>
-			<CardHeader className="flex flex-row items-center justify-between py-3 px-4 border-b space-y-0">
-				<h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
+		<Card className="overflow-hidden">
+			<CardHeader className="flex flex-row items-center justify-between py-3 px-4 border-b space-y-0 bg-gradient-to-r from-slate-50/80 to-white dark:from-slate-800/40 dark:to-transparent">
+				<h3 className="font-semibold text-sm text-slate-800 dark:text-slate-100">
 					{title}
 				</h3>
-				<div className="flex items-center gap-2">
+				<div className="flex items-center gap-2 flex-wrap">
 					{headerActions}
 					{isAdmin && onAdd && (
 						<Button
 							size="sm"
-							variant="outline"
 							onClick={onAdd}
-							className="h-7 gap-1 text-xs"
+							className="h-8 gap-1.5 text-xs px-3"
 						>
-							<Plus className="h-3 w-3" />
+							<Plus className="h-3.5 w-3.5" />
 							{addLabel}
 						</Button>
 					)}

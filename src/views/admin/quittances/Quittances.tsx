@@ -318,7 +318,7 @@ const Quittances = () => {
 					{bulkAlert.message}
 				</AppAlert>
 			)}
-			<div className="grid grid-cols-3 gap-3 mb-4 text-center">
+			<div className="flex gap-4 mb-4 text-center w-full justify-content-center flex-direction-column">
 				<StatCard
 					value={quittances.length}
 					label={

@@ -45,6 +45,7 @@ const emptyForm = {
 	amount: "",
 	date: "",
 	frequency: "unique",
+	tva_rate: "",
 };
 
 const Charges = () => {
@@ -92,6 +93,7 @@ const Charges = () => {
 			amount: c.amount,
 			date: c.date,
 			frequency: c.frequency,
+			tva_rate: c.tva_rate || "",
 		}),
 	});
 
@@ -219,7 +221,7 @@ const Charges = () => {
 				</Card>
 			</div>
 
-			<div className="grid grid-cols-12 gap-4 mb-4 text-center justify-center">
+			<div className="flex gap-4 mb-4 text-center w-full justify-content-center flex-direction-column">
 				{Object.entries(
 					charges.reduce((acc: Record<string, number>, c) => {
 						acc[c.type] = (acc[c.type] || 0) + Number.parseFloat(c.amount || 0);
@@ -294,7 +296,7 @@ const Charges = () => {
 						</Button>
 						<Button
 							size="sm"
-							variant="ghost"
+							variant="secondary"
 							onClick={() => setSelectedIds(new Set())}
 							disabled={bulkLoading}
 						>
@@ -403,6 +405,11 @@ const Charges = () => {
 										</td>
 										<td className="px-4 py-3">
 											{Number.parseFloat(c.amount || 0).toFixed(2)} €
+											{c.tva_rate && (
+												<span className="text-xs text-muted-foreground ml-1">
+													(+{c.tva_rate}% TVA)
+												</span>
+											)}
 										</td>
 										<td className="px-4 py-3">
 											{freqLabel[c.frequency] || c.frequency}
@@ -442,8 +449,8 @@ const Charges = () => {
 				onSubmit={handleSubmit}
 			>
 				<div className="col-span-6">
-					<select
-						className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+					<FormSelectField
+						label="Type de charge"
 						name="type"
 						value={form.type}
 						onChange={handleChange}
@@ -453,11 +460,11 @@ const Charges = () => {
 								{l}
 							</option>
 						))}
-					</select>
+					</FormSelectField>
 				</div>
 				<div className="col-span-6">
-					<select
-						className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+					<FormSelectField
+						label="Bien associé"
 						name="property_id"
 						value={form.property_id}
 						onChange={handleChange}
@@ -469,30 +476,40 @@ const Charges = () => {
 								value={p.id}
 							>{`${p.type} - ${p.address}, ${p.city}`}</option>
 						))}
-					</select>
+					</FormSelectField>
 				</div>
 				<div className="col-span-12">
-					<input
+					<FormInputField
+						label="Description"
 						type="text"
 						name="description"
 						placeholder="Description"
 						value={form.description}
 						onChange={handleChange}
-						className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
 					/>
 				</div>
-				<div className="col-span-4">
+				<div className="col-span-3">
 					<FormInputField
 						type="number"
 						name="amount"
-						label="Montant (€)"
+						label="Montant HT (€)"
 						value={form.amount}
 						onChange={handleChange}
 						required
 						error={formErrors.amount}
 					/>
 				</div>
-				<div className="col-span-4">
+				<div className="col-span-3">
+					<FormInputField
+						type="number"
+						name="tva_rate"
+						label="TVA (%)"
+						placeholder="0"
+						value={form.tva_rate}
+						onChange={handleChange}
+					/>
+				</div>
+				<div className="col-span-3">
 					<FormInputField
 						type="date"
 						name="date"
@@ -503,7 +520,7 @@ const Charges = () => {
 						error={formErrors.date}
 					/>
 				</div>
-				<div className="col-span-4">
+				<div className="col-span-3">
 					<FormSelectField
 						label="Fréquence"
 						name="frequency"
@@ -516,6 +533,20 @@ const Charges = () => {
 						<option value="annuel">Annuel</option>
 					</FormSelectField>
 				</div>
+				{form.amount &&
+					form.tva_rate &&
+					Number.parseFloat(form.tva_rate) > 0 && (
+						<div className="col-span-12 text-sm text-muted-foreground -mt-2">
+							Montant TTC :{" "}
+							<strong>
+								{(
+									Number.parseFloat(form.amount) *
+									(1 + Number.parseFloat(form.tva_rate) / 100)
+								).toFixed(2)}{" "}
+								€
+							</strong>
+						</div>
+					)}
 			</CrudModal>
 
 			<DeleteModal

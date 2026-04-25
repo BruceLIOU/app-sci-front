@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
 	Table,
@@ -16,8 +17,16 @@ import {
 	LinearScale,
 	Tooltip,
 } from "chart.js";
+import { Download } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { Bar } from "react-chartjs-2";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "src/components/ui/select";
 import StatCard from "../../../components/StatCard";
 import TableEmptyRow from "../../../components/TableEmptyRow";
 import ChargeDataService from "../../../services/charge.service";
@@ -139,6 +148,87 @@ const Reporting = () => {
 		(a, b) => b.recettes - a.recettes,
 	);
 
+	// Prévision 12 prochains mois basée sur les baux actifs
+	const activeLeases = leases.filter((l) => l.status === "active");
+	const today = new Date();
+	const forecastMonths = Array.from({ length: 12 }, (_, i) => {
+		const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
+		return {
+			key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+			label: d.toLocaleDateString("fr-FR", { month: "short", year: "2-digit" }),
+			year: d.getFullYear(),
+			month: d.getMonth() + 1,
+		};
+	});
+	const forecastData = forecastMonths.map(({ key, label, year, month }) => {
+		const monthStart = new Date(year, month - 1, 1);
+		const monthEnd = new Date(year, month, 0);
+		const expected = activeLeases.reduce((sum, l) => {
+			const start = new Date(l.start_date);
+			const end = l.end_date ? new Date(l.end_date) : null;
+			if (start > monthEnd) return sum;
+			if (end && end < monthStart) return sum;
+			return (
+				sum +
+				Number.parseFloat(l.rent_amount || 0) +
+				Number.parseFloat(l.charges_amount || 0)
+			);
+		}, 0);
+		return { key, label, expected };
+	});
+	const forecastTotal12 = forecastData.reduce((s, m) => s + m.expected, 0);
+
+	const exportCsv = () => {
+		const monthCount =
+			filterYear === currentYear ? new Date().getMonth() + 1 : 12;
+		const header = [
+			"Bien",
+			"Recettes (€)",
+			"Charges (€)",
+			"Solde net (€)",
+			"Renta. brute (%)",
+			"Renta. nette (%)",
+			"Taux occupation (%)",
+		];
+		const rows = propertyStats.map((stat) => {
+			const solde = stat.recettes - stat.depenses;
+			const rentaBrute =
+				stat.purchase_price && stat.purchase_price > 0
+					? (
+							((stat.recettes * (12 / monthCount)) / stat.purchase_price) *
+							100
+						).toFixed(1)
+					: "N/A";
+			const rentaNette =
+				stat.purchase_price && stat.purchase_price > 0
+					? (((solde * (12 / monthCount)) / stat.purchase_price) * 100).toFixed(
+							1,
+						)
+					: "N/A";
+			return [
+				stat.label,
+				stat.recettes.toFixed(2),
+				stat.depenses.toFixed(2),
+				solde.toFixed(2),
+				rentaBrute,
+				rentaNette,
+				((stat.occupiedMonths / stat.totalMonths) * 100).toFixed(0),
+			];
+		});
+		const csv = [header, ...rows]
+			.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(";"))
+			.join("\n");
+		const blob = new Blob([`\uFEFF${csv}`], {
+			type: "text/csv;charset=utf-8;",
+		});
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement("a");
+		a.href = url;
+		a.download = `reporting_${filterYear}.csv`;
+		a.click();
+		URL.revokeObjectURL(url);
+	};
+
 	// Portfolio totals
 	const totalRecettes = propertyStats.reduce((s, p) => s + p.recettes, 0);
 	const totalDepenses = propertyStats.reduce((s, p) => s + p.depenses, 0);
@@ -203,24 +293,29 @@ const Reporting = () => {
 							</span>
 							<div className="ml-auto flex items-center gap-2">
 								<label className="text-sm text-muted-foreground">Année :</label>
-								<select
-									className="h-8 rounded-md border border-input bg-transparent px-2 text-sm"
-									value={filterYear}
-									onChange={(e) => setFilterYear(e.target.value)}
-								>
-									{yearOptions.map((y) => (
-										<option key={y} value={y}>
-											{y}
-										</option>
-									))}
-								</select>
+								<Select value={filterYear} onValueChange={setFilterYear}>
+									<SelectTrigger className="h-8 w-[100px] text-sm">
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										{yearOptions.map((y) => (
+											<SelectItem key={y} value={y}>
+												{y}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+								<Button size="sm" variant="outline" onClick={exportCsv}>
+									<Download className="h-4 w-4 mr-1" />
+									Exporter CSV
+								</Button>
 							</div>
 						</div>
 					</CardContent>
 				</Card>
 			</div>
 
-			<div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 text-center">
+			<div className="flex gap-4 mb-4 text-center w-full justify-content-center flex-direction-column">
 				<StatCard
 					value={`${totalRecettes.toFixed(0)} €`}
 					label="Recettes"
@@ -402,6 +497,79 @@ const Reporting = () => {
 							)}
 						</TableBody>
 					</Table>
+				</CardContent>
+			</Card>
+
+			{/* Prévision de revenus — 12 prochains mois */}
+			<Card className="mt-4 app-panel-card">
+				<CardHeader className="border-b py-3 px-4 flex flex-row items-center justify-between">
+					<strong>Prévision de revenus — 12 prochains mois</strong>
+					<span className="text-sm text-muted-foreground">
+						Basé sur {activeLeases.length} bail
+						{activeLeases.length > 1 ? "x" : ""} actif
+						{activeLeases.length > 1 ? "s" : ""}
+						&nbsp;·&nbsp;Total projeté :{" "}
+						<strong>{forecastTotal12.toFixed(0)} €</strong>
+					</span>
+				</CardHeader>
+				<CardContent>
+					{activeLeases.length === 0 ? (
+						<p className="text-muted-foreground py-4 text-center">
+							Aucun bail actif pour calculer la prévision.
+						</p>
+					) : (
+						<>
+							<Bar
+								style={{ height: "220px" }}
+								data={{
+									labels: forecastData.map((m) => m.label),
+									datasets: [
+										{
+											label: "Loyers attendus CC (€)",
+											backgroundColor: "rgba(99, 102, 241, 0.72)",
+											data: forecastData.map((m) => m.expected.toFixed(2)),
+										},
+									],
+								}}
+								options={{
+									maintainAspectRatio: false,
+									plugins: {
+										legend: { display: false },
+									},
+									scales: {
+										x: {
+											ticks: { color: chartTextColor },
+											grid: { color: chartGridColor },
+										},
+										y: {
+											ticks: { color: chartTextColor },
+											grid: { color: chartGridColor },
+										},
+									},
+								}}
+							/>
+							<Table className="mt-3">
+								<TableHeader>
+									<TableRow>
+										<TableHead>Mois</TableHead>
+										<TableHead className="text-right">
+											Revenus attendus CC (€)
+										</TableHead>
+									</TableRow>
+								</TableHeader>
+								<TableBody>
+									{forecastData.map((m) => (
+										<TableRow key={m.key}>
+											<TableCell>{m.label}</TableCell>
+											<TableCell className="text-right font-medium text-indigo-600">
+												{m.expected.toFixed(2)} €
+											</TableCell>
+										</TableRow>
+									))}
+								</TableBody>
+							</Table>
+						</>
+					)}
 				</CardContent>
 			</Card>
 		</>

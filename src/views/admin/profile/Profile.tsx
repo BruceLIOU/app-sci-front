@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import type React from "react";
 import { useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { FormInputField } from "../../../components/FormFields";
 import AuthService from "../../../services/auth.service";
 import {
 	type RootState,
@@ -76,19 +77,24 @@ const Profile: React.FC = () => {
 		}
 	};
 
+	const applyTheme = (dark: boolean) => {
+		document.documentElement.setAttribute(
+			"data-coreui-theme",
+			dark ? "dark" : "light",
+		);
+		document.documentElement.classList.toggle("dark", dark);
+		localStorage.setItem("app-theme", dark ? "dark" : "light");
+	};
+
 	const handleDarkMode = async (checked: boolean) => {
+		applyTheme(checked);
 		try {
 			const fd = new FormData();
 			fd.append("darkMode", String(checked));
 			const { data } = await AuthService.updatePreferences(fd);
 			dispatch(updatePreferences(data.preferences));
-			document.documentElement.setAttribute(
-				"data-coreui-theme",
-				checked ? "dark" : "light",
-			);
-			document.documentElement.classList.toggle("dark", checked);
 		} catch {
-			/* ignore */
+			applyTheme(!checked); // rollback
 		}
 	};
 
@@ -188,18 +194,13 @@ const Profile: React.FC = () => {
 							</div>
 
 							<div className="space-y-3">
-								<div className="space-y-1.5">
-									<Label>Nom affiché</Label>
-									<Input
-										value={name}
-										onChange={(e) => setName(e.target.value)}
-										placeholder="Votre nom"
-									/>
-								</div>
-								<div className="space-y-1.5">
-									<Label>Email</Label>
-									<Input value={user.email} disabled />
-								</div>
+								<FormInputField
+									label="Nom affiché"
+									value={name}
+									onChange={(e) => setName(e.target.value)}
+									placeholder="Votre nom"
+								/>
+								<FormInputField label="Email" value={user.email} disabled />
 							</div>
 
 							<Button

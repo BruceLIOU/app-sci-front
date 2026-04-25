@@ -8,8 +8,13 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import {
 	Table,
@@ -22,6 +27,11 @@ import {
 import { Download, File, Plus, Trash2 } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
+import {
+	FormInputField,
+	FormSelectField,
+	FormTextareaField,
+} from "../../../components/FormFields";
 import StatCard from "../../../components/StatCard";
 import TableEmptyRow from "../../../components/TableEmptyRow";
 import useIsAdmin from "../../../hooks/useIsAdmin";
@@ -76,8 +86,10 @@ const Documents = () => {
 	const [properties, setProperties] = useState<any[]>([]);
 	const [leases, setLeases] = useState<any[]>([]);
 
-	const [filterEntityType, setFilterEntityType] = useState("");
-	const [filterCategory, setFilterCategory] = useState("");
+	const [filterEntityType, setFilterEntityType] = useState<
+		string | undefined
+	>();
+	const [filterCategory, setFilterCategory] = useState<string | undefined>();
 
 	const [addModal, setAddModal] = useState(false);
 	const [deleteModal, setDeleteModal] = useState(false);
@@ -263,7 +275,7 @@ const Documents = () => {
 				</Card>
 			</div>
 
-			<div className="grid grid-cols-3 gap-3 mb-4 text-center">
+			<div className="flex gap-4 mb-4 text-center w-full justify-content-center flex-direction-column">
 				<StatCard value={docs.length} label="Documents" color="primary" />
 				<StatCard
 					value={docs.filter((d) => d.entity_type === "tenant").length}
@@ -281,32 +293,42 @@ const Documents = () => {
 				<CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2 border-b py-3 px-4 space-y-0">
 					<strong>Mes documents</strong>
 					<div className="flex gap-2 flex-wrap items-center">
-						<select
-							className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
-							style={{ width: 180 }}
-							value={filterEntityType}
-							onChange={(e) => setFilterEntityType(e.target.value)}
+						<Select
+							value={filterEntityType ?? "__all__"}
+							onValueChange={(v) =>
+								setFilterEntityType(v === "__all__" ? undefined : v)
+							}
 						>
-							<option value="">Toutes les entités</option>
-							{ENTITY_TYPES.map((et) => (
-								<option key={et.value} value={et.value}>
-									{et.label}
-								</option>
-							))}
-						</select>
-						<select
-							className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
-							style={{ width: 220 }}
-							value={filterCategory}
-							onChange={(e) => setFilterCategory(e.target.value)}
+							<SelectTrigger className="w-[180px]">
+								<SelectValue placeholder="Toutes les entités" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="__all__">Toutes les entités</SelectItem>
+								{ENTITY_TYPES.map((et) => (
+									<SelectItem key={et.value} value={et.value}>
+										{et.label}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+						<Select
+							value={filterCategory ?? "__all__"}
+							onValueChange={(v) =>
+								setFilterCategory(v === "__all__" ? undefined : v)
+							}
 						>
-							<option value="">Toutes les catégories</option>
-							{CATEGORIES.map((c) => (
-								<option key={c.value} value={c.value}>
-									{c.label}
-								</option>
-							))}
-						</select>
+							<SelectTrigger className="w-[220px]">
+								<SelectValue placeholder="Toutes les catégories" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="__all__">Toutes les catégories</SelectItem>
+								{CATEGORIES.map((cat) => (
+									<SelectItem key={cat.value} value={cat.value}>
+										{cat.label}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
 						{isAdmin && (
 							<Button
 								size="sm"
@@ -398,6 +420,7 @@ const Documents = () => {
 															{isAdmin && (
 																<Button
 																	variant="outline"
+																	className="text-destructive"
 																	size="sm"
 																	onClick={() => {
 																		setToDelete(doc);
@@ -427,38 +450,33 @@ const Documents = () => {
 						<DialogTitle>Ajouter un document</DialogTitle>
 					</DialogHeader>
 					<form className="grid grid-cols-12 gap-3" onSubmit={handleSubmit}>
-						<div className="col-span-12 space-y-1.5">
-							<Label>
-								Titre du document <span className="text-destructive">*</span>
-							</Label>
-							<Input
+						<div className="col-span-12">
+							<FormInputField
+								label="Titre du document"
 								required
 								value={form.title}
 								onChange={(e) => setForm({ ...form, title: e.target.value })}
 								placeholder="Ex : Bail signé 2025, Carte identité M. Dupont..."
 							/>
 						</div>
-						<div className="col-span-6 space-y-1.5">
-							<Label>
-								Catégorie <span className="text-destructive">*</span>
-							</Label>
-							<select
+						<div className="col-span-6">
+							<FormSelectField
+								label="Catégorie"
+								required
 								value={form.category}
 								onChange={(e) => setForm({ ...form, category: e.target.value })}
-								className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
 							>
 								{CATEGORIES.map((c) => (
 									<option key={c.value} value={c.value}>
 										{c.label}
 									</option>
 								))}
-							</select>
+							</FormSelectField>
 						</div>
-						<div className="col-span-6 space-y-1.5">
-							<Label>
-								Lié à <span className="text-destructive">*</span>
-							</Label>
-							<select
+						<div className="col-span-6">
+							<FormSelectField
+								label="Lié à"
+								required
 								value={form.entity_type}
 								onChange={(e) =>
 									setForm({
@@ -467,28 +485,28 @@ const Documents = () => {
 										entity_id: "",
 									})
 								}
-								className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
 							>
 								{ENTITY_TYPES.map((et) => (
 									<option key={et.value} value={et.value}>
 										{et.label}
 									</option>
 								))}
-							</select>
+							</FormSelectField>
 						</div>
-						<div className="col-span-12 space-y-1.5">
-							<Label>
-								{ENTITY_TYPES.find((et) => et.value === form.entity_type)
-									?.label ?? "Entité"}{" "}
-								<span className="text-destructive">*</span>
-							</Label>
-							<select
+						<div className="col-span-12">
+							<FormSelectField
+								label={
+									<>
+										{ENTITY_TYPES.find((et) => et.value === form.entity_type)
+											?.label ?? "Entité"}{" "}
+										<span className="text-destructive">*</span>
+									</>
+								}
 								required
 								value={form.entity_id}
 								onChange={(e) =>
 									setForm({ ...form, entity_id: e.target.value })
 								}
-								className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
 							>
 								<option value="">-- Sélectionner --</option>
 								{entityOptions().map((o) => (
@@ -496,13 +514,11 @@ const Documents = () => {
 										{o.label}
 									</option>
 								))}
-							</select>
+							</FormSelectField>
 						</div>
-						<div className="col-span-12 space-y-1.5">
-							<Label>
-								Fichier <span className="text-destructive">*</span>
-							</Label>
-							<Input
+						<div className="col-span-12">
+							<FormInputField
+								label="Fichier"
 								required
 								type="file"
 								accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,.xls,.xlsx"
@@ -512,14 +528,13 @@ const Documents = () => {
 								PDF, Word, images, Excel acceptés
 							</p>
 						</div>
-						<div className="col-span-12 space-y-1.5">
-							<Label>Notes</Label>
-							<textarea
+						<div className="col-span-12">
+							<FormTextareaField
+								label="Notes"
 								rows={2}
 								value={form.notes}
 								onChange={(e) => setForm({ ...form, notes: e.target.value })}
 								placeholder="Précisions optionnelles..."
-								className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm"
 							/>
 						</div>
 						<div className="col-span-12 flex gap-2 justify-end pt-2">

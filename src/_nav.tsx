@@ -1,4 +1,5 @@
 import {
+	BookUser,
 	Building2,
 	Calendar,
 	ClipboardList,
@@ -66,6 +67,12 @@ const _nav: NavItem[] = [
 		name: "Maintenance",
 		to: "/admin/maintenance",
 		icon: <Wrench className="w-5 h-5" />,
+	},
+	{
+		type: "item",
+		name: "Prestataires",
+		to: "/admin/providers",
+		icon: <BookUser className="w-5 h-5" />,
 	},
 	{ type: "title", name: "Finance", roles: ["admin"] },
 	{

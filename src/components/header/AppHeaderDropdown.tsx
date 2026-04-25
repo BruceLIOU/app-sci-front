@@ -14,6 +14,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import AuthService from "../../services/auth.service";
 import { type RootState, setUser, updatePreferences } from "../../store";
+import { Button } from "../ui/button";
 
 const AppHeaderDropdown = () => {
 	const dispatch = useDispatch();
@@ -48,28 +49,33 @@ const AppHeaderDropdown = () => {
 		}
 	};
 
+	const applyTheme = (dark: boolean) => {
+		document.documentElement.setAttribute(
+			"data-coreui-theme",
+			dark ? "dark" : "light",
+		);
+		document.documentElement.classList.toggle("dark", dark);
+		localStorage.setItem("app-theme", dark ? "dark" : "light");
+	};
+
 	const handleDarkMode = async (checked: boolean) => {
+		applyTheme(checked);
 		try {
 			const fd = new FormData();
 			fd.append("darkMode", String(checked));
 			const { data } = await AuthService.updatePreferences(fd);
 			dispatch(updatePreferences(data.preferences));
-			document.documentElement.setAttribute(
-				"data-coreui-theme",
-				checked ? "dark" : "light",
-			);
-			document.documentElement.classList.toggle("dark", checked);
 		} catch {
-			/* ignore */
+			applyTheme(!checked); // rollback
 		}
 	};
 
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<button
-					type="button"
-					className="py-0 px-2 app-profile-trigger focus:outline-none"
+				<Button
+					variant="ghost"
+					className="py-0 px-2 app-profile-trigger focus:outline-none border-none"
 				>
 					<Avatar className="h-8 w-8">
 						{avatarSrc && !avatarLoadFailed ? (
@@ -82,7 +88,7 @@ const AppHeaderDropdown = () => {
 							{initials}
 						</AvatarFallback>
 					</Avatar>
-				</button>
+				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent
 				align="end"

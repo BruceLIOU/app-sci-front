@@ -38,7 +38,7 @@ const PropertyFormPage = () => {
 		return (
 			<div className="max-w-4xl mx-auto px-4 py-10 text-center">
 				<p className="text-muted-foreground mb-4">Bien introuvable.</p>
-				<Button variant="outline" onClick={goBack}>
+				<Button variant="secondary" onClick={goBack}>
 					<ArrowLeft className="h-4 w-4 mr-1" />
 					Retour
 				</Button>
@@ -49,7 +49,12 @@ const PropertyFormPage = () => {
 	return (
 		<div className="max-w-4xl mx-auto px-4 py-6">
 			<div className="flex items-center gap-3 mb-6">
-				<Button variant="ghost" size="sm" onClick={goBack} className="shrink-0">
+				<Button
+					variant="secondary"
+					size="sm"
+					onClick={goBack}
+					className="shrink-0"
+				>
 					<ArrowLeft className="h-4 w-4 mr-1" />
 					Retour
 				</Button>

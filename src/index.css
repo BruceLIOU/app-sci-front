@@ -53,24 +53,24 @@
 
 /* Dark mode */
 .dark {
-	--color-background: oklch(9% 0.014 253);
-	--color-foreground: oklch(92% 0.007 253);
-	--color-card: oklch(13.5% 0.014 253);
-	--color-card-foreground: oklch(92% 0.007 253);
-	--color-popover: oklch(13.5% 0.014 253);
-	--color-popover-foreground: oklch(92% 0.007 253);
-	--color-primary: oklch(52% 0.13 174);
+	--color-background: #0c1929;
+	--color-foreground: oklch(93% 0.007 253);
+	--color-card: oklch(19% 0.014 253); /* was 13.5% */
+	--color-card-foreground: oklch(93% 0.007 253);
+	--color-popover: oklch(19% 0.014 253);
+	--color-popover-foreground: oklch(93% 0.007 253);
+	--color-primary: oklch(54% 0.13 174);
 	--color-primary-foreground: oklch(98% 0 0);
-	--color-secondary: oklch(20% 0.014 253);
-	--color-secondary-foreground: oklch(92% 0.007 253);
-	--color-muted: oklch(20% 0.014 253);
-	--color-muted-foreground: oklch(65% 0.014 253);
-	--color-accent: oklch(20% 0.014 253);
-	--color-accent-foreground: oklch(92% 0.007 253);
-	--color-destructive: oklch(50% 0.178 25);
-	--color-border: oklch(27% 0.014 253);
-	--color-input: oklch(27% 0.014 253);
-	--color-ring: oklch(52% 0.13 174);
+	--color-secondary: oklch(23% 0.014 253);
+	--color-secondary-foreground: oklch(93% 0.007 253);
+	--color-muted: oklch(23% 0.014 253);
+	--color-muted-foreground: oklch(67% 0.014 253);
+	--color-accent: oklch(23% 0.014 253);
+	--color-accent-foreground: oklch(93% 0.007 253);
+	--color-destructive: oklch(52% 0.178 25);
+	--color-border: oklch(30% 0.014 253); /* was 27% */
+	--color-input: oklch(30% 0.014 253);
+	--color-ring: oklch(54% 0.13 174);
 }
 
 html {
@@ -80,16 +80,126 @@ html.dark {
 	color-scheme: dark;
 }
 
+/* ============================================================
+   GLOBAL DESIGN POLISH — outside @layer to override utilities
+   ============================================================ */
+
+/* Primary button — gradient + glow */
+.app-btn-primary {
+	background: linear-gradient(155deg, #1cbfae 0%, #0c6b63 100%);
+	box-shadow: 0 1px 3px rgba(15, 118, 110, 0.3), inset 0 1px 0
+		rgba(255, 255, 255, 0.12);
+}
+.app-btn-primary:hover {
+	background: linear-gradient(155deg, #23d1bf 0%, #0d7a70 100%);
+}
+.app-btn-primary:active {
+	background: linear-gradient(155deg, #0fb5a4 0%, #095e57 100%);
+}
+
+/* Input & textarea — polished focus ring */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+textarea,
+select {
+	transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+textarea:focus {
+	outline: none;
+	border-color: var(--color-primary) !important;
+	box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12) !important;
+}
+
+/* Styled select elements in table headers and forms */
+select.h-8,
+select[class*="h-8"],
+select[class*="rounded-md border"] {
+	appearance: none;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 0.6rem center;
+	padding-right: 2rem !important;
+	cursor: pointer;
+	transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+select.h-8:focus,
+select[class*="h-8"]:focus,
+select[class*="rounded-md border"]:focus {
+	outline: none;
+	border-color: var(--color-primary) !important;
+	box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12) !important;
+}
+
+/* Card — transition for hover lift */
+.rounded-lg.border.bg-card,
+.rounded-xl.border.bg-card {
+	transition: box-shadow 180ms ease, transform 180ms ease;
+}
+
+/* Table header uniform bg */
+thead th {
+	background-color: rgba(248, 250, 252, 0.9);
+}
+.dark thead th {
+	background-color: rgba(15, 23, 35, 0.5);
+}
+
+/* Better card KPI containers */
+.app-kpi-card {
+	position: relative;
+	overflow: hidden;
+	border-radius: 0.75rem;
+	border: 1px solid var(--color-border);
+	background: var(--color-card);
+	padding: 1rem 1.25rem;
+	transition: box-shadow 180ms ease, transform 180ms ease;
+}
+.app-kpi-card::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(
+		135deg,
+		transparent 60%,
+		rgba(15, 118, 110, 0.04) 100%
+	);
+	pointer-events: none;
+}
+.app-kpi-card:hover {
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+	transform: translateY(-1px);
+}
+.app-kpi-value {
+	font-size: 1.75rem;
+	font-weight: 800;
+	letter-spacing: -0.03em;
+	line-height: 1.1;
+}
+.app-kpi-label {
+	font-size: 0.78rem;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+	color: var(--color-muted-foreground);
+	margin-top: 0.25rem;
+}
+
+/* Dialog header — subtle gradient strip */
+[role="dialog"] [class*="border-b"] {
+	background: linear-gradient(to right, rgba(15, 118, 110, 0.04), transparent);
+}
+
+/* Table empty state */
+td[colspan] {
+	text-align: center;
+	padding: 2.5rem 1rem !important;
+	color: var(--color-muted-foreground);
+}
+
 /* === Semantic UI helpers === */
 
 .app-page-hero {
 	padding: 1.25rem 1.5rem;
-	background: linear-gradient(
-		135deg,
-		var(--color-card) 0%,
-		oklch(from var(--color-primary) l c h / 0.04) 100%
-	);
-	border-radius: var(--radius);
 }
 
 .app-page-kicker {

@@ -1,7 +1,13 @@
 import { AppAlert } from "@/components/ui/app-alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import type React from "react";
 import { useEffect, useState } from "react";
 import AddressAutocomplete from "../../../components/AddressAutocomplete";
@@ -108,6 +114,7 @@ const CreateForms = ({ setModalVisible, entities }: CreateFormsProps) => {
 					guarantor_address: "",
 					guarantor_zipcode: "",
 					guarantor_city: "",
+					monthly_income: "",
 				}
 			: {
 					address: "",
@@ -231,9 +238,9 @@ const CreateForms = ({ setModalVisible, entities }: CreateFormsProps) => {
 					</div>
 				)}
 				{/* Avatar */}
-				<div className="col-span-2 space-y-1.5">
-					<Label>Photo du locataire</Label>
-					<Input
+				<div className="col-span-2">
+					<FormInputField
+						label="Photo du locataire"
 						type="file"
 						accept="image/*"
 						onChange={(e) => {
@@ -376,6 +383,16 @@ const CreateForms = ({ setModalVisible, entities }: CreateFormsProps) => {
 						}
 					/>
 				</div>
+
+				{/* Solvabilité */}
+				<FormInputField
+					type="number"
+					name="monthly_income"
+					label="Revenus mensuels nets (€)"
+					placeholder="Ex : 2500"
+					value={inputValue.monthly_income}
+					onChange={handleChangeInput}
+				/>
 
 				{/* Garant */}
 				<div className="col-span-2">
@@ -574,9 +591,13 @@ const CreateForms = ({ setModalVisible, entities }: CreateFormsProps) => {
 			/>
 
 			{/* Photo principale */}
-			<div className="col-span-2 space-y-1.5">
-				<Label>Photo principale (vignette)</Label>
-				<Input type="file" accept="image/*" onChange={handleThumbnailChange} />
+			<div className="col-span-2">
+				<FormInputField
+					label="Photo principale (vignette)"
+					type="file"
+					accept="image/*"
+					onChange={handleThumbnailChange}
+				/>
 				{thumbnailPreview && (
 					<img
 						src={thumbnailPreview}
@@ -588,9 +609,9 @@ const CreateForms = ({ setModalVisible, entities }: CreateFormsProps) => {
 			</div>
 
 			{/* Galerie de photos */}
-			<div className="col-span-2 space-y-1.5">
-				<Label>Photos supplémentaires</Label>
-				<Input
+			<div className="col-span-2">
+				<FormInputField
+					label="Photos supplémentaires"
 					type="file"
 					accept="image/*"
 					multiple
@@ -618,18 +639,18 @@ const CreateForms = ({ setModalVisible, entities }: CreateFormsProps) => {
 			</div>
 			<div className="col-span-2">
 				<div className="flex gap-2 items-center flex-wrap mb-2">
-					<select
-						className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-						style={{ maxWidth: 220 }}
-						value={newRoomType}
-						onChange={(e) => setNewRoomType(e.target.value)}
-					>
-						{ROOM_TYPES.map((r) => (
-							<option key={r} value={r}>
-								{r}
-							</option>
-						))}
-					</select>
+					<Select value={newRoomType} onValueChange={setNewRoomType}>
+						<SelectTrigger className="w-[220px]">
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							{ROOM_TYPES.map((r) => (
+								<SelectItem key={r} value={r}>
+									{r}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 					<Button
 						type="button"
 						variant="outline"

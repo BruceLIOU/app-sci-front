@@ -8,8 +8,6 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import type { DateSelectArg, EventClickArg } from "@fullcalendar/core";
 import frLocale from "@fullcalendar/core/locales/fr";
@@ -22,6 +20,11 @@ import { format } from "date-fns";
 import { Calendar, Plus, Trash2 } from "lucide-react";
 import type { ChangeEvent, FC } from "react";
 import { useCallback, useEffect, useState } from "react";
+import {
+	FormInputField,
+	FormSelectField,
+	FormTextareaField,
+} from "../../../components/FormFields";
 import StatCard from "../../../components/StatCard";
 import PropertyDataService from "../../../services/property.service";
 import TenantDataService from "../../../services/tenant.service";
@@ -282,7 +285,7 @@ const Visits: FC = () => {
 				</Card>
 			</div>
 
-			<div className="mb-4 grid grid-cols-4 gap-3 text-center">
+			<div className="flex gap-4 mb-4 text-center w-full justify-content-center flex-direction-column">
 				<StatCard
 					value={totalVisits}
 					label="Total des visites"
@@ -375,9 +378,10 @@ const Visits: FC = () => {
 						</DialogTitle>
 					</DialogHeader>
 					<div className="grid grid-cols-12 gap-3 py-2">
-						<div className="col-span-8 space-y-1.5">
-							<Label htmlFor="visit-title">Titre *</Label>
-							<Input
+						<div className="col-span-8">
+							<FormInputField
+								label="Titre"
+								required
 								id="visit-title"
 								name="title"
 								value={form.title}
@@ -385,44 +389,40 @@ const Visits: FC = () => {
 								placeholder="Ex : Visite T3 - M. Dupont"
 							/>
 						</div>
-						<div className="col-span-4 space-y-1.5">
-							<Label htmlFor="visit-type">Type</Label>
-							<select
-								id="visit-type"
+						<div className="col-span-4">
+							<FormSelectField
+								label="Type"
 								name="type"
 								value={form.type}
 								onChange={handleChange}
-								className={fieldClassName}
 							>
 								<option value="visite">Visite</option>
 								<option value="rdv">Rendez-vous</option>
 								<option value="autre">Autre</option>
-							</select>
+							</FormSelectField>
 						</div>
-						<div className="col-span-4 space-y-1.5">
-							<Label htmlFor="visit-date">Date *</Label>
-							<Input
-								id="visit-date"
+						<div className="col-span-4">
+							<FormInputField
+								label="Date"
+								required
 								type="date"
 								name="date"
 								value={form.date}
 								onChange={handleChange}
 							/>
 						</div>
-						<div className="col-span-4 space-y-1.5">
-							<Label htmlFor="visit-time">Heure</Label>
-							<Input
-								id="visit-time"
+						<div className="col-span-4">
+							<FormInputField
+								label="Heure"
 								type="time"
 								name="time"
 								value={form.time}
 								onChange={handleChange}
 							/>
 						</div>
-						<div className="col-span-4 space-y-1.5">
-							<Label htmlFor="visit-duration">Durée (min)</Label>
-							<Input
-								id="visit-duration"
+						<div className="col-span-4">
+							<FormInputField
+								label="Durée (min)"
 								type="number"
 								name="duration"
 								value={form.duration}
@@ -431,14 +431,13 @@ const Visits: FC = () => {
 								step={15}
 							/>
 						</div>
-						<div className="col-span-6 space-y-1.5">
-							<Label htmlFor="visit-property">Bien *</Label>
-							<select
-								id="visit-property"
+						<div className="col-span-6">
+							<FormSelectField
+								label="Bien"
+								required
 								name="property_id"
 								value={form.property_id}
 								onChange={handleChange}
-								className={fieldClassName}
 							>
 								<option value="">-- Sélectionner un bien --</option>
 								{properties.map((property: any) => (
@@ -446,16 +445,14 @@ const Visits: FC = () => {
 										{property.address}, {property.city}
 									</option>
 								))}
-							</select>
+							</FormSelectField>
 						</div>
-						<div className="col-span-6 space-y-1.5">
-							<Label htmlFor="visit-tenant">Locataire (optionnel)</Label>
-							<select
-								id="visit-tenant"
+						<div className="col-span-6">
+							<FormSelectField
+								label="Locataire (optionnel)"
 								name="tenant_id"
 								value={form.tenant_id}
 								onChange={handleChange}
-								className={fieldClassName}
 							>
 								<option value="">-- Aucun --</option>
 								{filteredTenants.map((tenant: any) => (
@@ -463,22 +460,20 @@ const Visits: FC = () => {
 										{tenant.civility} {tenant.firstname} {tenant.lastname}
 									</option>
 								))}
-							</select>
+							</FormSelectField>
 						</div>
-						<div className="col-span-4 space-y-1.5">
-							<Label htmlFor="visit-contact-name">Nom du contact</Label>
-							<Input
-								id="visit-contact-name"
+						<div className="col-span-4">
+							<FormInputField
+								label="Nom du contact"
 								name="contact_name"
 								value={form.contact_name}
 								onChange={handleChange}
 								placeholder="Nom Prénom"
 							/>
 						</div>
-						<div className="col-span-4 space-y-1.5">
-							<Label htmlFor="visit-contact-email">Email du contact</Label>
-							<Input
-								id="visit-contact-email"
+						<div className="col-span-4">
+							<FormInputField
+								label="Email du contact"
 								type="email"
 								name="contact_email"
 								value={form.contact_email}
@@ -486,56 +481,45 @@ const Visits: FC = () => {
 								placeholder="email@exemple.fr"
 							/>
 						</div>
-						<div className="col-span-4 space-y-1.5">
-							<Label htmlFor="visit-contact-phone">Téléphone</Label>
-							<Input
-								id="visit-contact-phone"
+						<div className="col-span-4">
+							<FormInputField
+								label="Téléphone"
 								name="contact_phone"
 								value={form.contact_phone}
 								onChange={handleChange}
 								placeholder="06 00 00 00 00"
 							/>
 						</div>
-						<div
-							className={
-								editing ? "col-span-6 space-y-1.5" : "col-span-12 space-y-1.5"
-							}
-						>
-							<Label htmlFor="visit-description">Description</Label>
-							<textarea
-								id="visit-description"
+						<div className={editing ? "col-span-6" : "col-span-12"}>
+							<FormTextareaField
+								label="Description"
 								name="description"
 								value={form.description}
 								onChange={handleChange}
 								rows={2}
-								className={textareaClassName}
 							/>
 						</div>
 						{editing && (
-							<div className="col-span-6 space-y-1.5">
-								<Label htmlFor="visit-status">Statut</Label>
-								<select
-									id="visit-status"
+							<div className="col-span-6">
+								<FormSelectField
+									label="Statut"
 									name="status"
 									value={form.status}
 									onChange={handleChange}
-									className={fieldClassName}
 								>
 									<option value="scheduled">Planifiée</option>
 									<option value="completed">Effectuée</option>
 									<option value="cancelled">Annulée</option>
-								</select>
+								</FormSelectField>
 							</div>
 						)}
-						<div className="col-span-12 space-y-1.5">
-							<Label htmlFor="visit-notes">Notes internes</Label>
-							<textarea
-								id="visit-notes"
+						<div className="col-span-12">
+							<FormTextareaField
+								label="Notes internes"
 								name="notes"
 								value={form.notes}
 								onChange={handleChange}
 								rows={2}
-								className={textareaClassName}
 							/>
 						</div>
 						{googleConnected && (

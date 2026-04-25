@@ -20,6 +20,7 @@ import EntityTableCard from "../../../components/EntityTableCard";
 import {
 	FormInputField,
 	FormSelectField,
+	FormTextareaField,
 } from "../../../components/FormFields";
 import StatCard from "../../../components/StatCard";
 import { StatusBadge } from "../../../components/StatusBadge";
@@ -121,6 +122,15 @@ const Leases = () => {
 	}, []);
 
 	const totalActive = leases.filter((l) => l.status === "active").length;
+
+	const today = new Date();
+	const in90Days = new Date(today);
+	in90Days.setDate(today.getDate() + 90);
+	const expiringLeases = leases.filter((l) => {
+		if (l.status !== "active" || !l.end_date) return false;
+		const end = new Date(l.end_date);
+		return end >= today && end <= in90Days;
+	});
 	const totalRent = leases
 		.filter((l) => l.status === "active")
 		.reduce(
@@ -234,7 +244,42 @@ const Leases = () => {
 				</Card>
 			</div>
 
-			<div className="grid grid-cols-12 gap-4 mb-4 text-center">
+			{expiringLeases.length > 0 && (
+				<div className="mb-4 p-4 border border-amber-300 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+					<strong className="text-amber-700 dark:text-amber-400 text-sm">
+						{expiringLeases.length} bail{expiringLeases.length > 1 ? "x" : ""}{" "}
+						expirant dans les 90 jours
+					</strong>
+					<ul className="mt-2 space-y-1 text-sm text-amber-800 dark:text-amber-300">
+						{expiringLeases.map((l) => (
+							<li key={l.id}>
+								<strong>
+									{l.Property
+										? `${l.Property.type} – ${l.Property.city}`
+										: "Bien inconnu"}
+								</strong>
+								{l.Tenant
+									? ` · ${l.Tenant.civility || ""} ${l.Tenant.firstname} ${l.Tenant.lastname}`.trim()
+									: ""}{" "}
+								— fin le <strong>{DateUtils.formatShort(l.end_date)}</strong>
+								{(() => {
+									const daysLeft = Math.ceil(
+										(new Date(l.end_date).getTime() - today.getTime()) /
+											(1000 * 60 * 60 * 24),
+									);
+									return (
+										<span className="ml-1 text-xs opacity-70">
+											({daysLeft} j)
+										</span>
+									);
+								})()}
+							</li>
+						))}
+					</ul>
+				</div>
+			)}
+
+			<div className="flex gap-4 mb-4 text-center w-full justify-content-center flex-direction-column">
 				<StatCard value={totalActive} label="Baux actifs" color="success" />
 				<StatCard
 					value={`${totalRent.toFixed(2)} €`}
@@ -435,11 +480,8 @@ const Leases = () => {
 					</FormSelectField>
 				</div>
 				<div className="col-span-6">
-					<label className="text-sm font-medium leading-none mb-1 block">
-						Locataire
-					</label>
-					<select
-						className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+					<FormSelectField
+						label="Locataire"
 						name="tenant_id"
 						value={form.tenant_id}
 						onChange={handleChange}
@@ -451,14 +493,11 @@ const Leases = () => {
 								value={t.id}
 							>{`${t.civility || ""} ${t.firstname} ${t.lastname}`}</option>
 						))}
-					</select>
+					</FormSelectField>
 				</div>
 				<div className="col-span-4">
-					<label className="text-sm font-medium leading-none mb-1 block">
-						Type de bail
-					</label>
-					<select
-						className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+					<FormSelectField
+						label="Type de bail"
 						name="type"
 						value={form.type}
 						onChange={handleChange}
@@ -466,7 +505,7 @@ const Leases = () => {
 						<option value="nu">Location nue</option>
 						<option value="meublé">Meublé</option>
 						<option value="commercial">Commercial</option>
-					</select>
+					</FormSelectField>
 				</div>
 				<div className="col-span-4">
 					<FormInputField
@@ -529,11 +568,8 @@ const Leases = () => {
 					/>
 				</div>
 				<div className="col-span-4">
-					<label className="text-sm font-medium leading-none mb-1 block">
-						Statut
-					</label>
-					<select
-						className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+					<FormSelectField
+						label="Statut"
 						name="status"
 						value={form.status}
 						onChange={handleChange}
@@ -541,18 +577,15 @@ const Leases = () => {
 						<option value="active">Actif</option>
 						<option value="expired">Expiré</option>
 						<option value="terminated">Résilié</option>
-					</select>
+					</FormSelectField>
 				</div>
 				<div className="col-span-12">
-					<label className="text-sm font-medium leading-none mb-1 block">
-						Notes
-					</label>
-					<textarea
+					<FormTextareaField
+						label="Notes"
 						name="notes"
 						rows={3}
 						value={form.notes}
 						onChange={handleChange}
-						className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm resize-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
 					/>
 				</div>
 			</CrudModal>

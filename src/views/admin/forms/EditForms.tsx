@@ -133,6 +133,7 @@ const EditForms = ({ setModalVisible, data, entities }: EditFormsProps) => {
 					guarantor_address: data[0]?.guarantor_address || "",
 					guarantor_zipcode: data[0]?.guarantor_zipcode || "",
 					guarantor_city: data[0]?.guarantor_city || "",
+					monthly_income: data[0]?.monthly_income || "",
 				}
 			: {
 					address: data[0]?.address || "",
@@ -257,7 +258,7 @@ const EditForms = ({ setModalVisible, data, entities }: EditFormsProps) => {
 					</div>
 				)}
 				{/* Avatar */}
-				<div className="col-span-2 space-y-1.5">
+				<div className="col-span-2">
 					<Label>Photo du locataire</Label>
 					{avatarPreview && !removeAvatar ? (
 						<div className="flex items-center gap-3 mb-2">
@@ -399,6 +400,16 @@ const EditForms = ({ setModalVisible, data, entities }: EditFormsProps) => {
 						}
 					/>
 				</div>
+
+				{/* Solvabilité */}
+				<FormInputField
+					type="number"
+					name="monthly_income"
+					label="Revenus mensuels nets (€)"
+					placeholder="Ex : 2500"
+					value={inputValue.monthly_income}
+					onChange={handleChangeInput}
+				/>
 
 				{/* Garant */}
 				<div className="col-span-2">
@@ -593,9 +604,13 @@ const EditForms = ({ setModalVisible, data, entities }: EditFormsProps) => {
 			/>
 
 			{/* Photo principale */}
-			<div className="col-span-2 space-y-1.5">
-				<Label>Photo principale (vignette)</Label>
-				<Input type="file" accept="image/*" onChange={handleThumbnailChange} />
+			<div className="col-span-2">
+				<FormInputField
+					label="Photo principale (vignette)"
+					type="file"
+					accept="image/*"
+					onChange={handleThumbnailChange}
+				/>
 				{thumbnailPreview && (
 					<div className="mt-2 flex items-start gap-2">
 						<img
@@ -623,9 +638,9 @@ const EditForms = ({ setModalVisible, data, entities }: EditFormsProps) => {
 			</div>
 
 			{/* Galerie de photos */}
-			<div className="col-span-2 space-y-1.5">
-				<Label>Photos supplémentaires</Label>
-				<Input
+			<div className="col-span-2">
+				<FormInputField
+					label="Photos supplémentaires"
 					type="file"
 					accept="image/*"
 					multiple
@@ -709,18 +724,18 @@ const EditForms = ({ setModalVisible, data, entities }: EditFormsProps) => {
 			</div>
 			<div className="col-span-2">
 				<div className="flex gap-2 items-center flex-wrap mb-2">
-					<select
-						className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-						style={{ maxWidth: 220 }}
-						value={newRoomType}
-						onChange={(e) => setNewRoomType(e.target.value)}
-					>
-						{ROOM_TYPES.map((r) => (
-							<option key={r} value={r}>
-								{r}
-							</option>
-						))}
-					</select>
+					<Select value={newRoomType} onValueChange={setNewRoomType}>
+						<SelectTrigger className="w-[220px]">
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							{ROOM_TYPES.map((r) => (
+								<SelectItem key={r} value={r}>
+									{r}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 					<Button
 						type="button"
 						variant="outline"

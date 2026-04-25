@@ -42,12 +42,12 @@ const CrudModal: React.FC<CrudModalProps> = ({
 }) => (
 	<Dialog open={visible} onOpenChange={(open) => !open && onClose()}>
 		<DialogContent className={cn(sizeClass[size] ?? sizeClass.lg)}>
-			<DialogHeader>
+			<DialogHeader className="p-2">
 				<DialogTitle>{title ?? (editing ? editTitle : addTitle)}</DialogTitle>
 			</DialogHeader>
 			<form onSubmit={onSubmit}>
-				<div className="grid grid-cols-2 gap-4">{children}</div>
-				<div className="flex justify-end gap-2 pt-4 mt-4 border-t">
+				<div className="grid grid-cols-12 gap-4">{children}</div>
+				<div className="flex justify-end gap-2 pt-4 mt-4 border-t border-border/60">
 					<Button type="button" variant="outline" onClick={onClose}>
 						Annuler
 					</Button>

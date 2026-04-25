@@ -1,7 +1,10 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type React from "react";
+import { useEffect, useState } from "react";
+import { DateUtils } from "src/utils/date";
 import DocumentsSection from "../../../components/DocumentsSection";
+import PaymentDataService from "../../../services/payment.service";
 
 interface ViewFormsProps {
 	entities: string;
@@ -11,6 +14,18 @@ interface ViewFormsProps {
 
 const ViewForms = ({ entities, data, setModalVisible }: ViewFormsProps) => {
 	const isTenant = entities === "tenants";
+	const [tenantPayments, setTenantPayments] = useState<any[]>([]);
+
+	useEffect(() => {
+		if (!isTenant || !data[0]?.id) return;
+		PaymentDataService.getAll()
+			.then((res) =>
+				setTenantPayments(
+					res.data.filter((p: any) => p.tenant_id === data[0].id),
+				),
+			)
+			.catch(() => {});
+	}, [isTenant, data]);
 
 	const Field = ({
 		label,
@@ -90,6 +105,83 @@ const ViewForms = ({ entities, data, setModalVisible }: ViewFormsProps) => {
 									}
 								/>
 							)}
+							{item.monthly_income && item.Lease?.rent_amount && (
+								<Field
+									label="Taux effort"
+									value={(() => {
+										const ratio =
+											(Number.parseFloat(item.Lease.rent_amount) /
+												Number.parseFloat(item.monthly_income)) *
+											100;
+										const color =
+											ratio <= 33
+												? "text-green-600"
+												: ratio <= 40
+													? "text-amber-500"
+													: "text-red-500";
+										return (
+											<span className={color}>
+												{ratio.toFixed(1)} % (
+												{ratio <= 33
+													? "✓ Solvable"
+													: ratio <= 40
+														? "⚠ Limite"
+														: "✗ Risqué"}
+												)
+											</span>
+										);
+									})()}
+								/>
+							)}
+							{item.monthly_income && (
+								<Field
+									label="Revenus mensuels"
+									value={`${Number.parseFloat(item.monthly_income).toFixed(0)} €`}
+								/>
+							)}
+
+							{tenantPayments.length > 0 && (
+								<>
+									<div className="py-2 border-b font-semibold text-sm mt-1">
+										Historique des paiements
+									</div>
+									{tenantPayments
+										.sort((a, b) =>
+											(b.month || "").localeCompare(a.month || ""),
+										)
+										.map((p) => (
+											<div
+												key={p.id}
+												className="grid grid-cols-3 gap-2 py-1.5 border-b last:border-0"
+											>
+												<span className="text-sm font-medium text-muted-foreground">
+													{DateUtils.formatMonthYear(p.month) ||
+														p.due_date?.slice(0, 7) ||
+														"—"}
+												</span>
+												<span className="col-span-2 text-sm flex items-center gap-2">
+													{Number.parseFloat(p.amount || 0).toFixed(2)} €
+													<Badge
+														variant={
+															p.status === "paid"
+																? "default"
+																: p.status === "late"
+																	? "destructive"
+																	: "secondary"
+														}
+													>
+														{p.status === "paid"
+															? "Payé"
+															: p.status === "late"
+																? "Retard"
+																: "Attente"}
+													</Badge>
+												</span>
+											</div>
+										))}
+								</>
+							)}
+
 							{(item.guarantor_firstname || item.guarantor_lastname) && (
 								<>
 									<div className="py-2 border-b font-semibold text-sm">

@@ -15,6 +15,7 @@ import { Bell, CheckCheck, Mail, Trash2 } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { DateUtils } from "src/utils/date";
+import { useNotifications } from "../../../hooks/useNotifications";
 import NotificationService, {
 	type Notification,
 } from "../../../services/notification.service";
@@ -36,6 +37,7 @@ const typeConfig: Record<
 };
 
 const Notifications = () => {
+	const { markAllRead: markAllReadHook } = useNotifications();
 	const [notifications, setNotifications] = useState<Notification[]>([]);
 	const [filter, setFilter] = useState<"all" | "unread">("all");
 	const [loading, setLoading] = useState(true);
@@ -78,7 +80,7 @@ const Notifications = () => {
 
 	const handleMarkAllRead = async () => {
 		try {
-			await NotificationService.markAllRead();
+			await markAllReadHook();
 			setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
 			setAlert({
 				type: "success",
@@ -300,7 +302,7 @@ const Notifications = () => {
 												<TableCell onClick={(e) => e.stopPropagation()}>
 													<Button
 														size="sm"
-														variant="ghost"
+														variant="secondary"
 														className="text-destructive hover:text-destructive"
 														onClick={() => handleDelete(n.id)}
 														title="Supprimer"

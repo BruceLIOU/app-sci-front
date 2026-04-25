@@ -251,7 +251,7 @@ const Properties = () => {
 									<div className="flex flex-wrap gap-2 justify-end mt-2">
 										{isAdmin && (
 											<Button
-												variant="ghost"
+												variant="secondary"
 												onClick={(e) => {
 													e.stopPropagation();
 													handleEditProperty(item.id);
@@ -262,7 +262,7 @@ const Properties = () => {
 										)}
 										{isAdmin && (
 											<Button
-												variant="ghost"
+												variant="secondary"
 												onClick={(e) => {
 													e.stopPropagation();
 													handleDeleteProperty(item.id);
@@ -369,7 +369,7 @@ const Properties = () => {
 									<div className="flex gap-2 mr-3" style={{ flexShrink: 0 }}>
 										{isAdmin && (
 											<Button
-												variant="ghost"
+												variant="secondary"
 												size="sm"
 												onClick={(e) => {
 													e.stopPropagation();
@@ -381,7 +381,7 @@ const Properties = () => {
 										)}
 										{isAdmin && (
 											<Button
-												variant="ghost"
+												variant="secondary"
 												size="sm"
 												onClick={(e) => {
 													e.stopPropagation();

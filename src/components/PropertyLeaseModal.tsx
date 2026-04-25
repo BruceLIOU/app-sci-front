@@ -7,8 +7,14 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { ExternalLink, FileText, Save } from "lucide-react";
 import type React from "react";
@@ -16,6 +22,7 @@ import { useEffect, useState } from "react";
 import DocumentDataService from "../services/document.service";
 import LeaseDataService from "../services/lease.service";
 import PdfDataService from "../services/pdf.service";
+import { FormInputField, FormTextareaField } from "./FormFields";
 
 interface PropertyLeaseModalProps {
 	visible: boolean;
@@ -93,6 +100,9 @@ const PropertyLeaseModal: React.FC<PropertyLeaseModalProps> = ({
 	// biome-ignore lint/suspicious/noExplicitAny: ChangeEvent générique multi-input
 	const handleChange = (e: React.ChangeEvent<any>) =>
 		setForm({ ...form, [e.target.name]: e.target.value });
+
+	const handleSelectChange = (name: string) => (value: string) =>
+		setForm((prev) => ({ ...prev, [name]: value === "__none__" ? "" : value }));
 
 	const handleSave = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -180,98 +190,92 @@ const PropertyLeaseModal: React.FC<PropertyLeaseModalProps> = ({
 				)}
 
 				<form id="lease-form" onSubmit={handleSave} className="space-y-4">
-					<div>
-						<Label>Bien loué</Label>
-						<Input
-							value={`${property.type} – ${property.address}, ${property.city}`}
-							readOnly
-							className="bg-muted/50 text-muted-foreground"
-						/>
-					</div>
+					<FormInputField
+						label="Bien loué"
+						value={`${property.type} – ${property.address}, ${property.city}`}
+						readOnly
+						className="bg-muted/50 text-muted-foreground"
+					/>
 
 					<div className="grid grid-cols-1 gap-4">
 						<div className="space-y-1.5">
 							<Label>Locataire</Label>
-							<select
-								name="tenant_id"
-								value={form.tenant_id}
-								onChange={handleChange}
-								className={fieldCls}
+							<Select
+								value={form.tenant_id || "__none__"}
+								onValueChange={handleSelectChange("tenant_id")}
 							>
-								<option value="">— Sélectionner un locataire —</option>
-								{tenants.map((t) => (
-									<option key={t.id} value={t.id}>
-										{t.civility ? `${t.civility} ` : ""}
-										{t.firstname} {t.lastname}
-									</option>
-								))}
-							</select>
+								<SelectTrigger>
+									<SelectValue placeholder="— Sélectionner un locataire —" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="__none__">
+										— Sélectionner un locataire —
+									</SelectItem>
+									{tenants.map((t) => (
+										<SelectItem key={t.id} value={String(t.id)}>
+											{t.civility ? `${t.civility} ` : ""}
+											{t.firstname} {t.lastname}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
 						</div>
 					</div>
 
 					<div className="grid grid-cols-3 gap-4">
 						<div className="space-y-1.5">
 							<Label>Type de bail</Label>
-							<select
-								name="type"
+							<Select
 								value={form.type}
-								onChange={handleChange}
-								className={fieldCls}
+								onValueChange={handleSelectChange("type")}
 							>
-								<option value="nu">Location nue (3 ans)</option>
-								<option value="meublé">Meublé (1 an)</option>
-								<option value="commercial">Commercial (9 ans)</option>
-							</select>
+								<SelectTrigger>
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="nu">Location nue (3 ans)</SelectItem>
+									<SelectItem value="meublé">Meublé (1 an)</SelectItem>
+									<SelectItem value="commercial">Commercial (9 ans)</SelectItem>
+								</SelectContent>
+							</Select>
 						</div>
-						<div className="space-y-1.5">
-							<Label>
-								Date de début <span className="text-rose-500">*</span>
-							</Label>
-							<Input
-								type="date"
-								name="start_date"
-								value={form.start_date}
-								onChange={handleChange}
-								required
-							/>
-						</div>
-						<div className="space-y-1.5">
-							<Label>Date de fin</Label>
-							<Input
-								type="date"
-								name="end_date"
-								value={form.end_date}
-								onChange={handleChange}
-							/>
-						</div>
+						<FormInputField
+							label="Date de début"
+							type="date"
+							name="start_date"
+							value={form.start_date}
+							onChange={handleChange}
+							required
+						/>
+						<FormInputField
+							label="Date de fin"
+							type="date"
+							name="end_date"
+							value={form.end_date}
+							onChange={handleChange}
+						/>
 					</div>
 
 					<div className="grid grid-cols-3 gap-4">
-						<div className="space-y-1.5">
-							<Label>
-								Loyer HC (€) <span className="text-rose-500">*</span>
-							</Label>
-							<Input
-								type="number"
-								name="rent_amount"
-								value={form.rent_amount}
-								onChange={handleChange}
-								required
-								min={0}
-								step={0.01}
-							/>
-						</div>
-						<div className="space-y-1.5">
-							<Label>Charges (€)</Label>
-							<Input
-								type="number"
-								name="charges_amount"
-								value={form.charges_amount}
-								onChange={handleChange}
-								min={0}
-								step={0.01}
-							/>
-						</div>
+						<FormInputField
+							label="Loyer HC (€)"
+							type="number"
+							name="rent_amount"
+							value={form.rent_amount}
+							onChange={handleChange}
+							required
+							min={0}
+							step={0.01}
+						/>
+						<FormInputField
+							label="Charges (€)"
+							type="number"
+							name="charges_amount"
+							value={form.charges_amount}
+							onChange={handleChange}
+							min={0}
+							step={0.01}
+						/>
 						<div className="flex flex-col justify-end rounded-lg border bg-muted/30 p-2 text-center">
 							<div className="text-xs text-muted-foreground">Loyer CC</div>
 							<strong className="text-sm">{loyer} €</strong>
@@ -279,52 +283,48 @@ const PropertyLeaseModal: React.FC<PropertyLeaseModalProps> = ({
 					</div>
 
 					<div className="grid grid-cols-3 gap-4">
-						<div className="space-y-1.5">
-							<Label>Dépôt de garantie (€)</Label>
-							<Input
-								type="number"
-								name="deposit_amount"
-								value={form.deposit_amount}
-								onChange={handleChange}
-								min={0}
-								step={0.01}
-							/>
-						</div>
-						<div className="space-y-1.5">
-							<Label>Préavis (mois)</Label>
-							<Input
-								type="number"
-								name="notice_period"
-								value={form.notice_period}
-								onChange={handleChange}
-								min={0}
-							/>
-						</div>
+						<FormInputField
+							label="Dépôt de garantie (€)"
+							type="number"
+							name="deposit_amount"
+							value={form.deposit_amount}
+							onChange={handleChange}
+							min={0}
+							step={0.01}
+						/>
+						<FormInputField
+							label="Préavis (mois)"
+							type="number"
+							name="notice_period"
+							value={form.notice_period}
+							onChange={handleChange}
+							min={0}
+						/>
 						<div className="space-y-1.5">
 							<Label>Statut</Label>
-							<select
-								name="status"
+							<Select
 								value={form.status}
-								onChange={handleChange}
-								className={fieldCls}
+								onValueChange={handleSelectChange("status")}
 							>
-								<option value="active">Actif</option>
-								<option value="expired">Expiré</option>
-								<option value="terminated">Résilié</option>
-							</select>
+								<SelectTrigger>
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="active">Actif</SelectItem>
+									<SelectItem value="expired">Expiré</SelectItem>
+									<SelectItem value="terminated">Résilié</SelectItem>
+								</SelectContent>
+							</Select>
 						</div>
 					</div>
 
-					<div className="space-y-1.5">
-						<Label>Conditions particulières / Notes</Label>
-						<textarea
-							name="notes"
-							rows={3}
-							value={form.notes}
-							onChange={handleChange}
-							className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm resize-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-						/>
-					</div>
+					<FormTextareaField
+						label="Conditions particulières / Notes"
+						name="notes"
+						rows={3}
+						value={form.notes}
+						onChange={handleChange}
+					/>
 				</form>
 
 				<DialogFooter className="gap-2">

@@ -1,5 +1,12 @@
 import { Button } from "@/components/ui/button";
 import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import {
 	Tooltip,
 	TooltipContent,
 	TooltipProvider,
@@ -158,21 +165,26 @@ const ViewControlBar: React.FC<ViewControlBarProps> = ({
 
 				{/* Filtres */}
 				{filters.map((f, i) => (
-					<select
+					<Select
 						// biome-ignore lint/suspicious/noArrayIndexKey: FilterConfig sans identifiant stable
 						key={i}
-						style={{ width: f.width ?? 160 }}
 						value={f.value}
-						onChange={(e) => f.onChange(e.target.value)}
-						className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+						onValueChange={f.onChange}
 					>
-						<option value="">{f.placeholder}</option>
-						{f.options.map((o) => (
-							<option key={o.value} value={o.value}>
-								{o.label}
-							</option>
-						))}
-					</select>
+						<SelectTrigger
+							className="h-8 text-xs rounded-md"
+							style={{ width: f.width ?? 160 }}
+						>
+							<SelectValue placeholder={f.placeholder} />
+						</SelectTrigger>
+						<SelectContent>
+							{f.options.map((o) => (
+								<SelectItem key={o.value} value={o.value}>
+									{o.label}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 				))}
 
 				{/* Reset + badge */}

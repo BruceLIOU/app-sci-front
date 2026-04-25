@@ -11,6 +11,13 @@ import {
 } from "@/components/ui/table";
 import { Download } from "lucide-react";
 import React, { useState, useEffect } from "react";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "src/components/ui/select";
 import { DateUtils } from "src/utils/date";
 import StatCard from "../../../components/StatCard";
 import TableEmptyRow from "../../../components/TableEmptyRow";
@@ -135,17 +142,21 @@ const Declarations = () => {
 								Parametres
 							</div>
 							<h5 className="mb-3">Annee de declaration</h5>
-							<select
-								className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm mb-3"
-								value={year}
-								onChange={(e) => setYear(Number(e.target.value))}
+							<Select
+								value={String(year)}
+								onValueChange={(v) => setYear(Number(v))}
 							>
-								{years.map((y) => (
-									<option key={y} value={y}>
-										{y}
-									</option>
-								))}
-							</select>
+								<SelectTrigger className="mb-3">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									{years.map((y) => (
+										<SelectItem key={y} value={String(y)}>
+											{y}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
 							<Button
 								className="w-full app-ghost-button"
 								onClick={handleGeneratePdf}
@@ -159,7 +170,7 @@ const Declarations = () => {
 				</div>
 			</div>
 
-			<div className="grid grid-cols-3 gap-3 mb-4 text-center">
+			<div className="flex gap-4 mb-4 text-center w-full justify-content-center flex-direction-column">
 				<StatCard
 					value={`${totalRevenues.toFixed(2)} €`}
 					label={`Revenus locatifs ${year}`}

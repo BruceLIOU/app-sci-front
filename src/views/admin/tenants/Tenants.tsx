@@ -225,7 +225,7 @@ const Tenants = () => {
 									</p>
 									<div className="flex flex-wrap gap-2 justify-end mt-2">
 										<Button
-											variant="ghost"
+											variant="secondary"
 											size="sm"
 											onClick={() => handleViewTenant(item.id)}
 											title="Voir"
@@ -234,7 +234,7 @@ const Tenants = () => {
 										</Button>
 										{isAdmin && (
 											<Button
-												variant="ghost"
+												variant="secondary"
 												size="sm"
 												onClick={() => handleToggleActive(item.id)}
 												title={item.is_active ? "Désactiver" : "Activer"}
@@ -248,7 +248,7 @@ const Tenants = () => {
 										)}
 										{isAdmin && (
 											<Button
-												variant="ghost"
+												variant="secondary"
 												size="sm"
 												onClick={() => handleEditTenant(item.id)}
 												title="Modifier"
@@ -258,7 +258,7 @@ const Tenants = () => {
 										)}
 										{isAdmin && (
 											<Button
-												variant="ghost"
+												variant="secondary"
 												size="sm"
 												onClick={() => handleDeleteTenant(item.id)}
 												title="Supprimer"
@@ -336,7 +336,7 @@ const Tenants = () => {
 									</div>
 									<div className="flex gap-1 mr-3" style={{ flexShrink: 0 }}>
 										<Button
-											variant="ghost"
+											variant="secondary"
 											size="sm"
 											onClick={() => handleViewTenant(item.id)}
 											title="Voir"
@@ -345,7 +345,7 @@ const Tenants = () => {
 										</Button>
 										{isAdmin && (
 											<Button
-												variant="ghost"
+												variant="secondary"
 												size="sm"
 												onClick={() => handleToggleActive(item.id)}
 												title={item.is_active ? "Désactiver" : "Activer"}
@@ -359,7 +359,7 @@ const Tenants = () => {
 										)}
 										{isAdmin && (
 											<Button
-												variant="ghost"
+												variant="secondary"
 												size="sm"
 												onClick={() => handleEditTenant(item.id)}
 												title="Modifier"
@@ -369,7 +369,7 @@ const Tenants = () => {
 										)}
 										{isAdmin && (
 											<Button
-												variant="ghost"
+												variant="secondary"
 												size="sm"
 												onClick={() => handleDeleteTenant(item.id)}
 												title="Supprimer"

@@ -279,7 +279,7 @@ a {
 }
 
 .app-sidebar {
-  background: linear-gradient(180deg, #12202f 0%, #0f1723 100%) !important;
+  background: linear-gradient(180deg, #1a2a3a 0%, #15202e 100%) !important;
   border-right: 1px solid var(--app-sidebar-border);
   box-shadow: 24px 0 40px rgba(18, 32, 47, 0.14);
 }
@@ -378,7 +378,6 @@ a {
   opacity: 1;
 }
 
-.app-page-hero,
 .app-surface-card,
 .app-entity-card,
 .app-panel-card,
@@ -406,11 +405,62 @@ a {
   position: relative;
   overflow: hidden;
   padding: 1.5rem;
-  background: #ffffff !important;
+  border: none !important;
+  border-radius: 1rem !important;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0f172a 100%) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22) !important;
 }
 
 .app-page-hero::before {
-  display: none;
+  display: block;
+  content: '';
+  position: absolute;
+  top: -3rem;
+  left: -3rem;
+  width: 14rem;
+  height: 14rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, #6366f1, transparent);
+  filter: blur(3rem);
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+.app-page-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -2rem;
+  right: 2rem;
+  width: 10rem;
+  height: 10rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, #10b981, transparent);
+  filter: blur(2.5rem);
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+.app-page-hero .app-page-kicker {
+  color: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.app-page-hero .app-display-title,
+.app-page-hero h1,
+.app-page-hero h2,
+.app-page-hero h3 {
+  color: #ffffff;
+}
+
+.app-page-hero .app-page-description {
+  color: rgba(255, 255, 255, 0.65) !important;
+}
+
+.app-page-hero .app-filter-chip {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  color: rgba(255, 255, 255, 0.88) !important;
 }
 
 .app-page-kicker {
@@ -1223,7 +1273,7 @@ a {
 
 // Dark mode overrides
 [data-coreui-theme="dark"] {
-  --app-bg: #0b1220;
+  --app-bg: #0c1929;
   --app-surface: #111827;
   --app-surface-strong: #1e293b;
   --app-border: rgba(148, 163, 184, 0.15);
@@ -1251,7 +1301,6 @@ a {
 
   .app-header,
   .app-footer,
-  .app-page-hero,
   .app-surface-card,
   .app-entity-card,
   .app-panel-card,
@@ -1549,4 +1598,107 @@ a {
     width: 100%;
     margin-left: 0.2rem;
   }
+}
+
+/* =====================================================
+   ADMIN PAGE POLISH
+   ===================================================== */
+
+
+/* Filtre chips dans le hero — plus propres */
+.app-filter-chip {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+/* Shadcn Card — hover lift global */
+.rounded-lg.border,
+.rounded-xl.border {
+  transition: box-shadow var(--app-motion-base) var(--app-ease-standard), transform var(--app-motion-base) var(--app-ease-standard);
+}
+
+/* Table card — séparateur header plus visible */
+.border-b.space-y-0 {
+  background: linear-gradient(to right, rgba(15, 118, 110, 0.03) 0%, transparent 100%) !important;
+}
+
+/* Form label styling */
+label.text-sm.font-medium {
+  color: #374151;
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.01em;
+}
+
+/* Input / select in forms */
+.flex.h-9.w-full.rounded-md,
+.flex.h-10.w-full.rounded-md {
+  border-color: #d1d5db;
+  background: #ffffff;
+  transition: border-color 150ms, box-shadow 150ms;
+}
+.flex.h-9.w-full.rounded-md:focus,
+.flex.h-10.w-full.rounded-md:focus {
+  border-color: var(--app-accent) !important;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1) !important;
+  outline: none;
+}
+
+/* Delete modal buttons — override for destructive context */
+[data-coreui-theme='dark'] label.text-sm.font-medium {
+  color: #e2e8f0;
+}
+
+/* Stat / KPI inline cards in admin pages */
+.grid .rounded-lg.border.bg-card.text-card-foreground.shadow-sm {
+  transition: box-shadow var(--app-motion-base) var(--app-ease-standard), transform var(--app-motion-base) var(--app-ease-standard);
+}
+.grid .rounded-lg.border.bg-card.text-card-foreground.shadow-sm:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+/* Badge — arrondi légèrement plus grand, padding mieux */
+.inline-flex.items-center.rounded-full {
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+
+/* Table header — force bg */
+table thead th {
+  background: #f8fafc;
+  color: #6b7280;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+/* Table row — teal hover */
+table tbody tr {
+  transition: background-color 100ms;
+}
+table tbody tr:hover {
+  background-color: rgba(15, 118, 110, 0.03) !important;
+}
+
+/* Empty state rows */
+table tbody td[colspan] {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--app-text-soft);
+}
+
+/* Action buttons in table */
+table .ghost,
+table button[class*="ghost"] {
+  color: #94a3b8;
+  border-radius: 6px;
+}
+table button[class*="ghost"]:hover {
+  color: var(--app-accent);
+  background: rgba(15, 118, 110, 0.08);
 }

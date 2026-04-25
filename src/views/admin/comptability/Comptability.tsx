@@ -90,6 +90,172 @@ const Comptability = () => {
 		(byMonth[m].pending + byMonth[m].late).toFixed(2),
 	);
 
+	const exportFec = () => {
+		const sep = "\t";
+		const fmt = (n: number) => n.toFixed(2);
+		const fmtDate = (s: string) =>
+			(s || "").replace(/-/g, "").slice(0, 8) || `${filterYear}0101`;
+		const chargeAccounts: Record<string, [string, string]> = {
+			assurance: ["616100", "Assurance immobilière"],
+			taxe_fonciere: ["635100", "Taxe foncière"],
+			entretien: ["615100", "Entretien / réparations"],
+			travaux: ["615200", "Travaux"],
+			charges_copro: ["614100", "Charges copropriété"],
+			frais_gestion: ["622600", "Honoraires gestion"],
+			autre: ["615900", "Autres charges"],
+		};
+		const cols = [
+			"JournalCode",
+			"JournalLib",
+			"EcritureNum",
+			"EcritureDate",
+			"CompteNum",
+			"CompteLib",
+			"CompAuxNum",
+			"CompAuxLib",
+			"PieceRef",
+			"PieceDate",
+			"EcritureLib",
+			"Debit",
+			"Credit",
+			"EcritureLet",
+			"DateLet",
+			"ValidDate",
+			"Montantdevise",
+			"Idevise",
+		];
+		const rows: string[] = [cols.join(sep)];
+		let seq = 1;
+
+		const paymentsYear = payments.filter(
+			(p) =>
+				(p.paid_date || p.due_date || p.month || "").slice(0, 4) === filterYear,
+		);
+		const chargesYear = charges.filter(
+			(c) => (c.date || "").slice(0, 4) === filterYear,
+		);
+
+		for (const p of paymentsYear.filter((x) => x.status === "paid")) {
+			const d = fmtDate(p.paid_date || p.due_date || "");
+			const amt = fmt(Number.parseFloat(p.amount || 0));
+			const lib =
+				`Loyer ${p.Tenant ? `${p.Tenant.firstname} ${p.Tenant.lastname}` : ""} ${p.Property?.city || ""}`
+					.trim()
+					.slice(0, 99);
+			const n = String(seq).padStart(6, "0");
+			rows.push(
+				[
+					"VT",
+					"Ventes",
+					n,
+					d,
+					"411000",
+					"Clients",
+					"",
+					"",
+					n,
+					d,
+					lib,
+					amt,
+					"0.00",
+					"",
+					"",
+					d,
+					amt,
+					"EUR",
+				].join(sep),
+			);
+			rows.push(
+				[
+					"VT",
+					"Ventes",
+					n,
+					d,
+					"706000",
+					"Produits loyers",
+					"",
+					"",
+					n,
+					d,
+					lib,
+					"0.00",
+					amt,
+					"",
+					"",
+					d,
+					amt,
+					"EUR",
+				].join(sep),
+			);
+			seq++;
+		}
+		for (const c of chargesYear) {
+			const d = fmtDate(c.date || "");
+			const amt = fmt(Number.parseFloat(c.amount || 0));
+			const [cNum, cLib] = chargeAccounts[c.type] || ["615900", "Charges"];
+			const lib =
+				`${CHARGE_TYPE_LABELS[c.type] || c.type} ${c.Property?.city || ""}`
+					.trim()
+					.slice(0, 99);
+			const n = String(seq).padStart(6, "0");
+			rows.push(
+				[
+					"AC",
+					"Achats",
+					n,
+					d,
+					cNum,
+					cLib,
+					"",
+					"",
+					n,
+					d,
+					lib,
+					amt,
+					"0.00",
+					"",
+					"",
+					d,
+					amt,
+					"EUR",
+				].join(sep),
+			);
+			rows.push(
+				[
+					"AC",
+					"Achats",
+					n,
+					d,
+					"512000",
+					"Banque",
+					"",
+					"",
+					n,
+					d,
+					lib,
+					"0.00",
+					amt,
+					"",
+					"",
+					d,
+					amt,
+					"EUR",
+				].join(sep),
+			);
+			seq++;
+		}
+
+		const blob = new Blob([`\uFEFF${rows.join("\n")}`], {
+			type: "text/plain;charset=utf-8;",
+		});
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement("a");
+		a.href = url;
+		a.download = `FEC_${filterYear}.txt`;
+		a.click();
+		URL.revokeObjectURL(url);
+	};
+
 	const exportCsv = () => {
 		const header = [
 			"Mois",
@@ -236,21 +402,22 @@ const Comptability = () => {
 							<span className="app-filter-chip">
 								{recoveryRate} % recouvres
 							</span>
-							<Button
-								size="sm"
-								variant="outline"
-								onClick={exportCsv}
-								className="ml-auto"
-							>
-								<Download className="h-4 w-4 mr-1" />
-								Exporter CSV
-							</Button>
+							<div className="ml-auto flex gap-2">
+								<Button size="sm" variant="outline" onClick={exportCsv}>
+									<Download className="h-4 w-4 mr-1" />
+									Exporter CSV
+								</Button>
+								<Button size="sm" variant="outline" onClick={exportFec}>
+									<Download className="h-4 w-4 mr-1" />
+									Export FEC
+								</Button>
+							</div>
 						</div>
 					</CardContent>
 				</Card>
 			</div>
 
-			<div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 text-center">
+			<div className="flex gap-4 mb-4 text-center w-full justify-content-center flex-direction-column">
 				<StatCard
 					value={`${totalPaid.toFixed(2)} €`}
 					label="Loyers perçus"
@@ -291,17 +458,18 @@ const Comptability = () => {
 				))}
 				{(activeTab === "journal" || activeTab === "tresorerie") && (
 					<div className="ml-auto flex items-center gap-2 pb-1">
-						<select
-							className="h-8 rounded-md border border-input bg-transparent px-2 text-sm"
-							value={filterYear}
-							onChange={(e) => setFilterYear(e.target.value)}
-						>
-							{yearOptions.map((y) => (
-								<option key={y} value={y}>
-									{y}
-								</option>
-							))}
-						</select>
+						<Select value={filterYear} onValueChange={setFilterYear}>
+							<SelectTrigger className="h-8 w-[100px] text-sm">
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								{yearOptions.map((y) => (
+									<SelectItem key={y} value={y}>
+										{y}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
 					</div>
 				)}
 			</div>

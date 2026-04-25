@@ -19,6 +19,13 @@ import {
 import { Pencil, Plus, Trash2, Wrench } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "src/components/ui/select";
 import { DateUtils } from "src/utils/date";
 import DeleteModal from "../../../components/DeleteModal";
 import EntityTableCard from "../../../components/EntityTableCard";
@@ -27,6 +34,7 @@ import {
 	FormSelectField,
 	FormTextareaField,
 } from "../../../components/FormFields";
+import StatCard from "../../../components/StatCard";
 import { StatusBadge } from "../../../components/StatusBadge";
 import TableEmptyRow from "../../../components/TableEmptyRow";
 import useIsAdmin from "../../../hooks/useIsAdmin";
@@ -86,8 +94,9 @@ const Maintenance = () => {
 	const [toDelete, setToDelete] = useState<any>(null);
 	const [form, setForm] = useState<Record<string, string>>(emptyForm);
 	const [submitError, setSubmitError] = useState("");
-	const [filterStatus, setFilterStatus] = useState("");
-	const [filterPriority, setFilterPriority] = useState("");
+	const [filterStatus, setFilterStatus] = useState<string | undefined>();
+	const [filterPriority, setFilterPriority] = useState<string | undefined>();
+	const [filterProperty, setFilterProperty] = useState<string | undefined>();
 	const isAdmin = useIsAdmin();
 
 	const fetchAll = async () => {
@@ -177,6 +186,8 @@ const Maintenance = () => {
 	const filtered = items.filter((i) => {
 		if (filterStatus && i.status !== filterStatus) return false;
 		if (filterPriority && i.priority !== filterPriority) return false;
+		if (filterProperty && String(i.property_id) !== filterProperty)
+			return false;
 		return true;
 	});
 
@@ -216,21 +227,14 @@ const Maintenance = () => {
 			</div>
 
 			{/* Header KPIs */}
-			<div className="grid grid-cols-3 gap-3 mb-4 text-center">
-				<Card className="p-4">
-					<div className="text-2xl font-bold text-rose-500">{totalOpen}</div>
-					<div className="text-sm text-muted-foreground">Ouverts</div>
-				</Card>
-				<Card className="p-4">
-					<div className="text-2xl font-bold text-amber-500">
-						{totalInProgress}
-					</div>
-					<div className="text-sm text-muted-foreground">En cours</div>
-				</Card>
-				<Card className="p-4">
-					<div className="text-2xl font-bold">{totalCost.toFixed(0)} €</div>
-					<div className="text-sm text-muted-foreground">Coût total réel</div>
-				</Card>
+			<div className="flex gap-4 mb-4 text-center w-full justify-content-center flex-direction-column">
+				<StatCard value={totalOpen} label="Ouverts" color="danger" />
+				<StatCard value={totalInProgress} label="En cours" color="warning" />
+				<StatCard
+					value={`${totalCost.toFixed(0)} €`}
+					label="Coût total réel"
+					color="info"
+				/>
 			</div>
 
 			<EntityTableCard
@@ -239,30 +243,60 @@ const Maintenance = () => {
 				onAdd={openCreate}
 				headerActions={
 					<>
-						<select
-							className="h-8 rounded-md border border-input bg-transparent px-2 text-sm"
-							value={filterStatus}
-							onChange={(e) => setFilterStatus(e.target.value)}
+						<Select
+							value={filterProperty ?? "__all__"}
+							onValueChange={(v) =>
+								setFilterProperty(v === "__all__" ? undefined : v)
+							}
 						>
-							<option value="">Tous les statuts</option>
-							{Object.entries(STATUS_LABELS).map(([v, l]) => (
-								<option key={v} value={v}>
-									{l}
-								</option>
-							))}
-						</select>
-						<select
-							className="h-8 rounded-md border border-input bg-transparent px-2 text-sm"
-							value={filterPriority}
-							onChange={(e) => setFilterPriority(e.target.value)}
+							<SelectTrigger className="h-8 w-[180px] text-sm">
+								<SelectValue placeholder="Tous les biens" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="__all__">Tous les biens</SelectItem>
+								{properties.map((p) => (
+									<SelectItem key={p.id} value={String(p.id)}>
+										{p.type} – {p.city}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+						<Select
+							value={filterStatus ?? "__all__"}
+							onValueChange={(v) =>
+								setFilterStatus(v === "__all__" ? undefined : v)
+							}
 						>
-							<option value="">Toutes les priorités</option>
-							{Object.entries(PRIORITY_LABELS).map(([v, l]) => (
-								<option key={v} value={v}>
-									{l}
-								</option>
-							))}
-						</select>
+							<SelectTrigger className="h-8 w-[160px] text-sm">
+								<SelectValue placeholder="Tous les statuts" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="__all__">Tous les statuts</SelectItem>
+								{Object.entries(STATUS_LABELS).map(([v, l]) => (
+									<SelectItem key={v} value={v}>
+										{l}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+						<Select
+							value={filterPriority ?? "__all__"}
+							onValueChange={(v) =>
+								setFilterPriority(v === "__all__" ? undefined : v)
+							}
+						>
+							<SelectTrigger className="h-8 w-[160px] text-sm">
+								<SelectValue placeholder="Toutes les priorités" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="__all__">Toutes les priorités</SelectItem>
+								{Object.entries(PRIORITY_LABELS).map(([v, l]) => (
+									<SelectItem key={v} value={v}>
+										{l}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
 					</>
 				}
 			>
