@@ -352,14 +352,15 @@ const Maintenance = () => {
 									{isAdmin && (
 										<TableCell className="text-right">
 											<Button
-												variant="ghost"
+												variant="secondary"
 												size="sm"
 												onClick={() => openEdit(item)}
 											>
 												<Pencil className="h-4 w-4" />
 											</Button>
 											<Button
-												variant="ghost"
+												variant="secondary"
+												className="text-red-500"
 												size="sm"
 												onClick={() => {
 													setToDelete(item);
