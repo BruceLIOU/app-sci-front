@@ -13,6 +13,9 @@ const loading = (
 );
 
 const DefaultLayout = React.lazy(() => import("./layout/DefaultLayout"));
+const TenantPortalLayout = React.lazy(
+	() => import("./views/tenant-portal/TenantPortalLayout"),
+);
 const Login = React.lazy(() => import("./views/pages/login/Login"));
 const Activate = React.lazy(() => import("./views/pages/activate/Activate"));
 const Page404 = React.lazy(() => import("./views/pages/page404/Page404"));
@@ -46,6 +49,14 @@ const AppInner: React.FC = () => {
 				<Route path="/activate" element={<Activate />} />
 				<Route path="/404" element={<Page404 />} />
 				<Route path="/500" element={<Page500 />} />
+				<Route
+					path="/tenant-portal/*"
+					element={
+						<AuthGuard>
+							<TenantPortalLayout />
+						</AuthGuard>
+					}
+				/>
 				<Route
 					path="*"
 					element={

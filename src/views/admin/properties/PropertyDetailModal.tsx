@@ -7,6 +7,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
@@ -195,63 +196,57 @@ const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
 
 							{activeTab === "detail" && (
 								<div>
-									<table className="w-full text-sm border">
-										<tbody>
-											<tr className="border-b">
-												<th className="px-3 py-2 text-left font-medium whitespace-nowrap">
+									<Table className="border">
+										<TableBody>
+											<TableRow>
+												<TableCell className="font-medium whitespace-nowrap">
 													Adresse
-												</th>
-												<td className="px-3 py-2">{property.address}</td>
-											</tr>
-											<tr className="border-b">
-												<th className="px-3 py-2 text-left font-medium">
+												</TableCell>
+												<TableCell>{property.address}</TableCell>
+											</TableRow>
+											<TableRow>
+												<TableCell className="font-medium">
 													Code postal
-												</th>
-												<td className="px-3 py-2">{property.zipcode}</td>
-											</tr>
-											<tr className="border-b">
-												<th className="px-3 py-2 text-left font-medium">
-													Ville
-												</th>
-												<td className="px-3 py-2">{property.city}</td>
-											</tr>
-											<tr className="border-b">
-												<th className="px-3 py-2 text-left font-medium">
-													Type
-												</th>
-												<td className="px-3 py-2">
+												</TableCell>
+												<TableCell>{property.zipcode}</TableCell>
+											</TableRow>
+											<TableRow>
+												<TableCell className="font-medium">Ville</TableCell>
+												<TableCell>{property.city}</TableCell>
+											</TableRow>
+											<TableRow>
+												<TableCell className="font-medium">Type</TableCell>
+												<TableCell>
 													<span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-teal-100 text-teal-700">
 														{property.type}
 													</span>
-												</td>
-											</tr>
-											<tr className="border-b">
-												<th className="px-3 py-2 text-left font-medium">
-													Pièces
-												</th>
-												<td className="px-3 py-2">{property.pieces}</td>
-											</tr>
-											<tr className="border-b">
-												<th className="px-3 py-2 text-left font-medium">
+												</TableCell>
+											</TableRow>
+											<TableRow>
+												<TableCell className="font-medium">Pièces</TableCell>
+												<TableCell>{property.pieces}</TableCell>
+											</TableRow>
+											<TableRow>
+												<TableCell className="font-medium">
 													Superficie
-												</th>
-												<td className="px-3 py-2">{property.area} m²</td>
-											</tr>
+												</TableCell>
+												<TableCell>{property.area} m²</TableCell>
+											</TableRow>
 											{hasCoords && (
-												<tr className="border-b">
-													<th className="px-3 py-2 text-left font-medium">
+												<TableRow>
+													<TableCell className="font-medium">
 														Coordonnées
-													</th>
-													<td className="px-3 py-2">
+													</TableCell>
+													<TableCell>
 														<small className="text-muted-foreground">
 															{Number(property.latitude).toFixed(5)},{" "}
 															{Number(property.longitude).toFixed(5)}
 														</small>
-													</td>
-												</tr>
+													</TableCell>
+												</TableRow>
 											)}
-										</tbody>
-									</table>
+										</TableBody>
+									</Table>
 									{property.rooms &&
 										(() => {
 											let rooms: any[] = [];

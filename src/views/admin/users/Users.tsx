@@ -9,13 +9,6 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import {
 	Table,
@@ -31,7 +24,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Mail, RefreshCw, Trash2, UserPlus } from "lucide-react";
+import { Mail, Pencil, Trash2, UserPlus } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import DeleteModal from "../../../components/DeleteModal";
@@ -41,6 +34,7 @@ import {
 } from "../../../components/FormFields";
 import StatCard from "../../../components/StatCard";
 import TableEmptyRow from "../../../components/TableEmptyRow";
+import TenantDataService from "../../../services/tenant.service";
 import UserDataService from "../../../services/user.service";
 
 interface AppUser {
@@ -48,15 +42,27 @@ interface AppUser {
 	email: string;
 	name: string | null;
 	avatar: string | null;
-	role: "admin" | "viewer";
+	role: "admin" | "viewer" | "locataire";
+	tenant_id: number | null;
 	status: "pending" | "active";
 	createdAt: string;
 }
 
-const roleLabel: Record<string, string> = { admin: "Admin", viewer: "Lecteur" };
+interface Tenant {
+	id: number;
+	firstname: string;
+	lastname: string;
+}
+
+const roleLabel: Record<string, string> = {
+	admin: "Admin",
+	viewer: "Lecteur",
+	locataire: "Locataire",
+};
 const roleColor: Record<string, string> = {
 	admin: "danger",
 	viewer: "secondary",
+	locataire: "primary",
 };
 const statusColor: Record<string, string> = {
 	active: "success",
@@ -69,21 +75,30 @@ const statusLabel: Record<string, string> = {
 
 const Users = () => {
 	const [users, setUsers] = useState<AppUser[]>([]);
+	const [tenants, setTenants] = useState<Tenant[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [inviteModal, setInviteModal] = useState(false);
 	const [inviteEmail, setInviteEmail] = useState("");
 	const [inviteName, setInviteName] = useState("");
 	const [inviteRole, setInviteRole] = useState("viewer");
+	const [inviteTenantId, setInviteTenantId] = useState("");
 	const [inviteLoading, setInviteLoading] = useState(false);
 	const [inviteError, setInviteError] = useState<string | null>(null);
 	const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [toDelete, setToDelete] = useState<AppUser | null>(null);
-	const [actionLoading, setActionLoading] = useState<number | null>(null);
 	const [globalMsg, setGlobalMsg] = useState<{
 		type: string;
 		text: string;
 	} | null>(null);
+	const [editModal, setEditModal] = useState(false);
+	const [editingUser, setEditingUser] = useState<AppUser | null>(null);
+	const [editName, setEditName] = useState("");
+	const [editRole, setEditRole] = useState("viewer");
+	const [editTenantId, setEditTenantId] = useState("");
+	const [editLoading, setEditLoading] = useState(false);
+	const [editError, setEditError] = useState<string | null>(null);
+	const [resendLoading, setResendLoading] = useState(false);
 
 	const fetchUsers = useCallback(() => {
 		setLoading(true);
@@ -95,6 +110,9 @@ const Users = () => {
 
 	useEffect(() => {
 		fetchUsers();
+		TenantDataService.getAll()
+			.then(({ data }) => setTenants(data))
+			.catch(() => {});
 	}, [fetchUsers]);
 
 	const handleInvite = async (e: React.FormEvent) => {
@@ -106,12 +124,15 @@ const Users = () => {
 		fd.append("email", inviteEmail);
 		fd.append("name", inviteName);
 		fd.append("role", inviteRole);
+		if (inviteRole === "locataire" && inviteTenantId)
+			fd.append("tenant_id", inviteTenantId);
 		try {
 			await UserDataService.invite(fd);
 			setInviteSuccess(`Invitation envoyée à ${inviteEmail}.`);
 			setInviteEmail("");
 			setInviteName("");
 			setInviteRole("viewer");
+			setInviteTenantId("");
 			fetchUsers();
 		} catch (err: any) {
 			setInviteError(err.response?.data?.message || "Erreur lors de l'envoi.");
@@ -120,8 +141,42 @@ const Users = () => {
 		}
 	};
 
+	const openEdit = (user: AppUser) => {
+		setEditingUser(user);
+		setEditName(user.name ?? "");
+		setEditRole(user.role);
+		setEditTenantId(user.tenant_id ? String(user.tenant_id) : "");
+		setEditError(null);
+		setEditModal(true);
+	};
+
+	const handleSaveEdit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!editingUser) return;
+		setEditLoading(true);
+		setEditError(null);
+		const fd = new FormData();
+		fd.append("name", editName);
+		fd.append("role", editRole);
+		if (editRole === "locataire" && editTenantId)
+			fd.append("tenant_id", editTenantId);
+		try {
+			const { data } = await UserDataService.update(editingUser.id, fd);
+			setUsers((prev) =>
+				prev.map((u) => (u.id === editingUser.id ? { ...u, ...data } : u)),
+			);
+			setEditModal(false);
+		} catch (err: any) {
+			setEditError(
+				err.response?.data?.message || "Erreur lors de la mise à jour.",
+			);
+		} finally {
+			setEditLoading(false);
+		}
+	};
+
 	const handleResend = async (user: AppUser) => {
-		setActionLoading(user.id);
+		setResendLoading(true);
 		try {
 			await UserDataService.resendInvite(user.id);
 			setGlobalMsg({
@@ -129,33 +184,13 @@ const Users = () => {
 				text: `Invitation renvoyée à ${user.email}.`,
 			});
 		} catch (err: any) {
+			const messageError = err.response?.data?.message;
 			setGlobalMsg({
 				type: "danger",
-				text: err.response?.data?.message || "Erreur.",
+				text: `${messageError || "Erreur lors du renvoi de l'invitation."}`,
 			});
 		} finally {
-			setActionLoading(null);
-		}
-	};
-
-	const handleRoleChange = async (user: AppUser, newRole: string) => {
-		const fd = new FormData();
-		fd.append("role", newRole);
-		setActionLoading(user.id);
-		try {
-			await UserDataService.updateRole(user.id, fd);
-			setUsers((prev) =>
-				prev.map((u) =>
-					u.id === user.id ? { ...u, role: newRole as "admin" | "viewer" } : u,
-				),
-			);
-		} catch (err: any) {
-			setGlobalMsg({
-				type: "danger",
-				text: err.response?.data?.message || "Erreur.",
-			});
-		} finally {
-			setActionLoading(null);
+			setResendLoading(false);
 		}
 	};
 
@@ -309,19 +344,9 @@ const Users = () => {
 													</Badge>
 												</TableCell>
 												<TableCell>
-													<Select
-														value={user.role}
-														onValueChange={(val) => handleRoleChange(user, val)}
-														disabled={actionLoading === user.id}
-													>
-														<SelectTrigger className="w-28 h-8 text-sm">
-															<SelectValue />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value="viewer">Lecteur</SelectItem>
-															<SelectItem value="admin">Admin</SelectItem>
-														</SelectContent>
-													</Select>
+													<Badge variant="outline">
+														{roleLabel[user.role]}
+													</Badge>
 												</TableCell>
 												<TableCell>
 													{new Date(user.createdAt).toLocaleDateString("fr-FR")}
@@ -335,14 +360,10 @@ const Users = () => {
 																		<Button
 																			variant="outline"
 																			size="sm"
+																			disabled={resendLoading}
 																			onClick={() => handleResend(user)}
-																			disabled={actionLoading === user.id}
 																		>
-																			{actionLoading === user.id ? (
-																				<Spinner size="sm" />
-																			) : (
-																				<Mail className="h-4 w-4" />
-																			)}
+																			<Mail className="h-4 w-4" />
 																		</Button>
 																	</TooltipTrigger>
 																	<TooltipContent>
@@ -350,6 +371,18 @@ const Users = () => {
 																	</TooltipContent>
 																</Tooltip>
 															)}
+															<Tooltip>
+																<TooltipTrigger asChild>
+																	<Button
+																		variant="outline"
+																		size="sm"
+																		onClick={() => openEdit(user)}
+																	>
+																		<Pencil className="h-4 w-4" />
+																	</Button>
+																</TooltipTrigger>
+																<TooltipContent>Modifier</TooltipContent>
+															</Tooltip>
 															<Tooltip>
 																<TooltipTrigger asChild>
 																	<Button
@@ -427,15 +460,39 @@ const Users = () => {
 								<FormSelectField
 									label="Rôle"
 									value={inviteRole}
-									onChange={(e) => setInviteRole(e.target.value)}
+									onChange={(e) => {
+										setInviteRole(e.target.value);
+										setInviteTenantId("");
+									}}
 									disabled={inviteLoading}
 								>
 									<option value="viewer">
 										Lecteur — consultation uniquement
 									</option>
 									<option value="admin">Administrateur — accès complet</option>
+									<option value="locataire">
+										Locataire — accès portail locataire
+									</option>
 								</FormSelectField>
 							</div>
+							{inviteRole === "locataire" && (
+								<div>
+									<FormSelectField
+										label="Locataire associé"
+										required
+										value={inviteTenantId}
+										onChange={(e) => setInviteTenantId(e.target.value)}
+										disabled={inviteLoading}
+									>
+										<option value="">— Sélectionner un locataire —</option>
+										{tenants.map((t) => (
+											<option key={t.id} value={String(t.id)}>
+												{t.firstname} {t.lastname}
+											</option>
+										))}
+									</FormSelectField>
+								</div>
+							)}
 							<p className="text-muted-foreground text-sm mb-0">
 								Un email contenant un lien d&apos;activation (valable 24h) sera
 								envoyé à cette adresse.
@@ -453,6 +510,100 @@ const Users = () => {
 							<Button type="submit" disabled={inviteLoading}>
 								{inviteLoading ? <Spinner size="sm" className="mr-2" /> : null}
 								Envoyer l&apos;invitation
+							</Button>
+						</DialogFooter>
+					</form>
+				</DialogContent>
+			</Dialog>
+
+			{/* Modal édition */}
+			<Dialog
+				open={editModal}
+				onOpenChange={(open) => !open && setEditModal(false)}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Modifier l&apos;utilisateur</DialogTitle>
+					</DialogHeader>
+					<form onSubmit={handleSaveEdit}>
+						<div className="space-y-3 py-2">
+							{editError && (
+								<AppAlert
+									color="danger"
+									dismissible
+									onClose={() => setEditError(null)}
+								>
+									{editError}
+								</AppAlert>
+							)}
+							<div>
+								<FormInputField
+									label="Email"
+									type="email"
+									value={editingUser?.email ?? ""}
+									disabled
+								/>
+							</div>
+							<div>
+								<FormInputField
+									label="Nom"
+									type="text"
+									value={editName}
+									onChange={(e) => setEditName(e.target.value)}
+									placeholder="Prénom Nom"
+									disabled={editLoading}
+								/>
+							</div>
+							<div>
+								<FormSelectField
+									label="Rôle"
+									value={editRole}
+									onChange={(e) => {
+										setEditRole(e.target.value);
+										setEditTenantId("");
+									}}
+									disabled={editLoading}
+								>
+									<option value="viewer">
+										Lecteur — consultation uniquement
+									</option>
+									<option value="admin">Administrateur — accès complet</option>
+									<option value="locataire">
+										Locataire — accès portail locataire
+									</option>
+								</FormSelectField>
+							</div>
+							{editRole === "locataire" && (
+								<div>
+									<FormSelectField
+										label="Locataire associé"
+										required
+										value={editTenantId}
+										onChange={(e) => setEditTenantId(e.target.value)}
+										disabled={editLoading}
+									>
+										<option value="">— Sélectionner un locataire —</option>
+										{tenants.map((t) => (
+											<option key={t.id} value={String(t.id)}>
+												{t.firstname} {t.lastname}
+											</option>
+										))}
+									</FormSelectField>
+								</div>
+							)}
+						</div>
+						<DialogFooter className="pt-2">
+							<Button
+								type="button"
+								variant="outline"
+								onClick={() => setEditModal(false)}
+								disabled={editLoading}
+							>
+								Annuler
+							</Button>
+							<Button type="submit" disabled={editLoading}>
+								{editLoading ? <Spinner size="sm" className="mr-2" /> : null}
+								Enregistrer
 							</Button>
 						</DialogFooter>
 					</form>

@@ -103,17 +103,24 @@ export class DateUtils {
 	 */
 	static formatMonthYear(date: Date | string): string {
 		try {
-			// Cas 1: date simple (YYYY-MM)
 			if (typeof date === "string" && /^\d{4}-\d{2}$/.test(date)) {
 				const [year, month] = date.split("-").map(Number);
-				return `${month.toString().padStart(2, "0")}/${year}`;
+				const str = new Intl.DateTimeFormat(DateUtils.DEFAULT_LOCALE, {
+					year: "numeric",
+					month: "long",
+				}).format(new Date(year, month - 1, 1));
+				return str.charAt(0).toUpperCase() + str.slice(1);
 			}
 
 			// Cas 2: date avec heure
 			const z = DateUtils.toInstant(date).toZonedDateTimeISO(
 				DateUtils.DEFAULT_TIMEZONE,
 			);
-			return `${z.month.toString().padStart(2, "0")}/${z.year}`;
+			const str = new Intl.DateTimeFormat(DateUtils.DEFAULT_LOCALE, {
+				year: "numeric",
+				month: "long",
+			}).format(new Date(z.year, z.month - 1, 1));
+			return str.charAt(0).toUpperCase() + str.slice(1);
 		} catch {
 			return "Date invalide";
 		}

@@ -89,37 +89,37 @@ const Login = () => {
 				<div className="flex justify-center items-center">
 					<Card className="app-login-panel p-4 w-full max-w-2xl">
 						<CardContent className="pt-0">
-							<div className="flex gap-8 flex-wrap items-center">
-								<div className="app-login-showcase flex-1 min-w-55">
+							<div className="flex gap-8 flex-wrap items-center justify-center">
+								<div className="app-login-showcase flex-1 min-w-55 p-4">
 									<div className="app-page-kicker mb-3">
-										Gestion locative nouvelle generation
+										Gestion locative nouvelle génération
 									</div>
 									<h1 className="app-login-showcase-title mb-3">
 										Un espace de pilotage plus clair pour vos biens, vos flux et
-										vos equipes.
+										vos équipes.
 									</h1>
 									<p className="app-login-note mb-4">
 										Centralisez les biens, locataires, baux, paiements et
 										documents dans une interface plus contemporaine, plus
-										lisible et orientee action.
+										lisible et orientée action.
 									</p>
 									<div className="app-kpi-inline">
 										<div className="app-kpi-inline-item">
 											<div className="app-kpi-inline-value">1</div>
 											<div className="app-kpi-inline-label">
-												entree unique pour toute l'activite
+												application pour toute l'activité
 											</div>
 										</div>
 										<div className="app-kpi-inline-item">
 											<div className="app-kpi-inline-value">24/7</div>
 											<div className="app-kpi-inline-label">
-												acces a vos donnees et alertes
+												accès à vos données et alertes
 											</div>
 										</div>
 										<div className="app-kpi-inline-item">
 											<div className="app-kpi-inline-value">6</div>
 											<div className="app-kpi-inline-label">
-												caracteres a saisir pour se connecter
+												caractères à saisir pour se connecter
 											</div>
 										</div>
 									</div>
@@ -128,7 +128,7 @@ const Login = () => {
 								<div className="w-full max-w-sm text-center shrink-0">
 									<div className="mb-4">
 										<h2 className="font-bold text-xl mb-1">
-											Connexion securisee
+											Connexion sécurisée
 										</h2>
 										<p className="text-muted-foreground text-sm mb-0">
 											Recevez un code de connexion temporaire par email

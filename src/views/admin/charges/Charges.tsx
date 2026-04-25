@@ -2,6 +2,15 @@ import { AppAlert } from "@/components/ui/app-alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableFooter,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
 import { RefreshCw } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { DateUtils } from "src/utils/date";
@@ -336,108 +345,83 @@ const Charges = () => {
 					filteredCount={filtered.length}
 					itemLabel="charge"
 				/>
-				<div className="overflow-x-auto">
-					<table className="w-full text-sm">
-						<thead>
-							<tr className="border-b bg-muted/50">
-								<th
-									className="px-4 py-3 text-left font-medium text-muted-foreground"
-									style={{ width: "40px" }}
-								>
-									<input
-										type="checkbox"
-										className="rounded border-input"
-										checked={isAllSelected}
-										onChange={toggleSelectAll}
-									/>
-								</th>
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Type
-								</th>
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Description
-								</th>
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Bien
-								</th>
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Montant
-								</th>
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Fréquence
-								</th>
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Date
-								</th>
-								<th className="px-4 py-3 text-right font-medium text-muted-foreground">
-									Actions
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							{filtered.length === 0 ? (
-								<TableEmptyRow
-									colSpan={8}
-									message="Aucune charge enregistrée"
+				<Table>
+					<TableHeader>
+						<TableRow>
+							<TableHead style={{ width: "40px" }}>
+								<input
+									type="checkbox"
+									className="rounded border-input"
+									checked={isAllSelected}
+									onChange={toggleSelectAll}
 								/>
-							) : (
-								filtered.map((c) => (
-									<tr
-										key={c.id}
-										className="border-b hover:bg-muted/30 transition-colors"
-									>
-										<td className="px-4 py-3">
-											<input
-												type="checkbox"
-												className="rounded border-input"
-												checked={selectedIds.has(c.id)}
-												onChange={() => toggleSelect(c.id)}
-											/>
-										</td>
-										<td className="px-4 py-3">
-											<StatusBadge value={c.type} />
-										</td>
-										<td className="px-4 py-3">{c.description || "-"}</td>
-										<td className="px-4 py-3">
-											{c.Property
-												? `${c.Property.type} - ${c.Property.city}`
-												: "Général"}
-										</td>
-										<td className="px-4 py-3">
-											{Number.parseFloat(c.amount || 0).toFixed(2)} €
-											{c.tva_rate && (
-												<span className="text-xs text-muted-foreground ml-1">
-													(+{c.tva_rate}% TVA)
-												</span>
-											)}
-										</td>
-										<td className="px-4 py-3">
-											{freqLabel[c.frequency] || c.frequency}
-										</td>
-										<td className="px-4 py-3">
-											{DateUtils.formatShort(c.date) || "-"}
-										</td>
-										<td className="px-4 py-3 text-right">
-											<ActionButtons
-												onEdit={() => openEdit(c)}
-												onDelete={() => openDelete(c)}
-											/>
-										</td>
-									</tr>
-								))
-							)}
-							{filtered.length > 0 && (
-								<tr className="font-bold border-b">
-									<td colSpan={4} className="px-4 py-3 text-right">
-										Total affiché :
-									</td>
-									<td className="px-4 py-3">{total.toFixed(2)} €</td>
-									<td colSpan={3} />
-								</tr>
-							)}
-						</tbody>
-					</table>
-				</div>
+							</TableHead>
+							<TableHead>Type</TableHead>
+							<TableHead>Description</TableHead>
+							<TableHead>Bien</TableHead>
+							<TableHead>Montant</TableHead>
+							<TableHead>Fréquence</TableHead>
+							<TableHead>Date</TableHead>
+							<TableHead className="text-right">Actions</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{filtered.length === 0 ? (
+							<TableEmptyRow colSpan={8} message="Aucune charge enregistrée" />
+						) : (
+							filtered.map((c) => (
+								<TableRow key={c.id}>
+									<TableCell>
+										<input
+											type="checkbox"
+											className="rounded border-input"
+											checked={selectedIds.has(c.id)}
+											onChange={() => toggleSelect(c.id)}
+										/>
+									</TableCell>
+									<TableCell>
+										<StatusBadge value={c.type} />
+									</TableCell>
+									<TableCell>{c.description || "-"}</TableCell>
+									<TableCell>
+										{c.Property
+											? `${c.Property.type} - ${c.Property.city}`
+											: "Général"}
+									</TableCell>
+									<TableCell>
+										{Number.parseFloat(c.amount || 0).toFixed(2)} €
+										{c.tva_rate && (
+											<span className="text-xs text-muted-foreground ml-1">
+												(+{c.tva_rate}% TVA)
+											</span>
+										)}
+									</TableCell>
+									<TableCell>{freqLabel[c.frequency] || c.frequency}</TableCell>
+									<TableCell>{DateUtils.formatShort(c.date) || "-"}</TableCell>
+									<TableCell className="text-right">
+										<ActionButtons
+											onEdit={() => openEdit(c)}
+											onDelete={() => openDelete(c)}
+										/>
+									</TableCell>
+								</TableRow>
+							))
+						)}
+					</TableBody>
+					{filtered.length > 0 && (
+						<TableFooter>
+							<TableRow>
+								<TableCell colSpan={4} className="text-right font-bold">
+									Total affiché :
+								</TableCell>
+								<TableCell className="font-bold">
+									{total.toFixed(2)} €
+								</TableCell>
+								<TableCell colSpan={3} />
+							</TableRow>
+						</TableFooter>
+					)}
+				</Table>
 			</EntityTableCard>
 
 			<CrudModal

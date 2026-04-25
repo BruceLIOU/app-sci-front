@@ -51,7 +51,9 @@ export const chargeFormSchema = z.object({
 });
 
 export const paymentFormSchema = z.object({
-	month: z.string().min(1, "Le mois est requis."),
+	month: z
+		.string()
+		.regex(/^\d{4}-\d{2}$/, "Le mois doit être au format YYYY-MM."),
 	amount: z
 		.string()
 		.min(1, "Le montant est requis.")

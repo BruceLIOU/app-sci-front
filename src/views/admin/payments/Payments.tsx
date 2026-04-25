@@ -1,6 +1,14 @@
 import { AppAlert } from "@/components/ui/app-alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
 import React, { useState, useEffect, useMemo } from "react";
 import { DateUtils } from "src/utils/date";
 import ActionButtons from "../../../components/ActionButtons";
@@ -264,98 +272,73 @@ const Payments = () => {
 					filteredCount={filteredPayments.length}
 					itemLabel="paiement"
 				/>
-				<div className="overflow-x-auto">
-					<table className="w-full text-sm">
-						<thead>
-							<tr className="border-b bg-muted/50">
-								<th
-									className="px-4 py-3 text-left font-medium text-muted-foreground"
-									style={{ width: "40px" }}
-								>
-									<input
-										type="checkbox"
-										className="rounded border-input"
-										checked={isAllSelected}
-										onChange={toggleSelectAll}
-									/>
-								</th>
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Mois
-								</th>
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Locataire
-								</th>
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Bien
-								</th>
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Montant
-								</th>
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Échéance
-								</th>
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Statut
-								</th>
-								<th className="px-4 py-3 text-right font-medium text-muted-foreground">
-									Actions
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							{filteredPayments.length === 0 ? (
-								<TableEmptyRow
-									colSpan={8}
-									message="Aucun paiement enregistré"
+				<Table>
+					<TableHeader>
+						<TableRow>
+							<TableHead style={{ width: "40px" }}>
+								<input
+									type="checkbox"
+									className="rounded border-input"
+									checked={isAllSelected}
+									onChange={toggleSelectAll}
 								/>
-							) : (
-								filteredPayments.map((payment) => (
-									<tr
-										key={payment.id}
-										className="border-b hover:bg-muted/30 transition-colors"
-									>
-										<td className="px-4 py-3">
-											<input
-												type="checkbox"
-												className="rounded border-input"
-												checked={selectedIds.has(payment.id)}
-												onChange={() => toggleSelect(payment.id)}
-											/>
-										</td>
-										<td className="px-4 py-3">
-											{DateUtils.formatMonthYear(payment.month) || "-"}
-										</td>
-										<td className="px-4 py-3">
-											{payment.Tenant
-												? `${payment.Tenant.civility || ""} ${payment.Tenant.firstname} ${payment.Tenant.lastname}`
-												: "-"}
-										</td>
-										<td className="px-4 py-3">
-											{payment.Property
-												? `${payment.Property.type} - ${payment.Property.city}`
-												: "-"}
-										</td>
-										<td className="px-4 py-3">
-											{Number.parseFloat(payment.amount || 0).toFixed(2)} €
-										</td>
-										<td className="px-4 py-3">
-											{DateUtils.formatShort(payment.due_date) || "-"}
-										</td>
-										<td className="px-4 py-3">
-											<StatusBadge value={payment.status} />
-										</td>
-										<td className="px-4 py-3 text-right">
-											<ActionButtons
-												onEdit={() => openEdit(payment)}
-												onDelete={() => openDelete(payment)}
-											/>
-										</td>
-									</tr>
-								))
-							)}
-						</tbody>
-					</table>
-				</div>
+							</TableHead>
+							<TableHead>Mois</TableHead>
+							<TableHead>Locataire</TableHead>
+							<TableHead>Bien</TableHead>
+							<TableHead>Montant</TableHead>
+							<TableHead>Échéance</TableHead>
+							<TableHead>Statut</TableHead>
+							<TableHead className="text-right">Actions</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{filteredPayments.length === 0 ? (
+							<TableEmptyRow colSpan={8} message="Aucun paiement enregistré" />
+						) : (
+							filteredPayments.map((payment) => (
+								<TableRow key={payment.id}>
+									<TableCell>
+										<input
+											type="checkbox"
+											className="rounded border-input"
+											checked={selectedIds.has(payment.id)}
+											onChange={() => toggleSelect(payment.id)}
+										/>
+									</TableCell>
+									<TableCell>
+										{DateUtils.formatMonthYear(payment.month) || "-"}
+									</TableCell>
+									<TableCell>
+										{payment.Tenant
+											? `${payment.Tenant.civility || ""} ${payment.Tenant.firstname} ${payment.Tenant.lastname}`
+											: "-"}
+									</TableCell>
+									<TableCell>
+										{payment.Property
+											? `${payment.Property.type} - ${payment.Property.city}`
+											: "-"}
+									</TableCell>
+									<TableCell>
+										{Number.parseFloat(payment.amount || 0).toFixed(2)} €
+									</TableCell>
+									<TableCell>
+										{DateUtils.formatShort(payment.due_date) || "-"}
+									</TableCell>
+									<TableCell>
+										<StatusBadge value={payment.status} />
+									</TableCell>
+									<TableCell className="text-right">
+										<ActionButtons
+											onEdit={() => openEdit(payment)}
+											onDelete={() => openDelete(payment)}
+										/>
+									</TableCell>
+								</TableRow>
+							))
+						)}
+					</TableBody>
+				</Table>
 			</EntityTableCard>
 
 			<CrudModal
@@ -400,9 +383,9 @@ const Payments = () => {
 				</div>
 				<div className="col-span-4">
 					<FormInputField
-						type="text"
+						type="month"
 						name="month"
-						label="Mois (ex: Janvier 2024)"
+						label="Mois"
 						value={formData.month}
 						onChange={handleChange}
 						required

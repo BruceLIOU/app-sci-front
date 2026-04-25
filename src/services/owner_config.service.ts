@@ -43,6 +43,7 @@ export interface OwnerConfigData {
 	// Alert thresholds
 	payment_reminder_days?: string;
 	lease_expiry_alert_days?: string;
+	payment_reminder_enabled?: boolean;
 }
 
 export interface SiretLookupData {

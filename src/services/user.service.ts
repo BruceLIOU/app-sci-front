@@ -7,6 +7,9 @@ class UserDataService {
 	invite(data: FormData) {
 		return http.post("/users", data);
 	}
+	update(id: number, data: FormData) {
+		return http.patch(`/users/${id}`, data);
+	}
 	resendInvite(id: number) {
 		return http.post(`/users/${id}/resend`);
 	}

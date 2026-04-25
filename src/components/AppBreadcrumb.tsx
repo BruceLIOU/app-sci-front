@@ -43,18 +43,13 @@ const AppBreadcrumb = () => {
 					<React.Fragment key={breadcrumb.pathname}>
 						<li className="select-none">/</li>
 						<li>
-							{breadcrumb.active ? (
-								<span className="text-foreground font-medium">
-									{breadcrumb.name}
-								</span>
-							) : (
-								<Link
-									to={breadcrumb.pathname}
-									className="hover:text-foreground transition-colors"
-								>
-									{breadcrumb.name}
-								</Link>
-							)}
+							<span
+								className={
+									breadcrumb.active ? "text-foreground font-medium" : ""
+								}
+							>
+								{breadcrumb.name}
+							</span>
 						</li>
 					</React.Fragment>
 				))}

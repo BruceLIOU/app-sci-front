@@ -8,6 +8,14 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
 import { Download, ExternalLink, FileText, Info, Send } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
@@ -226,111 +234,86 @@ const Inspections = () => {
 				addLabel="Nouveau"
 				onAdd={openCreate}
 			>
-				<div className="overflow-x-auto">
-					<table className="w-full text-sm">
-						<thead>
-							<tr className="border-b bg-muted/50">
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Type
-								</th>
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Bien
-								</th>
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Locataire
-								</th>
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Date
-								</th>
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Pièces vérifiées
-								</th>
-								<th className="px-4 py-3 text-left font-medium text-muted-foreground">
-									Statut
-								</th>
-								<th className="px-4 py-3 text-right font-medium text-muted-foreground">
-									Actions
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							{inspections.length === 0 ? (
-								<TableEmptyRow colSpan={7} message="Aucun état des lieux" />
-							) : (
-								inspections.map((i) => {
-									let roomCount = 0;
-									try {
-										roomCount = i.rooms ? JSON.parse(i.rooms).length : 0;
-									} catch {
-										roomCount = 0;
-									}
-									return (
-										<tr
-											key={i.id}
-											className="border-b hover:bg-muted/30 transition-colors"
-										>
-											<td className="px-4 py-3">
-												<StatusBadge value={i.type} />
-											</td>
-											<td className="px-4 py-3">
-												{i.Property
-													? `${i.Property.type} - ${i.Property.city}`
-													: "-"}
-											</td>
-											<td className="px-4 py-3">
-												{i.Tenant
-													? `${i.Tenant.civility || ""} ${i.Tenant.lastname}`
-													: "-"}
-											</td>
-											<td className="px-4 py-3">
-												{DateUtils.formatShort(i.date)}
-											</td>
-											<td className="px-4 py-3">
-												{roomCount} pièce{roomCount > 1 ? "s" : ""}
-											</td>
-											<td className="px-4 py-3">
-												<StatusBadge value={i.status} />
-											</td>
-											<td className="px-4 py-3 text-right">
-												<ActionButtons
-													onEdit={() => openEdit(i)}
-													onDelete={() => openDelete(i)}
-												>
-													{inspectionDocs[i.id] ? (
-														<a
-															href={DocumentDataService.downloadUrl(
-																inspectionDocs[i.id].id,
-															)}
-															target="_blank"
-															rel="noopener noreferrer"
-														>
-															<Button
-																variant="ghost"
-																size="sm"
-																className="mr-1"
-															>
-																<Download className="h-4 w-4" />
-															</Button>
-														</a>
-													) : (
-														<Button
-															variant="ghost"
-															size="sm"
-															className="mr-1"
-															onClick={() => openView(i)}
-														>
-															<Info className="h-4 w-4" />
+				<Table>
+					<TableHeader>
+						<TableRow>
+							<TableHead>Type</TableHead>
+							<TableHead>Bien</TableHead>
+							<TableHead>Locataire</TableHead>
+							<TableHead>Date</TableHead>
+							<TableHead>Pièces vérifiées</TableHead>
+							<TableHead>Statut</TableHead>
+							<TableHead className="text-right">Actions</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{inspections.length === 0 ? (
+							<TableEmptyRow colSpan={7} message="Aucun état des lieux" />
+						) : (
+							inspections.map((i) => {
+								let roomCount = 0;
+								try {
+									roomCount = i.rooms ? JSON.parse(i.rooms).length : 0;
+								} catch {
+									roomCount = 0;
+								}
+								return (
+									<TableRow key={i.id}>
+										<TableCell>
+											<StatusBadge value={i.type} />
+										</TableCell>
+										<TableCell>
+											{i.Property
+												? `${i.Property.type} - ${i.Property.city}`
+												: "-"}
+										</TableCell>
+										<TableCell>
+											{i.Tenant
+												? `${i.Tenant.civility || ""} ${i.Tenant.lastname}`
+												: "-"}
+										</TableCell>
+										<TableCell>{DateUtils.formatShort(i.date)}</TableCell>
+										<TableCell>
+											{roomCount} pièce{roomCount > 1 ? "s" : ""}
+										</TableCell>
+										<TableCell>
+											<StatusBadge value={i.status} />
+										</TableCell>
+										<TableCell className="text-right">
+											<ActionButtons
+												onEdit={() => openEdit(i)}
+												onDelete={() => openDelete(i)}
+											>
+												{inspectionDocs[i.id] ? (
+													<a
+														href={DocumentDataService.downloadUrl(
+															inspectionDocs[i.id].id,
+														)}
+														target="_blank"
+														rel="noopener noreferrer"
+													>
+														<Button variant="ghost" size="sm" className="mr-1">
+															<Download className="h-4 w-4" />
 														</Button>
-													)}
-												</ActionButtons>
-											</td>
-										</tr>
-									);
-								})
-							)}
-						</tbody>
-					</table>
-				</div>
+													</a>
+												) : (
+													<Button
+														variant="ghost"
+														size="sm"
+														className="mr-1"
+														onClick={() => openView(i)}
+													>
+														<Info className="h-4 w-4" />
+													</Button>
+												)}
+											</ActionButtons>
+										</TableCell>
+									</TableRow>
+								);
+							})
+						)}
+					</TableBody>
+				</Table>
 			</EntityTableCard>
 
 			<CrudModal
@@ -473,27 +456,27 @@ const Inspections = () => {
 							{viewing._rooms && viewing._rooms.length > 0 && (
 								<>
 									<strong>Pièces</strong>
-									<div className="overflow-x-auto mt-2">
-										<table className="w-full text-sm border">
-											<thead>
-												<tr className="border-b bg-muted/50">
-													<th className="px-3 py-2 text-left">Pièce</th>
-													<th className="px-3 py-2 text-left">État</th>
-													<th className="px-3 py-2 text-left">Observations</th>
-												</tr>
-											</thead>
-											<tbody>
+									<div className="mt-2">
+										<Table className="border">
+											<TableHeader>
+												<TableRow>
+													<TableHead>Pièce</TableHead>
+													<TableHead>État</TableHead>
+													<TableHead>Observations</TableHead>
+												</TableRow>
+											</TableHeader>
+											<TableBody>
 												{viewing._rooms.map((r: any, idx: number) => (
-													<tr key={idx} className="border-b">
-														<td className="px-3 py-2">{r.name}</td>
-														<td className="px-3 py-2">
+													<TableRow key={idx}>
+														<TableCell>{r.name}</TableCell>
+														<TableCell>
 															<StatusBadge value={r.condition} isCondition />
-														</td>
-														<td className="px-3 py-2">{r.notes || "-"}</td>
-													</tr>
+														</TableCell>
+														<TableCell>{r.notes || "-"}</TableCell>
+													</TableRow>
 												))}
-											</tbody>
-										</table>
+											</TableBody>
+										</Table>
 									</div>
 								</>
 							)}

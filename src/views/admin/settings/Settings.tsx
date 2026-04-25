@@ -1229,6 +1229,24 @@ const Settings: React.FC = () => {
 							<div className="space-y-6">
 								<div>
 									<h3 className="font-semibold mb-1">Rappels impayés</h3>
+									<div className="mb-3">
+										<label className="flex items-center gap-2 text-sm cursor-pointer">
+											<input
+												type="checkbox"
+												name="payment_reminder_enabled"
+												checked={config.payment_reminder_enabled !== false}
+												onChange={(e) => {
+													setSaved(false);
+													setConfig((prev) => ({
+														...prev,
+														payment_reminder_enabled: e.target.checked,
+													}));
+												}}
+												className="h-4 w-4 rounded border-input"
+											/>
+											Activer les relances automatiques par email
+										</label>
+									</div>
 									<p className="text-sm text-muted-foreground mb-3">
 										Jours après l'échéance auxquels envoyer un rappel (séparés
 										par des virgules). Ex : 5,15,30
@@ -1239,7 +1257,8 @@ const Settings: React.FC = () => {
 										value={config.payment_reminder_days ?? "5,15,30"}
 										onChange={handleChange}
 										placeholder="5,15,30"
-										className="flex h-9 w-full max-w-xs rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+										disabled={config.payment_reminder_enabled === false}
+										className="flex h-9 w-full max-w-xs rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm disabled:opacity-50"
 									/>
 								</div>
 								<div>

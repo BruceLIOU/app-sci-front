@@ -35,7 +35,8 @@ export interface AuthUser {
 	email: string;
 	name: string;
 	avatar: string | null;
-	role: "admin" | "viewer";
+	role: "admin" | "viewer" | "locataire";
+	tenant_id?: number | null;
 	preferences: UserPreferences;
 }
 
