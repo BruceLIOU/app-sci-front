@@ -34,6 +34,7 @@ import {
 	TrendingDown,
 	TrendingUp,
 	User,
+	Wrench,
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { Bar, Doughnut } from "react-chartjs-2";
@@ -43,6 +44,7 @@ import { DateUtils } from "src/utils/date";
 import AuthService from "../../services/auth.service";
 import ChargeDataService from "../../services/charge.service";
 import LeaseDataService from "../../services/lease.service";
+import MaintenanceDataService from "../../services/maintenance.service";
 import OwnerConfigDataService, {
 	type OwnerConfigData,
 } from "../../services/owner_config.service";
@@ -164,6 +166,8 @@ const Dashboard = () => {
 	const [charges, setCharges] = useState<any[]>([]);
 	// biome-ignore lint/suspicious/noExplicitAny: données API sans modèle TypeScript partagé
 	const [visits, setVisits] = useState<any[]>([]);
+	// biome-ignore lint/suspicious/noExplicitAny: données API sans modèle TypeScript partagé
+	const [maintenances, setMaintenances] = useState<any[]>([]);
 	const [ownerConfig, setOwnerConfig] = useState<OwnerConfigData>({
 		owner_profile_type: "INDIVIDUAL",
 	});
@@ -188,8 +192,9 @@ const Dashboard = () => {
 			VisitDataService.getAll(),
 			OwnerConfigDataService.get(),
 			VisitDataService.getGoogleStatus(),
+			MaintenanceDataService.getAll(),
 		])
-			.then(([p, t, l, pay, chg, vis, ownerRes, googleRes]) => {
+			.then(([p, t, l, pay, chg, vis, ownerRes, googleRes, maint]) => {
 				setProperties(p.data);
 				// biome-ignore lint/suspicious/noExplicitAny: données API non typées
 				setTenants(t.data.filter((x: any) => x.is_active !== false));
@@ -199,6 +204,7 @@ const Dashboard = () => {
 				setVisits(vis.data);
 				setOwnerConfig({ owner_profile_type: "INDIVIDUAL", ...ownerRes.data });
 				setGoogleConnected(Boolean(googleRes.data?.connected));
+				setMaintenances(maint.data);
 			})
 			.catch(console.error)
 			.finally(() => setLoading(false));
@@ -317,6 +323,9 @@ const Dashboard = () => {
 		(c) => isAll || toChargeYear(c) === selectedYear,
 	);
 	const activeLeases = leases.filter((l) => l.status === "active");
+	const openMaintenances = maintenances.filter(
+		(m) => m.status === "open" || m.status === "in_progress",
+	);
 	const upcomingVisits = visits.filter((v) => {
 		if (v.status && v.status !== "scheduled") return false;
 		if (!isAll && (v.date || "").slice(0, 4) !== selectedYear) return false;
@@ -628,6 +637,14 @@ const Dashboard = () => {
 						icon: Calendar,
 						color: "#f59e0b",
 						path: "/admin/visits",
+					},
+					{
+						label: "Signalements",
+						value: openMaintenances.length,
+						sub: "En cours",
+						icon: Wrench,
+						color: "#f43f5e",
+						path: "/admin/maintenance",
 					},
 				].map(({ label, value, sub, icon: Icon, color, path }) => (
 					<button
