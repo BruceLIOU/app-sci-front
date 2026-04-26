@@ -354,7 +354,7 @@ const Documents = () => {
 										<TableHead>Document</TableHead>
 										<TableHead>Catégorie</TableHead>
 										<TableHead>Entité</TableHead>
-										<TableHead>Fichier</TableHead>
+										{/* <TableHead>Fichier</TableHead> */}
 										<TableHead>Taille</TableHead>
 										<TableHead>Date</TableHead>
 										<TableHead className="text-right">Actions</TableHead>
@@ -388,9 +388,9 @@ const Documents = () => {
 														</Badge>
 														{entityLabel(doc)}
 													</TableCell>
-													<TableCell className="text-muted-foreground text-sm">
+													{/* <TableCell className="text-muted-foreground text-sm">
 														{doc.file_name || "—"}
-													</TableCell>
+													</TableCell> */}
 													<TableCell className="text-muted-foreground text-sm">
 														{formatSize(doc.file_size)}
 													</TableCell>

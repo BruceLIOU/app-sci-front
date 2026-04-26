@@ -18,7 +18,14 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { CircleX, Info, RefreshCw, Send, TrendingUp } from "lucide-react";
+import {
+	CircleX,
+	FileDown,
+	Info,
+	RefreshCw,
+	Send,
+	TrendingUp,
+} from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { DateUtils } from "src/utils/date";
 import ActionButtons from "../../../components/ActionButtons";
@@ -76,6 +83,7 @@ const Leases = () => {
 	const [filterLeaseType, setFilterLeaseType] = useState("");
 	const [viewing, setViewing] = useState<any>(null);
 	const [emailSendingId, setEmailSendingId] = useState<number | null>(null);
+	const [pdfGeneratingId, setPdfGeneratingId] = useState<number | null>(null);
 	const [emailResult, setEmailResult] = useState<{
 		type: "success" | "danger";
 		message: string;
@@ -285,6 +293,23 @@ const Leases = () => {
 			});
 		} finally {
 			setTerminateLoading(false);
+		}
+	};
+
+	const handleGeneratePdf = async (id: number) => {
+		setPdfGeneratingId(id);
+		setEmailResult(null);
+		try {
+			await PdfDataService.generateBail(id);
+			fetchAll();
+		} catch (e: any) {
+			setEmailResult({
+				type: "danger",
+				message:
+					e?.response?.data?.message || "Erreur lors de la génération du PDF.",
+			});
+		} finally {
+			setPdfGeneratingId(null);
 		}
 	};
 
@@ -520,24 +545,47 @@ const Leases = () => {
 													<CircleX className="h-4 w-4" />
 												</Button>
 											)}
-											<Button
-												variant="secondary"
-												size="sm"
-												className={`mr-1 ${l.email_sent_at ? "text-emerald-600" : ""}`}
-												disabled={emailSendingId === l.id}
-												onClick={() => handleEmailBail(l.id)}
-												title={
-													l.email_sent_at
-														? `Envoyé le ${DateUtils.formatShort(l.email_sent_at)}`
-														: "Envoyer bail par email"
-												}
-											>
-												{emailSendingId === l.id ? (
-													<Spinner size="sm" />
-												) : (
-													<Send className="h-4 w-4" />
+											{l.status === "active" &&
+												(!l.pdf_url || !l.pdf_generated_at) && (
+													<Button
+														variant="secondary"
+														size="sm"
+														className="mr-1"
+														disabled={pdfGeneratingId === l.id}
+														onClick={() => handleGeneratePdf(l.id)}
+														title={
+															l.pdf_url && !l.pdf_generated_at
+																? "Re-générer le bail"
+																: "Générer le bail PDF"
+														}
+													>
+														{pdfGeneratingId === l.id ? (
+															<Spinner size="sm" />
+														) : (
+															<FileDown className="h-4 w-4" />
+														)}
+													</Button>
 												)}
-											</Button>
+											{l.pdf_url && l.pdf_generated_at && (
+												<Button
+													variant="secondary"
+													size="sm"
+													className={`mr-1 ${l.email_sent_at ? "text-emerald-600" : ""}`}
+													disabled={emailSendingId === l.id}
+													onClick={() => handleEmailBail(l.id)}
+													title={
+														l.email_sent_at
+															? `Envoyé le ${DateUtils.formatShort(l.email_sent_at)}`
+															: "Envoyer bail par email"
+													}
+												>
+													{emailSendingId === l.id ? (
+														<Spinner size="sm" />
+													) : (
+														<Send className="h-4 w-4" />
+													)}
+												</Button>
+											)}
 										</ActionButtons>
 									</TableCell>
 								</TableRow>
@@ -755,18 +803,37 @@ const Leases = () => {
 							<DocumentsSection entityType="lease" entityId={viewing.id} />
 							<hr className="my-3" />
 							<div className="flex justify-end gap-2">
-								<Button
-									variant="outline"
-									disabled={emailSendingId === viewing?.id}
-									onClick={() => handleEmailBail(viewing.id)}
-								>
-									{emailSendingId === viewing?.id ? (
-										<Spinner size="sm" className="mr-1" />
-									) : (
-										<Send className="h-4 w-4 mr-1" />
+								{viewing?.status === "active" &&
+									(!viewing?.pdf_url || !viewing?.pdf_generated_at) && (
+										<Button
+											variant="outline"
+											disabled={pdfGeneratingId === viewing?.id}
+											onClick={() => handleGeneratePdf(viewing.id)}
+										>
+											{pdfGeneratingId === viewing?.id ? (
+												<Spinner size="sm" className="mr-1" />
+											) : (
+												<FileDown className="h-4 w-4 mr-1" />
+											)}
+											{viewing?.pdf_url && !viewing?.pdf_generated_at
+												? "Re-générer le bail"
+												: "Générer le bail PDF"}
+										</Button>
 									)}
-									Envoyer bail par email
-								</Button>
+								{viewing?.pdf_url && viewing?.pdf_generated_at && (
+									<Button
+										variant="outline"
+										disabled={emailSendingId === viewing?.id}
+										onClick={() => handleEmailBail(viewing.id)}
+									>
+										{emailSendingId === viewing?.id ? (
+											<Spinner size="sm" className="mr-1" />
+										) : (
+											<Send className="h-4 w-4 mr-1" />
+										)}
+										Envoyer bail par email
+									</Button>
+								)}
 								<Button onClick={() => setViewModal(false)}>Fermer</Button>
 							</div>
 						</div>
